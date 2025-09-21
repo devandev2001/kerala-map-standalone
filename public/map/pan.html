@@ -1,0 +1,2604 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>BJP Kerala Dashboard - Interactive Map | Mission 2025-2026</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  </noscript>
+  <style>
+    :root {
+      /* BJP Kerala Dashboard - Professional Theme */
+      
+      /* BJP Brand Colors */
+      --primary: #FF6B35;
+      --primary-dark: #E55A2B;
+      --primary-light: #FF8A65;
+      --secondary: #138808;
+      --accent: #FFD700;
+      --success: #10B981;
+      --warning: #F59E0B;
+      --error: #EF4444;
+      
+      /* Background Colors */
+      --background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #334155 100%);
+      --card-bg: rgba(15, 23, 42, 0.95);
+      --card-bg-light: rgba(30, 41, 59, 0.9);
+      --card-bg-hover: rgba(51, 65, 85, 0.95);
+      --overlay: rgba(0, 0, 0, 0.8);
+      --glass-bg: rgba(15, 23, 42, 0.7);
+      
+      /* Text Colors */
+      --text-primary: #F8FAFC;
+      --text-secondary: #CBD5E1;
+      --text-muted: #94A3B8;
+      --text-accent: #FFD700;
+      --text-success: #34D399;
+      --text-warning: #FBBF24;
+      --text-error: #F87171;
+      
+      /* Border & Effects */
+      --border: rgba(255, 107, 53, 0.3);
+      --border-light: rgba(203, 213, 225, 0.2);
+      --border-accent: rgba(255, 215, 0, 0.4);
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+      --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      --glow: 0 0 20px rgba(255, 107, 53, 0.3);
+      --glow-accent: 0 0 15px rgba(255, 215, 0, 0.4);
+      
+      /* Border Radius */
+      --border-radius: 12px;
+      --border-radius-lg: 16px;
+      --border-radius-xl: 20px;
+      
+      /* Typography */
+      --font-primary: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-display: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      
+      /* Transitions */
+      --transition-fast: 0.15s ease-out;
+      --transition-normal: 0.25s ease-out;
+      --transition-slow: 0.4s ease-out;
+      
+      /* Z-Index Scale */
+      --z-dropdown: 1000;
+      --z-sticky: 1020;
+      --z-fixed: 1030;
+      --z-modal: 1040;
+      --z-popover: 1050;
+      --z-tooltip: 1060;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body, #map { 
+      height: 100%; 
+      width: 100%;
+      margin: 0; 
+      padding: 0;
+      font-family: var(--font-primary);
+      background: var(--background);
+      color: var(--text-primary);
+      font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    .btn {
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      font-size: 0.875rem;
+      letter-spacing: 0.025em;
+      transition: all var(--transition-normal);
+      cursor: pointer;
+      border: 1px solid var(--border);
+      font-family: var(--font-primary);
+      background: var(--card-bg);
+      color: var(--text-primary);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn:hover {
+      background: var(--card-bg-hover);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-lg), var(--glow);
+      transform: translateY(-2px);
+      color: var(--text-accent);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: var(--shadow);
+    }
+    
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.1), transparent);
+      transition: left var(--transition-slow);
+    }
+    
+    .btn:hover::before {
+      left: 100%;
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: 1px solid var(--primary);
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+    
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+    
+    .btn-outline:hover {
+      background: rgba(249, 115, 22, 0.1);
+    }
+
+    .toolbar { 
+      position: absolute;
+      top: 1.5rem;
+      left: 1.5rem;
+      z-index: var(--z-fixed);
+      padding: 1rem 1.25rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      min-width: 280px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-light);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-xl);
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    
+    .toolbar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, 
+        rgba(255, 107, 53, 0.05) 0%, 
+        rgba(19, 136, 8, 0.05) 50%, 
+        rgba(255, 215, 0, 0.05) 100%);
+      border-radius: var(--border-radius-lg);
+      z-index: -1;
+    }
+
+    .toolbar span, .toolbar button {
+      color: var(--text-primary);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+      font-weight: 500;
+    }
+
+    .toolbar button {
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: rgba(249, 115, 22, 0.1);
+    }
+
+    .toolbar button:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .legend { 
+      position: absolute;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: var(--z-fixed);
+      padding: 1.25rem;
+      max-width: 320px;
+      min-width: 280px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-light);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-xl);
+      color: var(--text-primary);
+    }
+    
+    .legend::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, 
+        rgba(255, 215, 0, 0.05) 0%, 
+        rgba(255, 107, 53, 0.05) 50%, 
+        rgba(19, 136, 8, 0.05) 100%);
+      border-radius: var(--border-radius-lg);
+      z-index: -1;
+    }
+
+    .legend strong {
+      color: var(--text-accent);
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      display: block;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      letter-spacing: 0.025em;
+    }
+
+    .legend-swatch{ 
+      width: 1rem;
+      height: 1rem;
+      border-radius: 0.25rem;
+      margin-right: 0.5rem;
+      border: 1px solid var(--border);
+      display: inline-block;
+    }
+
+    .legend div {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    #legendItems {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    #legendItems > div {
+      margin-bottom: 0;
+      white-space: nowrap;
+    }
+
+    .warn { 
+      color: #f59e0b; 
+      font-size: 12px; 
+      margin-top: 6px; 
+      font-style: italic;
+    }
+
+    .lbl { 
+      font-weight: 600;
+      color: var(--text-primary);
+      background: none;
+      padding: 0;
+      border: none;
+      box-shadow: none;
+      pointer-events: none;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.7);
+      font-family: var(--font-display);
+      letter-spacing: 0.025em;
+    }
+
+    .centered-label {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .lbl-zone { 
+      font-size: 1rem; 
+      font-weight: 800; 
+      color: var(--text-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .lbl-org { 
+      font-size: 0.875rem; 
+      font-weight: 700; 
+      color: var(--text-primary);
+      letter-spacing: 0.05em;
+    }
+    .lbl-ac { 
+      font-size: 0.8125rem; 
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .lbl-mandal { 
+      font-size: 0.8125rem; 
+      font-weight: 700;
+      color: var(--primary);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+    }
+    .lbl-pan { 
+      font-size: 0.75rem; 
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    /* TARGET VISUALIZATION - BLINKING ANIMATIONS */
+    
+    /* Win target animations */
+    @keyframes blink-win {
+      0%, 40% { 
+        fill: #10B981; 
+        opacity: 1; 
+        stroke: #059669;
+        stroke-width: 2;
+      }
+      20% { 
+        fill: #34D399; 
+        opacity: 0.9; 
+        stroke: #10B981;
+        stroke-width: 3;
+      }
+      60%, 100% { 
+        fill: #10B981; 
+        opacity: 1; 
+        stroke: #059669;
+        stroke-width: 2;
+      }
+    }
+    
+    @keyframes glow-win {
+      0%, 100% { 
+        filter: drop-shadow(0 0 5px #10B981); 
+      }
+      50% { 
+        filter: drop-shadow(0 0 15px #34D399); 
+      }
+    }
+    
+    /* Opposition target animations */
+    @keyframes blink-opposition {
+      0%, 40% { 
+        fill: #F59E0B; 
+        opacity: 1; 
+        stroke: #D97706;
+        stroke-width: 2;
+      }
+      20% { 
+        fill: #FBBF24; 
+        opacity: 0.9; 
+        stroke: #F59E0B;
+        stroke-width: 3;
+      }
+      60%, 100% { 
+        fill: #F59E0B; 
+        opacity: 1; 
+        stroke: #D97706;
+        stroke-width: 2;
+      }
+    }
+    
+    @keyframes glow-opposition {
+      0%, 100% { 
+        filter: drop-shadow(0 0 5px #F59E0B); 
+      }
+      50% { 
+        filter: drop-shadow(0 0 15px #FBBF24); 
+      }
+    }
+    
+    /* NA target animations */
+    @keyframes blink-na {
+      0%, 40% { 
+        fill: #6B7280; 
+        opacity: 1; 
+        stroke: #4B5563;
+        stroke-width: 2;
+      }
+      20% { 
+        fill: #9CA3AF; 
+        opacity: 0.9; 
+        stroke: #6B7280;
+        stroke-width: 3;
+      }
+      60%, 100% { 
+        fill: #6B7280; 
+        opacity: 1; 
+        stroke: #4B5563;
+        stroke-width: 2;
+      }
+    }
+    
+    @keyframes glow-na {
+      0%, 100% { 
+        filter: drop-shadow(0 0 3px #6B7280); 
+      }
+      50% { 
+        filter: drop-shadow(0 0 8px #9CA3AF); 
+      }
+    }
+    
+    /* Target CSS classes for polygon styling */
+    .target-win {
+      animation: blink-win 2s ease-in-out infinite, glow-win 2s ease-in-out infinite;
+      fill: #10B981 !important;
+      stroke: #059669 !important;
+      stroke-width: 2 !important;
+      opacity: 1 !important;
+    }
+    
+    .target-opposition {
+      animation: blink-opposition 2s ease-in-out infinite, glow-opposition 2s ease-in-out infinite;
+      fill: #F59E0B !important;
+      stroke: #D97706 !important;
+      stroke-width: 2 !important;
+      opacity: 1 !important;
+    }
+    
+    .target-na {
+      animation: blink-na 2s ease-in-out infinite, glow-na 2s ease-in-out infinite;
+      fill: #6B7280 !important;
+      stroke: #4B5563 !important;
+      stroke-width: 2 !important;
+      opacity: 1 !important;
+    }
+    
+    /* Hover effects for target polygons */
+    .target-win:hover {
+      animation-duration: 1s !important;
+      filter: drop-shadow(0 0 20px #10B981) !important;
+    }
+    
+    .target-opposition:hover {
+      animation-duration: 1s !important;
+      filter: drop-shadow(0 0 20px #F59E0B) !important;
+    }
+    
+    .target-na:hover {
+      animation-duration: 1s !important;
+      filter: drop-shadow(0 0 15px #6B7280) !important;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1024px) {
+      .toolbar {
+        top: 0.5rem;
+        left: 0.5rem;
+        right: 0.5rem;
+        width: auto;
+        flex-wrap: wrap;
+      }
+      
+      .legend { 
+        bottom: 0.5rem; 
+        right: 0.5rem; 
+        left: 0.5rem; 
+        width: auto; 
+        max-width: none; 
+      }
+      
+      .lbl {
+        font-size: 0.625rem;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+      }
+    }
+    
+    /* Enhanced Custom Popup Styling */
+    .custom-popup .leaflet-popup-content-wrapper {
+      background: transparent;
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 10px 20px -5px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(20px);
+      padding: 0;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    
+    .custom-popup .leaflet-popup-content {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    
+    .custom-popup .leaflet-popup-tip {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      border: 1px solid rgba(255, 107, 53, 0.3);
+      border-radius: 4px;
+    }
+    
+    .custom-popup .leaflet-popup-close-button {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 18px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+    
+    .custom-popup .leaflet-popup-close-button:hover {
+      background: rgba(255, 107, 53, 0.2);
+      color: #FF6B35;
+      transform: scale(1.1);
+    }
+    
+    /* Scrollbar styling for popup content */
+    .custom-popup .leaflet-popup-content-wrapper::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .custom-popup .leaflet-popup-content-wrapper::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.3);
+      border-radius: 3px;
+    }
+    
+    .custom-popup .leaflet-popup-content-wrapper::-webkit-scrollbar-thumb {
+      background: rgba(255, 107, 53, 0.5);
+      border-radius: 3px;
+    }
+    
+    .custom-popup .leaflet-popup-content-wrapper::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 107, 53, 0.7);
+    }
+    
+    /* Modal-specific styling */
+    #detailedModal {
+      animation: fadeIn 0.3s ease-out;
+    }
+    
+    #detailedModal > div {
+      animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+      from { 
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+      }
+      to { 
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+    
+    /* Modal scrollbar styling */
+    #detailedModal div[style*="overflow-y: auto"]::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    #detailedModal div[style*="overflow-y: auto"]::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.3);
+      border-radius: 4px;
+    }
+    
+    #detailedModal div[style*="overflow-y: auto"]::-webkit-scrollbar-thumb {
+      background: rgba(255, 107, 53, 0.5);
+      border-radius: 4px;
+    }
+    
+    #detailedModal div[style*="overflow-y: auto"]::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 107, 53, 0.7);
+    }
+    
+    /* Responsive modal */
+    @media (max-width: 768px) {
+      #detailedModal > div {
+        width: 95% !important;
+        max-height: 95vh !important;
+      }
+      
+      #detailedModal h2 {
+        font-size: 24px !important;
+      }
+      
+      #detailedModal h3 {
+        font-size: 18px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span id="title" style="display:none;">Kerala — Zones</span>
+    <button id="backBtn" class="btn btn-outline" style="display:none;">⬅ Back</button>
+    <button id="homeBtn" class="btn btn-primary">🏠 Home</button>
+  </div>
+  <div id="map"></div>
+  <div class="legend"><strong id="legendTitle">Zones</strong><div id="legendItems"></div><div id="legendNote" class="warn"></div></div>
+
+  <!-- Detailed Modal Popup -->
+  <div id="detailedModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 10000; backdrop-filter: blur(10px);">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 1000px; max-height: 90vh; background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); overflow: hidden;">
+      
+      <!-- Modal Header -->
+      <div style="background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%); padding: 24px; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h2 id="modalTitle" style="color: white; margin: 0 0 8px 0; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);">🏛️ Local Body Details</h2>
+            <p id="modalSubtitle" style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 16px; font-weight: 500;">Comprehensive Voter Data Report</p>
+          </div>
+          <button onclick="closeDetailedModal()" style="background: rgba(255, 255, 255, 0.2); border: none; border-radius: 50%; width: 40px; height: 40px; color: white; font-size: 20px; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(10px);">
+            ✕
+          </button>
+        </div>
+      </div>
+      
+      <!-- Modal Content -->
+      <div style="padding: 0; max-height: calc(90vh - 120px); overflow-y: auto;">
+        <div id="modalContent" style="padding: 24px;">
+          <!-- Content will be dynamically populated -->
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <script>
+    // ========= FILES =========
+    const FILES = {
+      zones:  'kerala_zones.geojson',
+      org:    'kerala_org_districts.geojson',
+      ac:     'KERALA_ASSEMBLY_filtered.geojson',
+      mandal: 'org_mandal.geojson',
+      pan:    'panchayats_tagged.geojson',
+      ward:   'FinalN_Thiruvanathapuram_Thiruvananthapuram.json',
+      thrissurWard: 'Thrissur_Wards_Merged.geojson',
+      targetData: '../data/iluminatti/Iluiminati.csv'
+    };
+
+    // ========= TARGET DATA =========
+    let targetDataCache = null;
+    
+    async function loadTargetData() {
+      if (targetDataCache) return targetDataCache;
+      
+      try {
+        console.log('🎯 Loading target data...');
+        const response = await fetch(FILES.targetData);
+        if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`);
+        
+        const csvText = await response.text();
+        const data = { Win: [], Opposition: [], NA: [] };
+        
+        const lines = csvText.split('\n');
+        const header = lines[0].split(',');
+        const lbNameIndex = header.findIndex(h => h.trim() === 'LBName');
+        const targetIndex = header.findIndex(h => h.trim() === 'Target');
+        
+        if (lbNameIndex === -1 || targetIndex === -1) {
+          throw new Error('Required columns not found in CSV');
+        }
+        
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          
+          const row = parseCSVRow(line);
+          if (row.length > Math.max(lbNameIndex, targetIndex)) {
+            const lbName = row[lbNameIndex]?.trim();
+            const target = row[targetIndex]?.trim();
+            
+            if (lbName && target && data[target]) {
+              const cleanLBName = lbName.replace(/^["']|["']$/g, '').trim();
+              if (!data[target].includes(cleanLBName)) {
+                data[target].push(cleanLBName);
+              }
+            }
+          }
+        }
+        
+        console.log('🎯 Target data loaded:', {
+          Win: data.Win.length,
+          Opposition: data.Opposition.length,
+          NA: data.NA.length
+        });
+        
+        targetDataCache = data;
+        return data;
+      } catch (error) {
+        console.error('❌ Error loading target data:', error);
+        return { Win: [], Opposition: [], NA: [] };
+      }
+    }
+    
+    function parseCSVRow(row) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < row.length; i++) {
+        const char = row[i];
+        
+        if (char === '"' && (i === 0 || row[i - 1] === ',')) {
+          inQuotes = true;
+        } else if (char === '"' && inQuotes && (i === row.length - 1 || row[i + 1] === ',')) {
+          inQuotes = false;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current);
+          current = '';
+          continue;
+        }
+        
+        if (!(char === '"' && (inQuotes && (i === 0 || row[i - 1] === ',') || !inQuotes && (i === row.length - 1 || row[i + 1] === ',')))) {
+          current += char;
+        }
+      }
+      
+      result.push(current);
+      return result;
+    }
+    
+    function getTargetForLocalBody(lbName) {
+      if (!targetDataCache) return null;
+      
+      const cleanName = lbName.trim().replace(/^["']|["']$/g, '');
+      
+      // Check exact matches first
+      for (const [target, lbNames] of Object.entries(targetDataCache)) {
+        if (lbNames.includes(cleanName)) {
+          console.log(`🎯 Exact match found: "${cleanName}" -> ${target}`);
+          return target;
+        }
+      }
+      
+      // Try fuzzy matching
+      for (const [target, lbNames] of Object.entries(targetDataCache)) {
+        for (const name of lbNames) {
+          if (fuzzyMatch(cleanName, name)) {
+            console.log(`🎯 Fuzzy match found: "${cleanName}" -> "${name}" -> ${target}`);
+            return target;
+          }
+        }
+      }
+      
+      console.log(`❌ No match found for: "${cleanName}"`);
+      return null;
+    }
+    
+    function fuzzyMatch(name1, name2) {
+      const normalize = (str) => str.toLowerCase()
+        .replace(/\s+/g, ' ')
+        .replace(/[^\w\s]/g, '')
+        // Remove common suffixes and variations
+        .replace(/\b(gramapanchayath|gramapanchayat|grama\s*panchayat|panchayat|panchayath|municipality|corporation)\b/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      const n1 = normalize(name1);
+      const n2 = normalize(name2);
+      
+      // Check for exact matches after normalization
+      if (n1 === n2) return true;
+      
+      // Check if one is contained in the other
+      if (n1.includes(n2) || n2.includes(n1)) return true;
+      
+      // Use similarity scoring
+      return sim(n1, n2) >= 0.75;
+    }
+    
+    function applyTargetStyling(layer) {
+      if (!targetDataCache) {
+        console.log('⚠️ Target data not loaded yet');
+        return;
+      }
+      
+      console.log('🎯 Applying target styling to layer...');
+      let matchCount = 0;
+      let totalFeatures = 0;
+      
+      layer.eachLayer(l => {
+        totalFeatures++;
+        if (!l.feature || !l.feature.properties) return;
+        
+        const props = l.feature.properties;
+        const lbName = props.LocalBody || props.LB_NAME || props.LBNAME || props.Name || props.NAME || 
+                      props['Local Body'] || props.local_body || props.Local_Body || props.Panchayat || 
+                      props.PANCHAYAT || props.Panchayat_Name || props.PAN_NAME || props.Municipality || 
+                      props.Corporation || props.Ward_Name || props.Ward || props.WARD;
+        
+        if (!lbName) {
+          console.log('❌ No local body name found in properties:', Object.keys(props));
+          return;
+        }
+        
+        const target = getTargetForLocalBody(lbName);
+        if (target) {
+          matchCount++;
+          // Apply target styling
+          const element = l.getElement();
+          if (element) {
+            // Remove any existing target classes
+            element.classList.remove('target-win', 'target-opposition', 'target-na');
+            
+            // Add new target class
+            switch(target) {
+              case 'Win':
+                element.classList.add('target-win');
+                break;
+              case 'Opposition':
+                element.classList.add('target-opposition');
+                break;
+              case 'NA':
+                element.classList.add('target-na');
+                break;
+            }
+            
+            console.log(`✅ Applied ${target} styling to: ${lbName}`);
+          }
+        } else {
+          console.log(`ℹ️ No target found for: ${lbName}`);
+        }
+      });
+      
+      console.log(`🎯 Target styling complete: ${matchCount}/${totalFeatures} features matched`);
+    }
+    
+    function buildTargetLegend() {
+      if (!targetDataCache) return;
+      
+      const targetInfo = document.createElement('div');
+      targetInfo.style.marginTop = '1rem';
+      targetInfo.style.borderTop = '1px solid var(--border-light)';
+      targetInfo.style.paddingTop = '0.75rem';
+      targetInfo.innerHTML = `
+        <div style="font-weight: 700; color: var(--text-accent); margin-bottom: 0.5rem; font-size: 0.9rem;">
+          🎯 Target Areas
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 0.25rem; font-size: 0.8rem;">
+          <span style="width: 12px; height: 12px; background: #10B981; border-radius: 3px; margin-right: 0.5rem; border: 1px solid #059669;"></span>
+          Win (${targetDataCache.Win.length})
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 0.25rem; font-size: 0.8rem;">
+          <span style="width: 12px; height: 12px; background: #F59E0B; border-radius: 3px; margin-right: 0.5rem; border: 1px solid #D97706;"></span>
+          Opposition (${targetDataCache.Opposition.length})
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 0.25rem; font-size: 0.8rem;">
+          <span style="width: 12px; height: 12px; background: #6B7280; border-radius: 3px; margin-right: 0.5rem; border: 1px solid #4B5563;"></span>
+          NA (${targetDataCache.NA.length})
+        </div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic;">
+          ✨ Target areas have blinking animations
+        </div>
+      `;
+      
+      const legend = document.querySelector('.legend');
+      const existingTargetInfo = legend.querySelector('.target-legend-info');
+      if (existingTargetInfo) {
+        existingTargetInfo.remove();
+      }
+      
+      targetInfo.className = 'target-legend-info';
+      legend.appendChild(targetInfo);
+    }
+
+    // ========= MAP =========
+    const map = L.map('map', {
+      zoomControl: false,
+      attributionControl: false
+    }).setView([10.3, 76.5], 7);
+    const backBtn=document.getElementById('backBtn'), homeBtn=document.getElementById('homeBtn');
+    const titleEl=document.getElementById('title'), legendTitle=document.getElementById('legendTitle'),
+          legendItems=document.getElementById('legendItems'), legendNote=document.getElementById('legendNote');
+
+    const palette=['#60a5fa','#f59e0b','#34d399','#f472b6','#a78bfa','#fb7185','#22d3ee','#84cc16','#f97316','#eab308','#10b981','#38bdf8','#e879f9'];
+    const colormap=new Map();
+    const colorFor=n=>{const k=(n||'').toString(); if(!colormap.has(k)) colormap.set(k,palette[colormap.size%palette.length]); return colormap.get(k);};
+    const prop=(f,k)=>f?.properties?.[k];
+
+    let zonesGJ,orgGJ,acGJ,mandalGJ,panGJ,wardGJ,thrissurWardGJ;
+    let voterData = null;
+    let ctx={ level:'zones' };
+    let KEYS={};
+
+    // ========= SPECIAL MANDALS (for ward drilldown) =========
+      const WARD_MANDALS = [
+        "Kazhakkoottam","Ulloor","Vattiyoorkavu","Pattom",
+        "Thiruvananthapuram Central","Thiruvananthapuram West",
+        "Nemom","Attukal","Kovalam",
+        "Thrissur West","Thrissur East","Ollur"
+      ];
+
+    // ========= NORMALIZATION / FUZZY (Restored from Script 1) =========
+    const FUZZY = 0.92;
+    const aliases = new Map(Object.entries({
+      "quilandy":"koyilandy","vilyapally":"villiappally","narippatta":"naripatta",
+      "kilikollur":"kilikolloor","palarivattom":"pallarivattom","thriprangodu":"thrippangodu",
+      "ochira":"oachira","karumaloor":"karumalloor","nedumbassery":"nedumbassery",
+      "kolancherry":"kolenchery","erumappettyy":"erumapetty","chalakkudy":"chalakudy",
+      "chithra":"chithara","kumarakam":"kumarakom","puthupally":"puthuppally",
+      "kanjirapally":"kanjirappally","edappara":"elappara","vazhakkancherry":"vadakkenchery",
+      "thirunnavaya":"thirunavaya","eranad":"ernaad","manjery":"manjeri","kalikavu":"kalikkavu",
+      "koduvalli":"koduvally","ayanad":"aryanad","kattakada":"kattakkada",
+      "neyyatinkara":"neyyattinkara","kazhakuttam":"kazhakkoottam","thodupuzha":"thodupuzha",
+      "taliparamba":"thaliparambu","thaliparamba":"thaliparambu","peringome":"perongome"
+    }));
+    function norm(s){
+      if (!s) return "";
+      let x = s.toString().trim().toLowerCase();
+      try { x = x.normalize('NFD').replace(/\p{Diacritic}/gu,''); } catch(e){}
+      x = x.replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+      if (aliases.has(x)) x = aliases.get(x);
+      return x;
+    }
+    function stripParens(s){ return (s||"").replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim(); }
+    function levenshtein(a,b){
+      a = norm(a); b = norm(b);
+      const m=a.length, n=b.length; if(!m) return n; if(!n) return m;
+      const dp = new Array(n+1); for(let j=0;j<=n;j++) dp[j]=j;
+      for(let i=1;i<=m;i++){ let prev=dp[0]; dp[0]=i;
+        for(let j=1;j<=n;j++){ const t=dp[j];
+          dp[j]=Math.min(dp[j]+1, dp[j-1]+1, prev+(a[i-1]===b[j-1]?0:1)); prev=t; } }
+      return dp[n];
+    }
+    const sim=(a,b)=>{ const d=levenshtein(a,b), L=Math.max(norm(a).length,norm(b).length)||1; return 1-d/L; };
+
+    // ========= HELPERS =========
+    function detectKey(gj, candidates) {
+      if (!gj || !gj.features.length) return null;
+      const props = Object.keys(gj.features[0].properties || {});
+      for (const c of candidates) {
+        const hit = props.find(p => p.toLowerCase() === c.toLowerCase());
+        if (hit) return hit;
+      }
+      return props[0];
+    }
+    function buildLegend(values){ legendItems.innerHTML=''; legendNote.textContent='';
+      values.forEach(v=>{ const d=document.createElement('div');
+        d.innerHTML=`<span class="legend-swatch" style="background:${colorFor(v)}"></span>${v}`;
+        legendItems.appendChild(d);});
+    }
+    function clearLayers(){ map.eachLayer(l=>{if(l.feature) map.removeLayer(l);}); }
+
+    const labelLayer = L.layerGroup().addTo(map);
+    const clearLabels=()=>labelLayer.clearLayers();
+    function addLabels(layer, field, cls){
+      layer.eachLayer(l=>{
+        try{
+          // Calculate the best center point for text placement
+          let pt;
+          try {
+            // First try centroid (mathematical center)
+            const centroid = turf.centroid(l.feature);
+            // Check if centroid is inside the polygon
+            if (turf.booleanPointInPolygon(centroid, l.feature)) {
+              pt = centroid.geometry.coordinates.reverse();
+            } else {
+              // Fallback to point on surface if centroid is outside
+              pt = turf.pointOnFeature(l.feature).geometry.coordinates.reverse();
+            }
+          } catch(e) {
+            // Final fallback to point on feature
+            pt = turf.pointOnFeature(l.feature).geometry.coordinates.reverse();
+          }
+          
+          const name = l.feature.properties[field];
+          if(name){ 
+            // Enhanced label with better styling for center positioning
+            const labelHtml = `
+              <div class="lbl ${cls}" style="
+                transform: translate(-50%, -50%);
+                text-align: center;
+                white-space: nowrap;
+                background: rgba(0, 0, 0, 0.7);
+                padding: 4px 8px;
+                border-radius: 4px;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                backdrop-filter: blur(4px);
+                font-weight: 600;
+                letter-spacing: 0.5px;
+                min-width: fit-content;
+                display: inline-block;
+              ">${name}</div>
+            `;
+            labelLayer.addLayer(L.marker(pt,{
+              icon: L.divIcon({
+                className: 'centered-label',
+                html: labelHtml,
+                iconSize: [0, 0], // Let content determine size
+                iconAnchor: [0, 0] // No offset since we use CSS transform
+              })
+            }));
+          }
+        }catch(e){
+          console.warn('Label placement failed for feature:', e);
+        }
+      });
+    }
+
+    function filterChildrenSmart(gj,parentF,parentField){
+      let subset = gj.features.filter(f=>prop(f,parentField)===prop(parentF,parentField));
+      if (!subset.length){
+        subset = gj.features.filter(f=>{
+          try{ return turf.booleanPointInPolygon(turf.pointOnFeature(f), parentF); }catch(e){return false;}
+        });
+      }
+      return {type:"FeatureCollection",features:subset};
+    }
+
+    // ========= AC → Mandals (Restored from Script 1) =========
+    const MAPPING_BLOCK = `
+AC,Mandal
+Kazhakkoottam,Kazhakkoottam
+Kazhakkoottam,Ulloor
+Vattiyoorkavu,Vattiyoorkavu
+Vattiyoorkavu,Pattom
+Thiruvananthapuram,Thiruvananthapuram Central
+Thiruvananthapuram,Thiruvananthapuram West
+Nemom,Nemom
+Nemom,Attukal
+Chirayinkeezhu,Chirayinkeezhu
+Chirayinkeezhu,Kadakkavoor
+Varkala,Varkala
+Varkala,Navaikulam
+Attingal,Attingal
+Attingal,Kilimanoor
+Nedumangad,Nedumangad
+Nedumangad,Pothencode
+Vamanapuram,Vamanapuram
+Vamanapuram,Palode
+Aruvikkara,Aruvikkara
+Aruvikkara,Aryanadu
+Parasala,Parassala
+Parasala,Vellarada
+Kattakkada,Kattakkada
+Kattakkada,Malayinkeezhu
+Neyyattinkara,Neyyattinkara
+Neyyattinkara,Kulathoor
+Kovalam,Kovalam
+Kovalam,Balaramapuram
+Karunagappally,Karunagappally
+Karunagappally,Oachira
+Chavara,Chavara
+Chavara,Panmana
+Kollam,Kollam
+Kollam,Thrikkadavoor
+Kundara,Kundara
+Kundara,Mukhathala
+Eravipuram,Eravipuram
+Eravipuram,Kilikolloor
+Chathannoor,Chathannoor
+Chathannoor,Paravur
+Kunnathur,Kunnathur
+Kunnathur,Sasthamcotta
+Kottarakkara,Kottarakkara
+Kottarakkara,Neduvathur
+Pathanapuram,Pathanapuram
+Pathanapuram,Kunnikkode
+Punaloor,Punalur
+Punaloor,Anchal
+Chadayamangalam,Chadayamangalam
+Chadayamangalam,Chithara
+Thiruvalla,Thiruvalla
+Thiruvalla,Mallappally
+Aranmula,Aranmula
+Aranmula,Pathanamthitta
+Adoor,Adoor
+Adoor,Pandalam
+Ranni,Ranni
+Ranni,Ayiroor
+Konni,Konni
+Konni,Chittar
+Aroor,Aroor
+Aroor,Panavally
+Cherthala,Cherthala
+Cherthala,Muhamma
+Alappuzha,Alappuzha
+Alappuzha,Mararikkulam
+Ambalappuzha,Ambalappuzha
+Ambalappuzha,Mullakkal
+Kuttanad,Kuttanad
+Kuttanad,Thakazhy
+Haripad,Haripad
+Haripad,Karthikappalli
+Chenganur,Chengannur
+Chenganur,Mannar
+Mavelikkara,Mavelikkara
+Mavelikkara,Charummoodu
+Kayamkulam,Kayamkulam
+Kayamkulam,Chettikulangara
+Kaduthuruthy,Kaduthuruthy
+Kaduthuruthy,Kuravilangadu
+Vaikom,Vaikom
+Vaikom,Thalayolaparambu
+Ettumanoor,Ettumanoor
+Ettumanoor,Kumarakom
+Kottayam,Kottayam
+Kottayam,Panachikadu
+Pala,Pala
+Pala,Bharananganam
+Puthuppally,Puthuppally
+Puthuppally,Ayarkunnam
+Kanjirappally,Kanjirappally
+Kanjirappally,Vazhoor
+Poonjar,Poonjar
+Poonjar,Mundakkayam
+Changanassery,Changanassery
+Changanassery,Madappally
+Devikulam,Devikulam
+Devikulam,Adimali
+Thodupuzha,Thodupuzha
+Thodupuzha,Vannappuram
+Idukki,Idukki
+Idukki,Kattappana
+Udumbanchola,Udumbanchola
+Udumbanchola,Vandanmedu
+Peerumade,Peerumade
+Peerumade,Elappara
+Vypen,Vypen
+Vypen,Cherayi
+Kochi,Kochi
+Kochi,Mattancherry
+Thripunithura,Thrippunithura
+Thripunithura,Palluruthy
+Eranakulam,Ernakulam North
+Eranakulam,Ernakulam South
+Thrikkakara,Thrikkakkara
+Thrikkakara,Pallarivattom
+Perumbavoor,Perumbavoor
+Perumbavoor,Kuruppampady
+Angamaly,Angamaly
+Angamaly,Kalady
+Aluva,Aluva
+Aluva,Nedumbassery
+Kalamassery,Kalamassery
+Kalamassery,Karumalloor
+Paravur,Paravur
+Paravur,Vadakkekara
+Kunnathunad,Kunnathunad
+Kunnathunad,Kolenchery
+Piravom,Piravom
+Piravom,Chottanikara
+Muvattupuzha,Muvattupuzha
+Muvattupuzha,Vazhakkulam
+Kothamangalam,Kothamangalam
+Kothamangalam,Kavalangad
+Manalur,Manalur
+Manalur,Pavaratty
+Nattika,Nattika
+Nattika,Cherpu
+Ollur,Ollur
+Ollur,Peechi
+Thrissur,Thrissur West
+Thrissur,Thrissur East
+Puthukkad,Puthukkad
+Puthukkad,Amballur
+Kunnamkulam,Kunnamkulam
+Kunnamkulam,Erumapetty
+Guruvayoor,Guruvayoor
+Guruvayoor,Chavakkad
+Chelakkara,Chelakkara
+Chelakkara,Cheruthuruthy
+Wadakkanchery,Wadakkanchery
+Wadakkanchery,Kaipparambu
+Kaipamangalam,Kaipamangalam
+Kaipamangalam,Edavilangu
+Irinjalakuda,Irinjalakuda
+Irinjalakuda,Aloor
+Chalakudy,Chalakudy
+Chalakudy,Koratty
+Kodungallur,Kodungallur
+Kodungallur,Mala
+Kongad,Kongad
+Kongad,Karimba
+Malampuzha,Malampuzha
+Malampuzha,Puthussery
+Palakkad,Palakkad
+Palakkad,Pirayiri
+Chittur,Chittur
+Chittur,Kozhinjampara
+Nenmara,Nenmara
+Nenmara,Kollengode
+Alathur,Alathur
+Alathur,Vandazhi
+Thrithala,Thrithala
+Thrithala,Kappur
+Pattambi,Pattambi
+Pattambi,Koppam
+Shornur,Shornur
+Shornur,Cherpulassery
+Ottapalam,Ottapalam
+Ottapalam,Sreekrishnapuram
+Mannarkad,Mannarkad
+Mannarkad,Attappady
+Tarur,Tharur
+Tarur,Vadakkenchery
+Kondotty,Kondotty
+Kondotty,Vazhakkad
+Vengara,Vengara
+Vengara,Parappur
+Malappuram,Malappuram
+Malappuram,Pookkottur
+Kottakkal,Kottakkal
+Kottakkal,Kuttippuram
+Mankada,Mankada
+Mankada,Kolathur
+Vallikkunnu,Vallikkunnu
+Vallikkunnu,Pallikkal
+Thirurangadi,Thirurangadi
+Thirurangadi,Edarikkodu
+Tanur,Tanur
+Tanur,Ponmundam
+Tirur,Tirur
+Tirur,Thirunavaya
+Thavanur,Thavanur
+Thavanur,Thrippangodu
+Ponnani,Ponnani
+Ponnani,Changaramkulam
+Nilambur,Nilambur
+Nilambur,Edakkara
+Ernaad,Ernaad
+Ernaad,Edavanna
+Manjeri,Manjeri
+Manjeri,Pandikkad
+Wandoor,Wandoor
+Wandoor,Kalikkavu
+Perinthalamanna,Perinthalmanna
+Perinthalamanna,Elamkulam
+Vadakara,Vadakara
+Vadakara,Onchiyam
+Kuttiadi,Kuttiadi
+Kuttiadi,Villiappally
+Nadapuram,Nadapuram
+Nadapuram,Naripatta
+Perambra,Perambra
+Perambra,Meppayur
+Koyilandy,Koyilandy
+Koyilandy,Payyoli
+Balussery (SC),Balussery
+Balussery (SC),Ulliyeri
+Elathur,Elathur
+Elathur,Chelannur
+Koduvally,Koduvally
+Koduvally,Thamarassery
+Thiruvambady,Thiruvambady
+Thiruvambady,Mukkam
+Kozhikode North,Kozhikode North
+Kozhikode North,Nadakkavu
+Kunnamangalam,Kunnamangalam
+Kunnamangalam,Olavanna
+Kozhikode South,Kozhikode South
+Kozhikode South,Puthiyara
+Beypore,Beypore
+Beypore,Ramanattukara
+Mananthavady,Mananthavady
+Mananthavady,Panamaram
+Sulthanbathery,Sulthan Bathery
+Sulthanbathery,Pulpally
+Kalpetta,Kalpetta
+Kalpetta,Padinjarathara
+Payyannur,Payyannur
+Payyannur,Peringome
+Kalliasseri,Kalliassery
+Kalliasseri,Madayi
+Taliparamba,Taliparamba
+Taliparamba,Mayyil
+Irikkur,Irikkur
+Irikkur,Alakkode
+Azhikode,Azhikode
+Azhikode,Chirakkal
+Kannur,Kannur
+Kannur,Edakkad
+Dharmadam,Dharmadom
+Dharmadam,Chakkarakkal
+Mattannur,Mattannur
+Mattannur,Chittariparamba
+Peravoor,Peravoor
+Peravoor,Iritty
+Kuthuparamba,Kuthuparamba
+Kuthuparamba,Panoor
+Thalassery,Thalassery
+Thalassery,Kathiroor
+Manjeshwaram,Manjeshwar
+Manjeshwaram,Kumbla
+Kasaragod,Kasaragod
+Kasaragod,Badiadka
+Udma,Udma
+Udma,Muliyar
+Kanhangad,Kanhangad
+Kanhangad,Vellarikundu
+Trikkarippur,Trikaripur
+Trikkarippur,Neeleshwaram
+`.trim();
+
+    const AC_TO_MANDALS = (() => {
+      const rows = MAPPING_BLOCK.split(/\r?\n/).slice(1);
+      const out = new Map();
+      for (const line of rows) {
+        const [acRaw, mRaw] = line.split(',').map(s=>s?.trim());
+        if (!acRaw || !mRaw) continue;
+        if (!out.has(acRaw)) out.set(acRaw, new Set());
+        out.get(acRaw).add(mRaw);
+      }
+      return out;
+    })();
+    const AC_KEYS = () => Array.from(AC_TO_MANDALS.keys());
+    function resolveACKey(acName){
+      const keys = AC_KEYS();
+      let k = keys.find(x => x === acName); if (k) return k;
+      const acNorm = norm(acName);
+      k = keys.find(x => norm(x) === acNorm); if (k) return k;
+      const strippedNorm = norm(stripParens(acName));
+      k = keys.find(x => norm(x) === strippedNorm); if (k) return k;
+      let best=null, bestScore=-1;
+      for (const cand of keys){
+        const s = Math.max(sim(norm(cand), acNorm), sim(norm(cand), strippedNorm));
+        if (s>bestScore){ bestScore=s; best=cand; }
+      }
+      return bestScore>=FUZZY ? best : null;
+    }
+
+    let mandalIndex;
+    function buildMandalIndex() {
+      mandalIndex = new Map();
+      for (const f of mandalGJ.features) {
+        const n = norm(prop(f, KEYS.mnd));
+        if (!mandalIndex.has(n)) mandalIndex.set(n, []);
+        mandalIndex.get(n).push(f);
+      }
+    }
+    function featuresForMappedMandals(names){
+      const hits=[], missed=[], labelByNorm={};
+      for (const name of names) {
+        const target = norm(name);
+        if (mandalIndex.has(target)) { labelByNorm[target]=name; hits.push(...mandalIndex.get(target)); continue; }
+        let bestArr=null, bestKey=null, bestScore=-1;
+        for (const [k, arr] of mandalIndex.entries()) {
+          const score = sim(k, target);
+          if (score>bestScore){ bestScore=score; bestArr=arr; bestKey=k; }
+        }
+        if (bestArr && bestScore>=FUZZY){ labelByNorm[bestKey]=name; hits.push(...bestArr); }
+        else { missed.push(name); }
+      }
+      return {hits, missed, labelByNorm};
+    }
+
+    // ========= VIEWS =========
+    function safeFit(layer){
+      try{ map.fitBounds(layer.getBounds()); }catch(e){}
+    }
+
+    function showZones(){
+      clearLayers(); clearLabels(); ctx.level='zones'; ctx.zone=ctx.org=ctx.ac=ctx.mandal=null;
+      titleEl.textContent="Kerala — Zones"; legendTitle.textContent="Zones";
+      const layer=L.geoJSON(zonesGJ,{
+        style:f=>({color:"#111",weight:1,fillColor:colorFor(prop(f,KEYS.zone)),fillOpacity:0.8}),
+        onEachFeature:(f,l)=>l.on('click',()=>showOrgs(f))
+      }).addTo(map);
+      safeFit(layer);
+      buildLegend([...new Set(zonesGJ.features.map(f=>prop(f,KEYS.zone)))]);
+      addLabels(layer, KEYS.zone, 'lbl-zone');
+      backBtn.style.display="none";
+      
+      // Notify parent of context change
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'map-navigation',
+          action: 'context-change',
+          context: { level: 'zones', zone: '', org: '', ac: '' }
+        }, '*');
+      }
+    }
+
+    function showOrgs(zoneF){
+      clearLayers(); clearLabels(); ctx.level='orgs'; ctx.zone=zoneF; ctx.org=ctx.ac=ctx.mandal=null;
+      titleEl.textContent=`Kerala — ${prop(zoneF,KEYS.zone)} — Org Districts`; legendTitle.textContent="Org Districts";
+      const subset=filterChildrenSmart(orgGJ,zoneF,KEYS.zone);
+      const layer=L.geoJSON(subset,{
+        style:f=>({color:"#111",weight:1,fillColor:colorFor(prop(f,KEYS.org)),fillOpacity:0.8}),
+        onEachFeature:(f,l)=>l.on('click',()=>showACs(f))
+      }).addTo(map);
+      safeFit(layer);
+      buildLegend([...new Set(subset.features.map(f=>prop(f,KEYS.org)))]);
+      addLabels(layer, KEYS.org, 'lbl-org');
+      backBtn.style.display="inline-block";
+      
+      // Notify parent of context change
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'map-navigation',
+          action: 'context-change',
+          context: { level: 'orgs', zone: prop(zoneF, KEYS.zone) || '', org: '', ac: '' }
+        }, '*');
+      }
+    }
+
+    function showACs(orgF){
+      clearLayers(); clearLabels(); ctx.level='acs'; ctx.org=orgF; ctx.ac=ctx.mandal=null;
+      titleEl.textContent=`Kerala — ${prop(ctx.zone,KEYS.zone)} — ${prop(orgF,KEYS.org)} — ACs`; legendTitle.textContent="Assembly Constituencies";
+      const subset=filterChildrenSmart(acGJ,orgF,KEYS.org);
+      const layer=L.geoJSON(subset,{
+        style:f=>({color:"#111",weight:1,fillColor:colorFor(prop(f,KEYS.ac)),fillOpacity:0.8}),
+        onEachFeature:(f,l)=>l.on('click',()=>showMandals(f))
+      }).addTo(map);
+      safeFit(layer);
+      buildLegend([...new Set(subset.features.map(f=>prop(f,KEYS.ac)))]);
+      addLabels(layer, KEYS.ac, 'lbl-ac');
+      
+      // Notify parent of context change
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'map-navigation',
+          action: 'context-change',
+          context: { 
+            level: 'acs', 
+            zone: prop(ctx.zone, KEYS.zone) || '', 
+            org: prop(orgF, KEYS.org) || '', 
+            ac: '' 
+          }
+        }, '*');
+      }
+    }
+
+    // UPDATED showMandals function with proper mandal grouping
+    function showMandals(acF){
+      clearLayers(); clearLabels(); ctx.level='mandals'; ctx.ac=acF; ctx.mandal=null;
+      const acName = prop(acF, KEYS.ac);
+      titleEl.textContent=`Kerala — ${prop(ctx.zone,KEYS.zone)} — ${prop(ctx.org,KEYS.org)} — ${acName} — Mandals`;
+      legendTitle.textContent="Mandals";
+
+      const LABEL_KEY="__label"; // Use a temporary key for consistent labeling
+      let subsetFeatures = [];
+      let missed = [];
+      let labelByNorm = {};
+
+      const acKey = resolveACKey(acName);
+      if (acKey){
+        const mapped = AC_TO_MANDALS.get(acKey);
+        const r = featuresForMappedMandals([...mapped]);
+        subsetFeatures = r.hits;
+        missed = r.missed;
+        labelByNorm = r.labelByNorm || {};
+      }
+      // Fallback to spatial query if mapping fails
+      if (!subsetFeatures.length) {
+        subsetFeatures = mandalGJ.features.filter(f=>{
+          try { return turf.booleanPointInPolygon(turf.pointOnFeature(f), acF); }
+          catch(e){ return false; }
+        });
+      }
+
+      // GROUP PANCHAYATS BY MANDAL to create unified boundaries
+      const mandalGroups = new Map();
+      
+      subsetFeatures.forEach(f => {
+        const mandalName = prop(f, KEYS.mnd) || prop(f, 'ORG_MANDAL');
+        if (!mandalName) return;
+        
+        if (!mandalGroups.has(mandalName)) {
+          mandalGroups.set(mandalName, {
+            features: [],
+            properties: f.properties,
+            mandalName: mandalName
+          });
+        }
+        mandalGroups.get(mandalName).features.push(f);
+      });
+
+      // Create unified mandal features by merging panchayat polygons
+      const unifiedFeatures = [];
+      
+      mandalGroups.forEach((group, mandalName) => {
+        try {
+          // Create a union of all panchayat polygons in this mandal
+          let unionGeometry = group.features[0].geometry;
+          
+          // If there are multiple panchayats, union them
+          if (group.features.length > 1) {
+            for (let i = 1; i < group.features.length; i++) {
+              try {
+                unionGeometry = turf.union(
+                  { type: 'Feature', geometry: unionGeometry },
+                  group.features[i]
+                ).geometry;
+              } catch (e) {
+                console.warn(`Failed to union ${mandalName} panchayats:`, e);
+                // Fallback: use MultiPolygon
+                if (unionGeometry.type === 'Polygon') {
+                  unionGeometry = {
+                    type: 'MultiPolygon',
+                    coordinates: [unionGeometry.coordinates]
+                  };
+                }
+                if (group.features[i].geometry.type === 'Polygon') {
+                  unionGeometry.coordinates.push(group.features[i].geometry.coordinates);
+                } else if (group.features[i].geometry.type === 'MultiPolygon') {
+                  unionGeometry.coordinates.push(...group.features[i].geometry.coordinates);
+                }
+              }
+            }
+          }
+
+          // Create unified mandal feature
+          const unifiedFeature = {
+            type: 'Feature',
+            properties: {
+              ...group.properties,
+              [LABEL_KEY]: mandalName,
+              [KEYS.mnd]: mandalName,
+              panchayat_count: group.features.length
+            },
+            geometry: unionGeometry
+          };
+          
+          unifiedFeatures.push(unifiedFeature);
+          console.log(`✅ Created unified ${mandalName} mandal from ${group.features.length} panchayats`);
+          
+        } catch (e) {
+          console.error(`Failed to create unified mandal for ${mandalName}:`, e);
+          // Fallback: add individual features
+          group.features.forEach(f => {
+            unifiedFeatures.push({
+              ...f,
+              properties: { ...f.properties, [LABEL_KEY]: mandalName }
+            });
+          });
+        }
+      });
+
+      const subset = { type:"FeatureCollection", features: unifiedFeatures };
+      const layer=L.geoJSON(subset,{
+        style:f=>({color:"#111",weight:1,fillColor:colorFor(prop(f,LABEL_KEY)),fillOpacity:0.8}),
+        onEachFeature:(f,l)=>{
+          const mName = prop(f, LABEL_KEY);
+          // Your hybrid logic: check if the mandal name should lead to wards or panchayats
+          if (WARD_MANDALS.includes(mName)) {
+            l.on('click',()=>showWards(f));
+          } else {
+            l.on('click',()=>showPanchayats(f));
+          }
+        }
+      }).addTo(map);
+
+      safeFit(layer);
+      buildLegend([...new Set(subset.features.map(f=>prop(f,LABEL_KEY)))]);
+      addLabels(layer, LABEL_KEY, 'lbl-mandal');
+
+      // Display warning note if needed
+      legendNote.textContent =
+        (!acKey) ? 'Note: AC name not found in mapping; showing spatially contained mandals.'
+        : (missed.length ? `Note: not found by name (≥${Math.round(FUZZY*100)}%): ${missed.join(', ')}.` : '');
+      
+      // Notify parent of context change
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'map-navigation',
+          action: 'context-change',
+          context: { 
+            level: 'mandals', 
+            zone: prop(ctx.zone, KEYS.zone) || '', 
+            org: prop(ctx.org, KEYS.org) || '', 
+            ac: prop(acF, KEYS.ac) || '' 
+          }
+        }, '*');
+      }
+    }
+
+    function showPanchayats(mF){
+      clearLayers(); clearLabels(); ctx.level='panchayats'; ctx.mandal=mF;
+      const mName = prop(mF,"__label") || prop(mF, KEYS.mnd); // Use consistent label
+      titleEl.textContent=`Kerala — ${prop(ctx.zone,KEYS.zone)} — ${prop(ctx.org,KEYS.org)} — ${prop(ctx.ac,KEYS.ac)} — ${mName} — Panchayats`;
+      legendTitle.textContent="Panchayats";
+
+      const panMandalKey = KEYS.pan_mnd;
+      let subset = {type:"FeatureCollection", features:[]};
+
+      // Prioritize name matching from tagged panchayat file
+      if (panMandalKey){
+        const target = norm(mName);
+        subset.features = panGJ.features.filter(f => {
+          const mandalValue = prop(f, panMandalKey);
+          return mandalValue && norm(mandalValue) === target;
+        });
+      }
+      
+      // Always add spatial filtering to catch panchayats with empty/missing mandal tags
+      const spatialFeatures = panGJ.features.filter(f=>{
+        try{ 
+          // Skip if already found by name matching
+          if (subset.features.some(existing => prop(existing, 'name') === prop(f, 'name'))) {
+            return false;
+          }
+          return turf.booleanPointInPolygon(turf.pointOnFeature(f), mF); 
+        }catch(e){return false;}
+      });
+      
+      // Combine name-matched and spatially-matched features
+      subset.features = [...subset.features, ...spatialFeatures];
+
+      const layer=L.geoJSON(subset,{
+        style:f=>({color:"#111",weight:1,fillColor:colorFor(prop(f,KEYS.pan)),fillOpacity:0.8}),
+        onEachFeature:(f,l)=>{
+          const panchayatName = prop(f,KEYS.pan);
+          const mandalName = mName;
+          const acName = prop(ctx.ac, KEYS.ac);
+          const orgDistName = prop(ctx.org, KEYS.org);
+          const zoneName = prop(ctx.zone, KEYS.zone);
+          
+          // Try to get voter data for this panchayat
+          let voterSummary = null;
+          if (voterData && mandalName && acName && orgDistName && zoneName) {
+            voterSummary = getLocalBodyVoterSummary(panchayatName, mandalName, acName, orgDistName, zoneName);
+          }
+          
+          // If no exact match, try fuzzy search
+          if (!voterSummary) {
+            voterSummary = findLocalBodyByName(panchayatName);
+          }
+          
+          // Enhanced Modern Popup Design
+          let popupContent = `<div style="font-family: 'Inter', sans-serif; max-width: 480px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%); border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);">`;
+          
+          // Header with gradient background
+          popupContent += `<div style="background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%); padding: 20px; position: relative; overflow: hidden;">`;
+          popupContent += `<div style="position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; transform: translate(30px, -30px);"></div>`;
+          popupContent += `<div style="position: relative; z-index: 2;">`;
+          popupContent += `<h2 style="color: white; margin: 0 0 8px 0; font-size: 22px; font-weight: 700; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);">🏛️ ${panchayatName}</h2>`;
+          
+          if (voterSummary) {
+            popupContent += `<p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 500;">📍 ${voterSummary.mandal} Mandal • ${voterSummary.ac} AC • ${voterSummary.zone} Zone</p>`;
+          } else {
+            popupContent += `<p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 500;">📍 ${mandalName} Mandal • ${acName} AC • ${zoneName} Zone</p>`;
+          }
+          popupContent += `</div>`;
+          popupContent += `</div>`;
+          
+          if (voterSummary) {
+            // Main content area
+            popupContent += `<div style="padding: 24px;">`;
+            
+            // Key Stats Cards
+            popupContent += `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">`;
+            popupContent += `<div style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%); border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 12px; padding: 16px; text-align: center;">`;
+            popupContent += `<div style="font-size: 24px; font-weight: 800; color: #FFD700; margin-bottom: 4px;">${voterSummary.totalWards}</div>`;
+            popupContent += `<div style="font-size: 12px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Total Wards</div>`;
+            popupContent += `</div>`;
+            popupContent += `<div style="background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 12px; padding: 16px; text-align: center;">`;
+            popupContent += `<div style="font-size: 24px; font-weight: 800; color: #34D399; margin-bottom: 4px;">${voterSummary.totalHouses.toLocaleString()}</div>`;
+            popupContent += `<div style="font-size: 12px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Total Houses</div>`;
+            popupContent += `</div>`;
+            popupContent += `<div style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 1px solid rgba(96, 165, 250, 0.2); border-radius: 12px; padding: 16px; text-align: center;">`;
+            popupContent += `<div style="font-size: 24px; font-weight: 800; color: #60A5FA; margin-bottom: 4px;">${voterSummary.totalVoters.toLocaleString()}</div>`;
+            popupContent += `<div style="font-size: 12px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Total Voters</div>`;
+            popupContent += `</div>`;
+            popupContent += `</div>`;
+            
+            // Demographics Section with Visual Bars
+            popupContent += `<div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 16px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(10px);">`;
+            popupContent += `<h4 style="color: #F8FAFC; margin: 0 0 16px 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px;">👥 Voter Demographics</h4>`;
+            
+            // Female voters with progress bar
+            popupContent += `<div style="margin-bottom: 16px;">`;
+            popupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">`;
+            popupContent += `<span style="color: #CBD5E1; font-size: 14px; font-weight: 500;">👩 Female Voters</span>`;
+            popupContent += `<span style="color: #34D399; font-weight: 700; font-size: 16px;">${voterSummary.femaleVoters.toLocaleString()} (${voterSummary.femalePercentage.toFixed(1)}%)</span>`;
+            popupContent += `</div>`;
+            popupContent += `<div style="background: rgba(52, 211, 153, 0.2); height: 8px; border-radius: 4px; overflow: hidden;">`;
+            popupContent += `<div style="background: linear-gradient(90deg, #34D399, #10B981); height: 100%; width: ${voterSummary.femalePercentage}%; border-radius: 4px; transition: width 0.8s ease;"></div>`;
+            popupContent += `</div>`;
+            popupContent += `</div>`;
+            
+            // Male voters with progress bar
+            popupContent += `<div style="margin-bottom: ${voterSummary.transgenderVoters > 0 ? '16px' : '0'};">`;
+            popupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">`;
+            popupContent += `<span style="color: #CBD5E1; font-size: 14px; font-weight: 500;">👨 Male Voters</span>`;
+            popupContent += `<span style="color: #60A5FA; font-weight: 700; font-size: 16px;">${voterSummary.maleVoters.toLocaleString()} (${voterSummary.malePercentage.toFixed(1)}%)</span>`;
+            popupContent += `</div>`;
+            popupContent += `<div style="background: rgba(96, 165, 250, 0.2); height: 8px; border-radius: 4px; overflow: hidden;">`;
+            popupContent += `<div style="background: linear-gradient(90deg, #60A5FA, #3B82F6); height: 100%; width: ${voterSummary.malePercentage}%; border-radius: 4px; transition: width 0.8s ease;"></div>`;
+            popupContent += `</div>`;
+            popupContent += `</div>`;
+            
+            // Transgender voters (if any)
+            if (voterSummary.transgenderVoters > 0) {
+              popupContent += `<div>`;
+              popupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">`;
+              popupContent += `<span style="color: #CBD5E1; font-size: 14px; font-weight: 500;">🏳️‍⚧️ Transgender Voters</span>`;
+              popupContent += `<span style="color: #F472B6; font-weight: 700; font-size: 16px;">${voterSummary.transgenderVoters.toLocaleString()} (${voterSummary.transgenderPercentage.toFixed(1)}%)</span>`;
+              popupContent += `</div>`;
+              popupContent += `<div style="background: rgba(244, 114, 182, 0.2); height: 8px; border-radius: 4px; overflow: hidden;">`;
+              popupContent += `<div style="background: linear-gradient(90deg, #F472B6, #EC4899); height: 100%; width: ${voterSummary.transgenderPercentage}%; border-radius: 4px; transition: width 0.8s ease;"></div>`;
+              popupContent += `</div>`;
+              popupContent += `</div>`;
+            }
+            popupContent += `</div>`;
+            
+            // Top Wards Section with Enhanced Cards
+            if (voterSummary.topWards.length > 0) {
+              popupContent += `<div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 16px; padding: 20px; backdrop-filter: blur(10px);">`;
+              popupContent += `<h4 style="color: #F8FAFC; margin: 0 0 16px 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px;">📋 Wards in Order</h4>`;
+              
+              voterSummary.topWards.forEach((ward, index) => {
+                // Use consistent styling for all wards since they're in order, not ranked
+                const wardColor = '#60A5FA';
+                
+                popupContent += `<div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%); border: 1px solid rgba(96, 165, 250, 0.3); border-radius: 12px; padding: 16px; margin-bottom: ${index === voterSummary.topWards.length - 1 ? '0' : '12px'}; position: relative; overflow: hidden;">`;
+                
+                // Ward number badge
+                popupContent += `<div style="position: absolute; top: -8px; right: -8px; width: 40px; height: 40px; background: ${wardColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; transform: rotate(12deg); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);">`;
+                popupContent += ward.wardNumber;
+                popupContent += `</div>`;
+                
+                popupContent += `<div style="margin-right: 32px;">`;
+                popupContent += `<div style="color: #F8FAFC; font-size: 16px; font-weight: 600; margin-bottom: 8px;">${ward.ward}</div>`;
+                popupContent += `<div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">`;
+                popupContent += `<div style="display: flex; align-items: center; gap: 6px;">`;
+                popupContent += `<span style="background: rgba(52, 211, 153, 0.2); color: #34D399; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">Ward ${ward.wardNumber}</span>`;
+                popupContent += `</div>`;
+                popupContent += `<div style="color: #60A5FA; font-size: 14px; font-weight: 600;">👥 ${ward.totalVoters.toLocaleString()} voters</div>`;
+                popupContent += `<div style="color: #FFD700; font-size: 14px; font-weight: 600;">🏠 ${ward.houses.toLocaleString()} houses</div>`;
+                popupContent += `</div>`;
+                popupContent += `</div>`;
+                popupContent += `</div>`;
+              });
+              
+              popupContent += `</div>`;
+            }
+            
+            // Add detailed view button
+            popupContent += `<div style="padding: 20px; border-top: 1px solid rgba(255, 107, 53, 0.2);">`;
+            popupContent += `<button onclick="openDetailedModal('${panchayatName}', '${voterSummary.mandal}', '${voterSummary.ac}', '${voterSummary.orgDist}', '${voterSummary.zone}', ${JSON.stringify(voterSummary).replace(/"/g, '&quot;')})" style="width: 100%; background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%); color: white; border: none; border-radius: 10px; padding: 12px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);">`;
+            popupContent += `📊 View Detailed Report`;
+            popupContent += `</button>`;
+            popupContent += `</div>`;
+            
+            popupContent += `</div>`; // Close main content
+          } else {
+            // No data available
+            popupContent += `<div style="padding: 24px; text-align: center;">`;
+            popupContent += `<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px;">`;
+            popupContent += `<div style="font-size: 48px; margin-bottom: 12px;">⚠️</div>`;
+            popupContent += `<h4 style="color: #F59E0B; margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">Data Not Available</h4>`;
+            popupContent += `<p style="color: #94A3B8; margin: 0; font-size: 14px;">Voter data is not available for this local body</p>`;
+            popupContent += `</div>`;
+            popupContent += `</div>`;
+          }
+          
+          popupContent += `</div>`;
+          
+          l.bindPopup(popupContent, {
+            maxWidth: 500,
+            className: 'custom-popup'
+          });
+        }
+      }).addTo(map);
+      safeFit(layer);
+      buildLegend([...new Set(subset.features.map(f=>prop(f,KEYS.pan)))]);
+      addLabels(layer, KEYS.pan, 'lbl-pan');
+      
+      // Apply target styling with blinking animations
+      applyTargetStyling(layer);
+      
+      // Add target legend information
+      buildTargetLegend();
+      
+      // Notify parent of context change
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'map-navigation',
+          action: 'context-change',
+          context: { 
+            level: 'panchayats', 
+            zone: prop(ctx.zone, KEYS.zone) || '', 
+            org: prop(ctx.org, KEYS.org) || '', 
+            ac: prop(ctx.ac, KEYS.ac) || '',
+            mandal: mName || ''
+          }
+        }, '*');
+      }
+    }
+
+    function showWards(mF){
+      clearLayers(); clearLabels(); ctx.level='wards'; ctx.mandal=mF;
+      const mName = prop(mF,"__label") || prop(mF, KEYS.mnd); // Use consistent label
+      titleEl.textContent=`${mName} — Wards`;
+      legendTitle.textContent="Wards";
+
+      let subset = {type:"FeatureCollection", features:[]};
+      if (["Thrissur West", "Thrissur East", "Ollur"].includes(mName)) {
+        // Use Thrissur ward data and filter by Org Mandal property
+        subset.features = thrissurWardGJ.features.filter(f=>{
+          return f.properties["Org Mandal"] === mName;
+        });
+        console.log(`🎯 Filtered ${subset.features.length} wards for Thrissur mandal: ${mName}`);
+      } else {
+        // Use Thiruvananthapuram ward data with spatial filtering
+        subset.features = wardGJ.features.filter(f=>{
+          try { return turf.booleanPointInPolygon(turf.pointOnFeature(f), mF); }
+          catch(e){ return false; }
+        });
+        console.log(`🎯 Filtered ${subset.features.length} wards for TVM mandal: ${mName}`);
+      }
+
+      const layer=L.geoJSON(subset,{
+        style:f=>({color:"#111",weight:1,fillColor:colorFor(prop(f,KEYS.ward)),fillOpacity:0.8}),
+        onEachFeature:(f,l)=>{
+          const wardName = prop(f,KEYS.ward);
+          const mandalName = mName;
+          const acName = prop(ctx.ac, KEYS.ac);
+          const orgDistName = prop(ctx.org, KEYS.org);
+          const zoneName = prop(ctx.zone, KEYS.zone);
+          
+          // Try to find ward data from voter data
+          let wardData = null;
+          if (voterData && mandalName && acName && orgDistName && zoneName) {
+            const zoneData = voterData[zoneName];
+            if (zoneData) {
+              const orgData = zoneData[orgDistName];
+              if (orgData) {
+                const acData = orgData[acName];
+                if (acData) {
+                  const mandalData = acData[mandalName];
+                  if (mandalData) {
+                    // Search through all local bodies in this mandal for this ward
+                    Object.keys(mandalData).forEach(lbName => {
+                      const lbData = mandalData[lbName];
+                      const foundWard = lbData.find(ward => {
+                        const wardNameNorm = norm(ward.ward);
+                        const searchNameNorm = norm(wardName);
+                        return wardNameNorm === searchNameNorm || sim(wardNameNorm, searchNameNorm) >= 0.8;
+                      });
+                      if (foundWard && !wardData) {
+                        wardData = { ...foundWard, localBody: lbName };
+                      }
+                    });
+                  }
+                }
+              }
+            }
+          }
+          
+          // Enhanced Ward Popup Design
+          let wardPopupContent = `<div style="font-family: 'Inter', sans-serif; max-width: 360px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%); border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);">`;
+          
+          // Header
+          wardPopupContent += `<div style="background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%); padding: 18px; position: relative; overflow: hidden;">`;
+          wardPopupContent += `<div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>`;
+          wardPopupContent += `<h3 style="color: white; margin: 0 0 6px 0; font-size: 20px; font-weight: 700; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);">🏘️ ${wardName}</h3>`;
+          wardPopupContent += `<p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 13px; font-weight: 500;">📍 ${mandalName} Mandal • ${acName} AC • ${zoneName} Zone</p>`;
+          wardPopupContent += `</div>`;
+          
+          if (wardData) {
+            wardPopupContent += `<div style="padding: 20px;">`;
+            
+            // Local Body Info
+            wardPopupContent += `<div style="background: rgba(255, 107, 53, 0.1); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 10px; padding: 12px; margin-bottom: 16px; text-align: center;">`;
+            wardPopupContent += `<div style="color: #FF6B35; font-size: 14px; font-weight: 600; margin-bottom: 4px;">🏛️ Local Body</div>`;
+            wardPopupContent += `<div style="color: #F8FAFC; font-size: 16px; font-weight: 700;">${wardData.localBody}</div>`;
+            wardPopupContent += `</div>`;
+            
+            // Ward Stats
+            wardPopupContent += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">`;
+            wardPopupContent += `<div style="background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 10px; padding: 14px; text-align: center;">`;
+            wardPopupContent += `<div style="font-size: 20px; font-weight: 800; color: #34D399; margin-bottom: 4px;">${wardData.houses.toLocaleString()}</div>`;
+            wardPopupContent += `<div style="font-size: 11px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Houses</div>`;
+            wardPopupContent += `</div>`;
+            wardPopupContent += `<div style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 1px solid rgba(96, 165, 250, 0.2); border-radius: 10px; padding: 14px; text-align: center;">`;
+            wardPopupContent += `<div style="font-size: 20px; font-weight: 800; color: #60A5FA; margin-bottom: 4px;">${wardData.totalVoters.toLocaleString()}</div>`;
+            wardPopupContent += `<div style="font-size: 11px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Total Voters</div>`;
+            wardPopupContent += `</div>`;
+            wardPopupContent += `</div>`;
+            
+            // Demographics with mini progress bars
+            wardPopupContent += `<div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 12px; padding: 16px; backdrop-filter: blur(10px);">`;
+            wardPopupContent += `<h4 style="color: #F8FAFC; margin: 0 0 14px 0; font-size: 16px; font-weight: 600;">👥 Demographics</h4>`;
+            
+            const femalePercentage = wardData.totalVoters > 0 ? (wardData.female / wardData.totalVoters) * 100 : 0;
+            const malePercentage = wardData.totalVoters > 0 ? (wardData.male / wardData.totalVoters) * 100 : 0;
+            const transgenderPercentage = wardData.totalVoters > 0 ? (wardData.transgender / wardData.totalVoters) * 100 : 0;
+            
+            // Female
+            wardPopupContent += `<div style="margin-bottom: 12px;">`;
+            wardPopupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
+            wardPopupContent += `<span style="color: #CBD5E1; font-size: 13px; font-weight: 500;">👩 Female</span>`;
+            wardPopupContent += `<span style="color: #34D399; font-weight: 600; font-size: 14px;">${wardData.female.toLocaleString()} (${femalePercentage.toFixed(1)}%)</span>`;
+            wardPopupContent += `</div>`;
+            wardPopupContent += `<div style="background: rgba(52, 211, 153, 0.2); height: 6px; border-radius: 3px; overflow: hidden;">`;
+            wardPopupContent += `<div style="background: #34D399; height: 100%; width: ${femalePercentage}%; border-radius: 3px;"></div>`;
+            wardPopupContent += `</div>`;
+            wardPopupContent += `</div>`;
+            
+            // Male
+            wardPopupContent += `<div style="margin-bottom: ${wardData.transgender > 0 ? '12px' : '0'};">`;
+            wardPopupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
+            wardPopupContent += `<span style="color: #CBD5E1; font-size: 13px; font-weight: 500;">👨 Male</span>`;
+            wardPopupContent += `<span style="color: #60A5FA; font-weight: 600; font-size: 14px;">${wardData.male.toLocaleString()} (${malePercentage.toFixed(1)}%)</span>`;
+            wardPopupContent += `</div>`;
+            wardPopupContent += `<div style="background: rgba(96, 165, 250, 0.2); height: 6px; border-radius: 3px; overflow: hidden;">`;
+            wardPopupContent += `<div style="background: #60A5FA; height: 100%; width: ${malePercentage}%; border-radius: 3px;"></div>`;
+            wardPopupContent += `</div>`;
+            wardPopupContent += `</div>`;
+            
+            // Transgender (if any)
+            if (wardData.transgender > 0) {
+              wardPopupContent += `<div>`;
+              wardPopupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
+              wardPopupContent += `<span style="color: #CBD5E1; font-size: 13px; font-weight: 500;">🏳️‍⚧️ Transgender</span>`;
+              wardPopupContent += `<span style="color: #F472B6; font-weight: 600; font-size: 14px;">${wardData.transgender.toLocaleString()} (${transgenderPercentage.toFixed(1)}%)</span>`;
+              wardPopupContent += `</div>`;
+              wardPopupContent += `<div style="background: rgba(244, 114, 182, 0.2); height: 6px; border-radius: 3px; overflow: hidden;">`;
+              wardPopupContent += `<div style="background: #F472B6; height: 100%; width: ${transgenderPercentage}%; border-radius: 3px;"></div>`;
+              wardPopupContent += `</div>`;
+              wardPopupContent += `</div>`;
+            }
+            
+            wardPopupContent += `</div>`; // Close demographics
+            
+            // Add detailed ward view button
+            wardPopupContent += `<div style="padding: 16px; border-top: 1px solid rgba(96, 165, 250, 0.2);">`;
+            wardPopupContent += `<button onclick="openDetailedWardModal('${wardName}', '${wardData.localBody}', '${mandalName}', '${acName}', '${orgDistName}', '${zoneName}', ${JSON.stringify(wardData).replace(/"/g, '&quot;')})" style="width: 100%; background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%); color: white; border: none; border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);">`;
+            wardPopupContent += `📊 View Detailed Ward Report`;
+            wardPopupContent += `</button>`;
+            wardPopupContent += `</div>`;
+            
+            wardPopupContent += `</div>`; // Close padding
+          } else {
+            // No data available
+            wardPopupContent += `<div style="padding: 20px; text-align: center;">`;
+            wardPopupContent += `<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 16px;">`;
+            wardPopupContent += `<div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>`;
+            wardPopupContent += `<p style="color: #F59E0B; margin: 0; font-size: 14px; font-weight: 600;">Ward data not available</p>`;
+            wardPopupContent += `</div>`;
+            wardPopupContent += `</div>`;
+          }
+          
+          wardPopupContent += `</div>`; // Close main container
+          
+          l.bindPopup(wardPopupContent, {
+            maxWidth: 380,
+            className: 'custom-popup'
+          });
+        }
+      }).addTo(map);
+      safeFit(layer);
+      buildLegend([...new Set(subset.features.map(f=>prop(f,KEYS.ward)))]);
+      addLabels(layer, KEYS.ward, 'lbl-pan');
+      
+      // Apply target styling with blinking animations for ward-level targets
+      applyTargetStyling(layer);
+      
+      // Add target legend information
+      buildTargetLegend();
+      
+      // Notify parent of context change
+      if (window.parent !== window) {
+        window.parent.postMessage({
+          type: 'map-navigation',
+          action: 'context-change',
+          context: { 
+            level: 'wards', 
+            zone: prop(ctx.zone, KEYS.zone) || '', 
+            org: prop(ctx.org, KEYS.org) || '', 
+            ac: prop(ctx.ac, KEYS.ac) || '',
+            mandal: mName || ''
+          }
+        }, '*');
+      }
+    }
+
+    // ========= DETAILED MODAL FUNCTIONS =========
+    function openDetailedModal(lbName, mandal, ac, orgDist, zone, voterSummary) {
+      const modal = document.getElementById('detailedModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalSubtitle = document.getElementById('modalSubtitle');
+      const modalContent = document.getElementById('modalContent');
+      
+      // Update modal header
+      modalTitle.textContent = `🏛️ ${lbName}`;
+      modalSubtitle.textContent = `${mandal} Mandal • ${ac} AC • ${orgDist} • ${zone} Zone`;
+      
+      // Use the passed voterSummary data directly, with fallback to lookup
+      let summaryData = voterSummary;
+      
+      // Fallback: if voterSummary is not provided, try to look it up
+      if (!summaryData || !summaryData.allWards || summaryData.allWards.length === 0) {
+        console.log('VoterSummary not provided or empty, attempting lookup for:', { lbName, mandal, ac, orgDist, zone });
+        summaryData = getLocalBodyVoterSummary(lbName, mandal, ac, orgDist, zone);
+      }
+      
+      if (summaryData && summaryData.allWards && summaryData.allWards.length > 0) {
+        console.log('Using voterSummary data:', summaryData);
+        modalContent.innerHTML = generateDetailedContent(summaryData, lbName);
+      } else {
+        console.log('No voter data found for:', { lbName, mandal, ac, orgDist, zone });
+        modalContent.innerHTML = `
+          <div style="text-align: center; padding: 40px;">
+            <div style="font-size: 64px; margin-bottom: 16px;">⚠️</div>
+            <h3 style="color: #F59E0B; margin: 0 0 8px 0; font-size: 20px; font-weight: 600;">Data Not Available</h3>
+            <p style="color: #94A3B8; margin: 0; font-size: 16px;">Detailed voter data is not available for this local body</p>
+            <p style="color: #94A3B8; margin: 8px 0 0 0; font-size: 12px;">Debug: ${lbName} in ${mandal}, ${ac}, ${orgDist}, ${zone}</p>
+            <p style="color: #94A3B8; margin: 4px 0 0 0; font-size: 10px;">Available voterData keys: ${voterData ? Object.keys(voterData).join(', ') : 'None'}</p>
+          </div>
+        `;
+      }
+      
+      // Show modal
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeDetailedModal() {
+      const modal = document.getElementById('detailedModal');
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+    
+    function generateDetailedContent(voterSummary, lbName) {
+      let content = `
+        <!-- Executive Summary -->
+        <div style="background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(255, 107, 53, 0.05) 100%); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+          <h3 style="color: #FF6B35; margin: 0 0 16px 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">📊 Executive Summary</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div style="text-align: center; padding: 16px; background: rgba(255, 215, 0, 0.1); border-radius: 12px; border: 1px solid rgba(255, 215, 0, 0.2);">
+              <div style="font-size: 32px; font-weight: 800; color: #FFD700; margin-bottom: 8px;">${voterSummary.totalWards}</div>
+              <div style="font-size: 14px; color: #CBD5E1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Total Wards</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: rgba(52, 211, 153, 0.1); border-radius: 12px; border: 1px solid rgba(52, 211, 153, 0.2);">
+              <div style="font-size: 32px; font-weight: 800; color: #34D399; margin-bottom: 8px;">${voterSummary.totalHouses.toLocaleString()}</div>
+              <div style="font-size: 14px; color: #CBD5E1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Total Houses</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: rgba(96, 165, 250, 0.1); border-radius: 12px; border: 1px solid rgba(96, 165, 250, 0.2);">
+              <div style="font-size: 32px; font-weight: 800; color: #60A5FA; margin-bottom: 8px;">${voterSummary.totalVoters.toLocaleString()}</div>
+              <div style="font-size: 14px; color: #CBD5E1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Total Voters</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: rgba(244, 114, 182, 0.1); border-radius: 12px; border: 1px solid rgba(244, 114, 182, 0.2);">
+              <div style="font-size: 32px; font-weight: 800; color: #F472B6; margin-bottom: 8px;">${(voterSummary.totalVoters / voterSummary.totalHouses).toFixed(1)}</div>
+              <div style="font-size: 14px; color: #CBD5E1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Voters per House</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Demographics Analysis -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 16px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(10px);">
+          <h3 style="color: #F8FAFC; margin: 0 0 20px 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">👥 Demographics Analysis</h3>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <!-- Female Demographics -->
+            <div style="background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 12px; padding: 20px;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="font-size: 24px;">👩</div>
+                <div>
+                  <div style="color: #34D399; font-size: 24px; font-weight: 800;">${voterSummary.femaleVoters.toLocaleString()}</div>
+                  <div style="color: #CBD5E1; font-size: 14px; font-weight: 500;">Female Voters</div>
+                </div>
+              </div>
+              <div style="background: rgba(52, 211, 153, 0.2); height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 8px;">
+                <div style="background: linear-gradient(90deg, #34D399, #10B981); height: 100%; width: ${voterSummary.femalePercentage}%; border-radius: 6px;"></div>
+              </div>
+              <div style="color: #34D399; font-size: 18px; font-weight: 700; text-align: center;">${voterSummary.femalePercentage.toFixed(1)}%</div>
+            </div>
+            
+            <!-- Male Demographics -->
+            <div style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 1px solid rgba(96, 165, 250, 0.2); border-radius: 12px; padding: 20px;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="font-size: 24px;">👨</div>
+                <div>
+                  <div style="color: #60A5FA; font-size: 24px; font-weight: 800;">${voterSummary.maleVoters.toLocaleString()}</div>
+                  <div style="color: #CBD5E1; font-size: 14px; font-weight: 500;">Male Voters</div>
+                </div>
+              </div>
+              <div style="background: rgba(96, 165, 250, 0.2); height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 8px;">
+                <div style="background: linear-gradient(90deg, #60A5FA, #3B82F6); height: 100%; width: ${voterSummary.malePercentage}%; border-radius: 6px;"></div>
+              </div>
+              <div style="color: #60A5FA; font-size: 18px; font-weight: 700; text-align: center;">${voterSummary.malePercentage.toFixed(1)}%</div>
+            </div>
+            
+            ${voterSummary.transgenderVoters > 0 ? `
+            <!-- Transgender Demographics -->
+            <div style="background: linear-gradient(135deg, rgba(244, 114, 182, 0.1) 0%, rgba(244, 114, 182, 0.05) 100%); border: 1px solid rgba(244, 114, 182, 0.2); border-radius: 12px; padding: 20px;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="font-size: 24px;">🏳️‍⚧️</div>
+                <div>
+                  <div style="color: #F472B6; font-size: 24px; font-weight: 800;">${voterSummary.transgenderVoters.toLocaleString()}</div>
+                  <div style="color: #CBD5E1; font-size: 14px; font-weight: 500;">Transgender Voters</div>
+                </div>
+              </div>
+              <div style="background: rgba(244, 114, 182, 0.2); height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 8px;">
+                <div style="background: linear-gradient(90deg, #F472B6, #EC4899); height: 100%; width: ${voterSummary.transgenderPercentage}%; border-radius: 6px;"></div>
+              </div>
+              <div style="color: #F472B6; font-size: 18px; font-weight: 700; text-align: center;">${voterSummary.transgenderPercentage.toFixed(1)}%</div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+        
+        <!-- Complete Ward Details -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 16px; padding: 24px; backdrop-filter: blur(10px);">
+          <h3 style="color: #F8FAFC; margin: 0 0 20px 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">🏘️ Complete Ward Details (${voterSummary.allWards.length} Wards)</h3>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 16px; max-height: 400px; overflow-y: auto; padding-right: 8px;">
+      `;
+      
+      // Add all wards with detailed information
+      voterSummary.allWards.forEach((ward, index) => {
+        const rankColors = ['#FFD700', '#C0C0C0', '#CD7F32', '#60A5FA', '#34D399'];
+        const rankIcons = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+        const rankColor = rankColors[index] || '#94A3B8';
+        const isTop5 = index < 5;
+        
+        content += `
+          <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%); border: 1px solid ${isTop5 ? `rgba(${rankColor === '#FFD700' ? '255, 215, 0' : rankColor === '#C0C0C0' ? '192, 192, 192' : '205, 127, 50'}, 0.4)` : 'rgba(255, 107, 53, 0.2)'}; border-radius: 12px; padding: 16px; position: relative; overflow: hidden;">
+            ${isTop5 ? `
+            <div style="position: absolute; top: -8px; right: -8px; width: 40px; height: 40px; background: ${rankColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; transform: rotate(12deg); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);">
+              ${rankIcons[index]}
+            </div>
+            ` : ''}
+            
+            <div style="margin-right: ${isTop5 ? '32px' : '0'};">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h4 style="color: #F8FAFC; margin: 0; font-size: 16px; font-weight: 600;">${ward.ward}</h4>
+                <span style="background: rgba(52, 211, 153, 0.2); color: #34D399; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">Ward ${ward.wardNumber}</span>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <div style="text-align: center; padding: 8px; background: rgba(96, 165, 250, 0.1); border-radius: 8px;">
+                  <div style="color: #60A5FA; font-size: 18px; font-weight: 700;">${ward.totalVoters.toLocaleString()}</div>
+                  <div style="color: #CBD5E1; font-size: 11px; font-weight: 500;">Total Voters</div>
+                </div>
+                <div style="text-align: center; padding: 8px; background: rgba(255, 215, 0, 0.1); border-radius: 8px;">
+                  <div style="color: #FFD700; font-size: 18px; font-weight: 700;">${ward.houses.toLocaleString()}</div>
+                  <div style="color: #CBD5E1; font-size: 11px; font-weight: 500;">Houses</div>
+                </div>
+              </div>
+              
+              <div style="background: rgba(15, 23, 42, 0.6); border-radius: 8px; padding: 12px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="color: #34D399; font-size: 12px; font-weight: 500;">👩 Female</span>
+                  <span style="color: #34D399; font-size: 12px; font-weight: 600;">${ward.female.toLocaleString()} (${((ward.female / ward.totalVoters) * 100).toFixed(1)}%)</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                  <span style="color: #60A5FA; font-size: 12px; font-weight: 500;">👨 Male</span>
+                  <span style="color: #60A5FA; font-size: 12px; font-weight: 600;">${ward.male.toLocaleString()} (${((ward.male / ward.totalVoters) * 100).toFixed(1)}%)</span>
+                </div>
+                ${ward.transgender > 0 ? `
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #F472B6; font-size: 12px; font-weight: 500;">🏳️‍⚧️ Trans</span>
+                  <span style="color: #F472B6; font-size: 12px; font-weight: 600;">${ward.transgender.toLocaleString()} (${((ward.transgender / ward.totalVoters) * 100).toFixed(1)}%)</span>
+                </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      
+      content += `
+          </div>
+        </div>
+        
+        <!-- Summary Statistics -->
+        <div style="background: linear-gradient(135deg, rgba(19, 136, 8, 0.1) 0%, rgba(19, 136, 8, 0.05) 100%); border: 1px solid rgba(19, 136, 8, 0.2); border-radius: 16px; padding: 24px; margin-top: 24px;">
+          <h3 style="color: #10B981; margin: 0 0 16px 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">📈 Key Insights</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+            <div style="text-align: center; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+              <div style="color: #34D399; font-size: 20px; font-weight: 700; margin-bottom: 4px;">${(voterSummary.totalVoters / voterSummary.totalWards).toFixed(0)}</div>
+              <div style="color: #CBD5E1; font-size: 12px; font-weight: 500;">Avg Voters per Ward</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+              <div style="color: #60A5FA; font-size: 20px; font-weight: 700; margin-bottom: 4px;">${(voterSummary.totalHouses / voterSummary.totalWards).toFixed(0)}</div>
+              <div style="color: #CBD5E1; font-size: 12px; font-weight: 500;">Avg Houses per Ward</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+              <div style="color: #F472B6; font-size: 20px; font-weight: 700; margin-bottom: 4px;">${voterSummary.femalePercentage > voterSummary.malePercentage ? 'Female' : 'Male'}</div>
+              <div style="color: #CBD5E1; font-size: 12px; font-weight: 500;">Dominant Gender</div>
+            </div>
+            <div style="text-align: center; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+              <div style="color: #FFD700; font-size: 20px; font-weight: 700; margin-bottom: 4px;">${voterSummary.topWards[0]?.ward || 'N/A'}</div>
+              <div style="color: #CBD5E1; font-size: 12px; font-weight: 500;">Largest Ward</div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      return content;
+    }
+    
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('detailedModal');
+      if (event.target === modal) {
+        closeDetailedModal();
+      }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeDetailedModal();
+      }
+    });
+
+    // ========= DETAILED WARD MODAL FUNCTIONS =========
+    function openDetailedWardModal(wardName, localBody, mandal, ac, orgDist, zone, wardData) {
+      const modal = document.getElementById('detailedModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalSubtitle = document.getElementById('modalSubtitle');
+      const modalContent = document.getElementById('modalContent');
+      
+      // Update modal header
+      modalTitle.textContent = `🏘️ ${wardName}`;
+      modalSubtitle.textContent = `${localBody} • ${mandal} Mandal • ${ac} AC • ${orgDist} • ${zone} Zone`;
+      
+      // Generate detailed ward content
+      modalContent.innerHTML = generateDetailedWardContent(wardData, wardName, localBody, mandal, ac, orgDist, zone);
+      
+      // Show modal
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function generateDetailedWardContent(wardData, wardName, localBody, mandal, ac, orgDist, zone) {
+      const femalePercentage = wardData.totalVoters > 0 ? (wardData.female / wardData.totalVoters) * 100 : 0;
+      const malePercentage = wardData.totalVoters > 0 ? (wardData.male / wardData.totalVoters) * 100 : 0;
+      const transgenderPercentage = wardData.totalVoters > 0 ? (wardData.transgender / wardData.totalVoters) * 100 : 0;
+      const votersPerHouse = wardData.houses > 0 ? (wardData.totalVoters / wardData.houses).toFixed(1) : 0;
+      
+      return `
+        <!-- Ward Overview -->
+        <div style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 1px solid rgba(96, 165, 250, 0.2); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+          <h3 style="color: #60A5FA; margin: 0 0 20px 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">🏘️ Ward Overview</h3>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div style="text-align: center; padding: 20px; background: rgba(255, 215, 0, 0.1); border-radius: 12px; border: 1px solid rgba(255, 215, 0, 0.2);">
+              <div style="font-size: 36px; font-weight: 800; color: #FFD700; margin-bottom: 8px;">${wardData.wardNumber}</div>
+              <div style="font-size: 14px; color: #CBD5E1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Ward Number</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: rgba(52, 211, 153, 0.1); border-radius: 12px; border: 1px solid rgba(52, 211, 153, 0.2);">
+              <div style="font-size: 36px; font-weight: 800; color: #34D399; margin-bottom: 8px;">${wardData.houses.toLocaleString()}</div>
+              <div style="font-size: 14px; color: #CBD5E1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Total Houses</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: rgba(96, 165, 250, 0.1); border-radius: 12px; border: 1px solid rgba(96, 165, 250, 0.2);">
+              <div style="font-size: 36px; font-weight: 800; color: #60A5FA; margin-bottom: 8px;">${wardData.totalVoters.toLocaleString()}</div>
+              <div style="font-size: 14px; color: #CBD5E1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Total Voters</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: rgba(244, 114, 182, 0.1); border-radius: 12px; border: 1px solid rgba(244, 114, 182, 0.2);">
+              <div style="font-size: 36px; font-weight: 800; color: #F472B6; margin-bottom: 8px;">${votersPerHouse}</div>
+              <div style="font-size: 14px; color: #CBD5E1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Voters per House</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Detailed Demographics -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 16px; padding: 24px; margin-bottom: 24px; backdrop-filter: blur(10px);">
+          <h3 style="color: #F8FAFC; margin: 0 0 20px 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">👥 Detailed Demographics</h3>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <!-- Female Demographics -->
+            <div style="background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 12px; padding: 20px;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="font-size: 32px;">👩</div>
+                <div>
+                  <div style="color: #34D399; font-size: 28px; font-weight: 800;">${wardData.female.toLocaleString()}</div>
+                  <div style="color: #CBD5E1; font-size: 14px; font-weight: 500;">Female Voters</div>
+                </div>
+              </div>
+              <div style="background: rgba(52, 211, 153, 0.2); height: 16px; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
+                <div style="background: linear-gradient(90deg, #34D399, #10B981); height: 100%; width: ${femalePercentage}%; border-radius: 8px;"></div>
+              </div>
+              <div style="color: #34D399; font-size: 24px; font-weight: 700; text-align: center;">${femalePercentage.toFixed(1)}%</div>
+            </div>
+            
+            <!-- Male Demographics -->
+            <div style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 1px solid rgba(96, 165, 250, 0.2); border-radius: 12px; padding: 20px;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="font-size: 32px;">👨</div>
+                <div>
+                  <div style="color: #60A5FA; font-size: 28px; font-weight: 800;">${wardData.male.toLocaleString()}</div>
+                  <div style="color: #CBD5E1; font-size: 14px; font-weight: 500;">Male Voters</div>
+                </div>
+              </div>
+              <div style="background: rgba(96, 165, 250, 0.2); height: 16px; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
+                <div style="background: linear-gradient(90deg, #60A5FA, #3B82F6); height: 100%; width: ${malePercentage}%; border-radius: 8px;"></div>
+              </div>
+              <div style="color: #60A5FA; font-size: 24px; font-weight: 700; text-align: center;">${malePercentage.toFixed(1)}%</div>
+            </div>
+            
+            ${wardData.transgender > 0 ? `
+            <!-- Transgender Demographics -->
+            <div style="background: linear-gradient(135deg, rgba(244, 114, 182, 0.1) 0%, rgba(244, 114, 182, 0.05) 100%); border: 1px solid rgba(244, 114, 182, 0.2); border-radius: 12px; padding: 20px;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="font-size: 32px;">🏳️\u200d⚧️</div>
+                <div>
+                  <div style="color: #F472B6; font-size: 28px; font-weight: 800;">${wardData.transgender.toLocaleString()}</div>
+                  <div style="color: #CBD5E1; font-size: 14px; font-weight: 500;">Transgender Voters</div>
+                </div>
+              </div>
+              <div style="background: rgba(244, 114, 182, 0.2); height: 16px; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
+                <div style="background: linear-gradient(90deg, #F472B6, #EC4899); height: 100%; width: ${transgenderPercentage}%; border-radius: 8px;"></div>
+              </div>
+              <div style="color: #F472B6; font-size: 24px; font-weight: 700; text-align: center;">${transgenderPercentage.toFixed(1)}%</div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+        
+        <!-- Ward Performance Analysis -->
+        <div style="background: linear-gradient(135deg, rgba(19, 136, 8, 0.1) 0%, rgba(19, 136, 8, 0.05) 100%); border: 1px solid rgba(19, 136, 8, 0.2); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+          <h3 style="color: #10B981; margin: 0 0 20px 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">📈 Ward Performance Analysis</h3>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+            <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+              <div style="color: #34D399; font-size: 24px; font-weight: 700; margin-bottom: 8px;">${votersPerHouse}</div>
+              <div style="color: #CBD5E1; font-size: 14px; font-weight: 500;">Voters per House</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+              <div style="color: #60A5FA; font-size: 24px; font-weight: 700; margin-bottom: 8px;">${femalePercentage > malePercentage ? 'Female' : 'Male'}</div>
+              <div style="color: #CBD5E1; font-size: 14px; font-weight: 500;">Dominant Gender</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+              <div style="color: #F472B6; font-size: 24px; font-weight: 700; margin-bottom: 8px;">${Math.abs(femalePercentage - malePercentage).toFixed(1)}%</div>
+              <div style="color: #CBD5E1; font-size: 14px; font-weight: 500;">Gender Gap</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 12px;">
+              <div style="color: #FFD700; font-size: 24px; font-weight: 700; margin-bottom: 8px;">${wardData.totalVoters >= 1500 ? 'High' : wardData.totalVoters >= 1000 ? 'Medium' : 'Low'}</div>
+              <div style="color: #CBD5E1; font-size: 14px; font-weight: 500;">Voter Density</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Administrative Information -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 16px; padding: 24px; backdrop-filter: blur(10px);">
+          <h3 style="color: #F8FAFC; margin: 0 0 20px 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px;">🏛️ Administrative Information</h3>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+            <div style="background: rgba(255, 107, 53, 0.1); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 12px; padding: 16px;">
+              <h4 style="color: #FF6B35; margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">📍 Location Details</h4>
+              <div style="color: #CBD5E1; font-size: 14px; line-height: 1.6;">
+                <div><strong>Ward:</strong> ${wardName}</div>
+                <div><strong>Ward Number:</strong> ${wardData.wardNumber}</div>
+                <div><strong>Local Body:</strong> ${localBody}</div>
+                <div><strong>Mandal:</strong> ${mandal}</div>
+                <div><strong>Assembly Constituency:</strong> ${ac}</div>
+                <div><strong>Organizational District:</strong> ${orgDist}</div>
+                <div><strong>Zone:</strong> ${zone}</div>
+              </div>
+            </div>
+            
+            <div style="background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 12px; padding: 16px;">
+              <h4 style="color: #34D399; margin: 0 0 12px 0; font-size: 16px; font-weight: 600;">📊 Statistical Summary</h4>
+              <div style="color: #CBD5E1; font-size: 14px; line-height: 1.6;">
+                <div><strong>Total Voters:</strong> ${wardData.totalVoters.toLocaleString()}</div>
+                <div><strong>Total Houses:</strong> ${wardData.houses.toLocaleString()}</div>
+                <div><strong>Female Voters:</strong> ${wardData.female.toLocaleString()} (${femalePercentage.toFixed(1)}%)</div>
+                <div><strong>Male Voters:</strong> ${wardData.male.toLocaleString()} (${malePercentage.toFixed(1)}%)</div>
+                ${wardData.transgender > 0 ? `<div><strong>Transgender Voters:</strong> ${wardData.transgender.toLocaleString()} (${transgenderPercentage.toFixed(1)}%)</div>` : ''}
+                <div><strong>Voters per House:</strong> ${votersPerHouse}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ========= NAV =========
+    function goBack(){
+      switch(ctx.level){
+        case 'wards':
+        case 'panchayats': showMandals(ctx.ac); break;
+        case 'mandals':    showACs(ctx.org);    break;
+        case 'acs':        showOrgs(ctx.zone);  break;
+        default:           showZones();
+      }
+    }
+    backBtn.onclick = goBack;
+    homeBtn.onclick = ()=>showZones();
+
+    // ========= VOTER DATA LOADING =========
+    async function loadVoterData() {
+      try {
+        const response = await fetch('/data/Voter/Org Dist_Mandal_Voters - Voter_num_pan_ward (1).csv');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const csvText = await response.text();
+        const lines = csvText.split('\n');
+        
+        // Skip header line
+        const dataLines = lines.slice(1).filter(line => line.trim() && !line.includes('#ERROR!'));
+        
+        const data = {};
+        
+        dataLines.forEach(line => {
+          const columns = line.split(',');
+          if (columns.length >= 12) {
+            const zone = columns[0]?.trim();
+            const orgDist = columns[1]?.trim();
+            const ac = columns[2]?.trim();
+            const mandal = columns[3]?.trim();
+            const lbName = columns[4]?.trim();
+            const ward = columns[5]?.trim();
+            const wardNumber = parseInt(columns[6]?.trim()) || 0;
+            const houses = parseInt(columns[7]?.trim()) || 0;
+            const totalVoters = parseInt(columns[8]?.trim()) || 0;
+            const female = parseInt(columns[9]?.trim()) || 0;
+            const male = parseInt(columns[10]?.trim()) || 0;
+            const transgender = parseInt(columns[11]?.trim()) || 0;
+
+            if (zone && orgDist && ac && mandal && lbName && ward) {
+              // Initialize nested structure
+              if (!data[zone]) data[zone] = {};
+              if (!data[zone][orgDist]) data[zone][orgDist] = {};
+              if (!data[zone][orgDist][ac]) data[zone][orgDist][ac] = {};
+              if (!data[zone][orgDist][ac][mandal]) data[zone][orgDist][ac][mandal] = {};
+              if (!data[zone][orgDist][ac][mandal][lbName]) data[zone][orgDist][ac][mandal][lbName] = [];
+
+              // Add ward data
+              data[zone][orgDist][ac][mandal][lbName].push({
+                zone, orgDist, ac, mandal, lbName, ward, wardNumber,
+                houses, totalVoters, female, male, transgender
+              });
+            }
+          }
+        });
+
+        voterData = data;
+        console.log('✅ Voter data loaded successfully');
+        return data;
+      } catch (error) {
+        console.error('Error loading voter data:', error);
+        return {};
+      }
+    }
+
+    function getLocalBodyVoterSummary(lbName, mandal, ac, orgDist, zone) {
+      if (!voterData) return null;
+
+      const zoneData = voterData[zone];
+      if (!zoneData) return null;
+
+      const orgData = zoneData[orgDist];
+      if (!orgData) return null;
+
+      const acData = orgData[ac];
+      if (!acData) return null;
+
+      const mandalData = acData[mandal];
+      if (!mandalData) return null;
+
+      const lbData = mandalData[lbName];
+      if (!lbData || lbData.length === 0) return null;
+
+      // Calculate totals
+      const totalWards = lbData.length;
+      const totalHouses = lbData.reduce((sum, ward) => sum + ward.houses, 0);
+      const totalVoters = lbData.reduce((sum, ward) => sum + ward.totalVoters, 0);
+      const femaleVoters = lbData.reduce((sum, ward) => sum + ward.female, 0);
+      const maleVoters = lbData.reduce((sum, ward) => sum + ward.male, 0);
+      const transgenderVoters = lbData.reduce((sum, ward) => sum + ward.transgender, 0);
+
+      // Calculate percentages
+      const femalePercentage = totalVoters > 0 ? (femaleVoters / totalVoters) * 100 : 0;
+      const malePercentage = totalVoters > 0 ? (maleVoters / totalVoters) * 100 : 0;
+      const transgenderPercentage = totalVoters > 0 ? (transgenderVoters / totalVoters) * 100 : 0;
+
+      // Get top 5 wards by ward number (in order)
+      const topWards = lbData
+        .sort((a, b) => a.wardNumber - b.wardNumber)
+        .slice(0, 5)
+        .map(ward => ({
+          ward: ward.ward,
+          wardNumber: ward.wardNumber,
+          totalVoters: ward.totalVoters,
+          houses: ward.houses
+        }));
+
+      // Sort all wards by ward number for consistent ordering
+      const sortedAllWards = lbData.sort((a, b) => a.wardNumber - b.wardNumber);
+
+      return {
+        lbName, mandal, ac, zone,
+        totalWards, totalHouses, totalVoters,
+        femaleVoters, maleVoters, transgenderVoters,
+        femalePercentage, malePercentage, transgenderPercentage,
+        topWards, allWards: sortedAllWards
+      };
+    }
+
+    function findLocalBodyByName(lbName) {
+      if (!voterData) return null;
+
+      // Search through all zones, org districts, ACs, and mandals
+      for (const zone in voterData) {
+        for (const orgDist in voterData[zone]) {
+          for (const ac in voterData[zone][orgDist]) {
+            for (const mandal in voterData[zone][orgDist][ac]) {
+              for (const lb in voterData[zone][orgDist][ac][mandal]) {
+                if (lb.toLowerCase().includes(lbName.toLowerCase()) || 
+                    lbName.toLowerCase().includes(lb.toLowerCase())) {
+                  return getLocalBodyVoterSummary(lb, mandal, ac, orgDist, zone);
+                }
+              }
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    // ========= LOAD =========
+    (async function(){
+      [zonesGJ, orgGJ, acGJ, mandalGJ, panGJ, wardGJ, thrissurWardGJ] = await Promise.all([
+        fetch(FILES.zones).then(r => r.json()),
+        fetch(FILES.org).then(r => r.json()),
+        fetch(FILES.ac).then(r => r.json()),
+        fetch(FILES.mandal).then(r => r.json()),
+        fetch(FILES.pan).then(r => r.json()),
+        fetch(FILES.ward).then(r => r.json()),
+        fetch(FILES.thrissurWard).then(r => r.json())
+      ]);
+      
+      // Load voter data separately
+      await loadVoterData();
+
+      // Load target data
+      await loadTargetData();
+      console.log('🎯 Target data initialization complete. Sample targets:');
+      if (targetDataCache) {
+        console.log('  - Win targets (first 5):', targetDataCache.Win.slice(0, 5));
+        console.log('  - Opposition targets (first 5):', targetDataCache.Opposition.slice(0, 5));
+        console.log('  - NA targets (first 5):', targetDataCache.NA.slice(0, 5));
+      }
+
+      KEYS.zone     = detectKey(zonesGJ, ["ZONE","Zone","name"]);
+      console.log('✅ Loaded all data files:');
+      console.log('  - Zones:', zonesGJ.features.length);
+      console.log('  - Org Districts:', orgGJ.features.length);
+      console.log('  - Assembly Constituencies:', acGJ.features.length);
+      console.log('  - Mandals:', mandalGJ.features.length);
+      console.log('  - Panchayats:', panGJ.features.length);
+      console.log('  - TVM Wards:', wardGJ.features.length);
+      console.log('  - Thrissur Wards:', thrissurWardGJ.features.length);
+      KEYS.org      = detectKey(orgGJ, ["ORG_DIST","Org_Dist","OrgDistrict","name"]);
+      KEYS.ac       = detectKey(acGJ, ["AC_NAME","ACNAME","Constituency","name"]);
+      KEYS.mnd      = detectKey(mandalGJ, ["MANDAL","Mandal","Org_Mandal","OrgMandal","name"]);
+      KEYS.pan      = detectKey(panGJ, ["PAN_NAME","Panchayat","NAME","Local Body","local_body","Local_Body","Panchayat_Name"]);
+      KEYS.pan_mnd  = detectKey(panGJ, ["MANDAL","Mandal","Org_Mandal","OrgMandal","mandal","org_mandal","Mandal_Name","ORG_MANDAL"]);
+      KEYS.ward     = detectKey(wardGJ, ["Ward_Name","Ward","WARD","name"]);
+
+      buildMandalIndex(); // Crucial step
+      showZones();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kerala Map Mobile Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #1F2937;
+            color: white;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #F97316, #EA580C);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            min-height: 44px;
+            min-width: 44px;
+            transition: all 0.3s ease;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4);
+        }
+        
+        .test-button:active {
+            transform: scale(0.95);
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: #1F2937;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+        
+        .close-btn {
+            float: right;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px 10px;
+            min-height: 44px;
+            min-width: 44px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        
+        .status.pass {
+            background: #10B981;
+            color: white;
+        }
+        
+        .status.fail {
+            background: #EF4444;
+            color: white;
+        }
+        
+        @media (max-width: 640px) {
+            .modal-content {
+                padding: 1rem;
+                border-radius: 0.75rem;
+                max-width: 95vw;
+                max-height: 95vh;
+            }
+            
+            .test-section {
+                padding: 15px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🗺️ Kerala Map Mobile Responsiveness Test</h1>
+        
+        <div class="test-section">
+            <h2>Device Information</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <strong>Screen Size:</strong>
+                    <div id="screen-size"></div>
+                </div>
+                <div class="info-card">
+                    <strong>Device Type:</strong>
+                    <div id="device-type"></div>
+                </div>
+                <div class="info-card">
+                    <strong>Touch Support:</strong>
+                    <div id="touch-support"></div>
+                </div>
+                <div class="info-card">
+                    <strong>Orientation:</strong>
+                    <div id="orientation"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Touch Interaction Tests</h2>
+            <p>Test touch-friendly button interactions:</p>
+            
+            <button class="test-button" onclick="testTouchFeedback(this)">
+                Touch Test Button 1
+            </button>
+            <button class="test-button" onclick="testTouchFeedback(this)">
+                Touch Test Button 2
+            </button>
+            <button class="test-button" onclick="testTouchFeedback(this)">
+                Touch Test Button 3
+            </button>
+            
+            <div id="touch-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Modal Responsiveness Tests</h2>
+            <p>Test mobile-optimized modals:</p>
+            
+            <button class="test-button" onclick="openModal('performance-modal')">
+                Open Performance Modal
+            </button>
+            <button class="test-button" onclick="openModal('contacts-modal')">
+                Open Contacts Modal
+            </button>
+            <button class="test-button" onclick="openModal('targets-modal')">
+                Open Targets Modal
+            </button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Responsive Design Tests</h2>
+            <div id="responsive-tests">
+                <div class="info-card">
+                    <strong>Viewport Meta Tag:</strong>
+                    <span id="viewport-test"></span>
+                </div>
+                <div class="info-card">
+                    <strong>Touch Action Support:</strong>
+                    <span id="touch-action-test"></span>
+                </div>
+                <div class="info-card">
+                    <strong>CSS Grid Support:</strong>
+                    <span id="css-grid-test"></span>
+                </div>
+                <div class="info-card">
+                    <strong>Flexbox Support:</strong>
+                    <span id="flexbox-test"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Modal -->
+    <div id="performance-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('performance-modal')">&times;</button>
+            <h3>📊 Performance Modal</h3>
+            <p>This modal demonstrates mobile-responsive design:</p>
+            <ul>
+                <li>Responsive padding and margins</li>
+                <li>Touch-friendly close button</li>
+                <li>Optimized for small screens</li>
+                <li>Smooth animations</li>
+            </ul>
+            <div style="height: 200px; background: rgba(249, 115, 22, 0.1); border-radius: 8px; margin: 1rem 0; display: flex; align-items: center; justify-content: center;">
+                <span>Chart Area (Mobile Optimized)</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contacts Modal -->
+    <div id="contacts-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('contacts-modal')">&times;</button>
+            <h3>👥 Contacts Modal</h3>
+            <p>Mobile-optimized contact list:</p>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: rgba(249, 115, 22, 0.2);">
+                            <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem;">Name</th>
+                            <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem;">Role</th>
+                            <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem;">Phone</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 0.5rem; font-size: 0.75rem;">John Doe</td>
+                            <td style="padding: 0.5rem; font-size: 0.75rem;">President</td>
+                            <td style="padding: 0.5rem; font-size: 0.75rem;"><a href="tel:+919876543210" style="color: #F97316;">+91 98765 43210</a></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.5rem; font-size: 0.75rem;">Jane Smith</td>
+                            <td style="padding: 0.5rem; font-size: 0.75rem;">Secretary</td>
+                            <td style="padding: 0.5rem; font-size: 0.75rem;"><a href="tel:+919876543211" style="color: #F97316;">+91 98765 43211</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Targets Modal -->
+    <div id="targets-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('targets-modal')">&times;</button>
+            <h3>🎯 Targets Modal</h3>
+            <p>Mobile-responsive target data:</p>
+            <div class="info-grid">
+                <div class="info-card">
+                    <strong>Panchayats</strong><br>
+                    Total: 941<br>
+                    Target: 250<br>
+                    Opposition: 47
+                </div>
+                <div class="info-card">
+                    <strong>Municipalities</strong><br>
+                    Total: 89<br>
+                    Target: 20<br>
+                    Opposition: 8
+                </div>
+                <div class="info-card">
+                    <strong>Corporations</strong><br>
+                    Total: 6<br>
+                    Target: 2<br>
+                    Opposition: 1
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Device detection and information display
+        function updateDeviceInfo() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            document.getElementById('screen-size').textContent = `${width} × ${height}`;
+            
+            // Device type detection
+            let deviceType = 'Desktop';
+            if (width <= 640) deviceType = 'Mobile';
+            else if (width <= 1024) deviceType = 'Tablet';
+            
+            document.getElementById('device-type').textContent = deviceType;
+            
+            // Touch support
+            const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            document.getElementById('touch-support').textContent = hasTouch ? 'Yes' : 'No';
+            
+            // Orientation
+            const orientation = height > width ? 'Portrait' : 'Landscape';
+            document.getElementById('orientation').textContent = orientation;
+        }
+        
+        // Touch feedback test
+        function testTouchFeedback(button) {
+            button.style.background = '#10B981';
+            button.textContent = 'Touch Detected!';
+            
+            setTimeout(() => {
+                button.style.background = 'linear-gradient(135deg, #F97316, #EA580C)';
+                button.textContent = button.textContent.replace('Touch Detected!', 'Touch Test Button');
+            }, 1000);
+            
+            // Log touch event
+            const results = document.getElementById('touch-results');
+            const timestamp = new Date().toLocaleTimeString();
+            results.innerHTML += `<div style="margin: 5px 0; padding: 5px; background: rgba(16, 185, 129, 0.2); border-radius: 4px;">
+                ✅ Touch registered at ${timestamp}
+            </div>`;
+        }
+        
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Responsive design tests
+        function runResponsiveTests() {
+            // Viewport meta tag test
+            const viewportMeta = document.querySelector('meta[name="viewport"]');
+            document.getElementById('viewport-test').innerHTML = viewportMeta ? 
+                '<span class="status pass">PASS</span>' : 
+                '<span class="status fail">FAIL</span>';
+            
+            // Touch action support test
+            const touchActionSupported = CSS.supports('touch-action', 'manipulation');
+            document.getElementById('touch-action-test').innerHTML = touchActionSupported ? 
+                '<span class="status pass">PASS</span>' : 
+                '<span class="status fail">FAIL</span>';
+            
+            // CSS Grid support test
+            const gridSupported = CSS.supports('display', 'grid');
+            document.getElementById('css-grid-test').innerHTML = gridSupported ? 
+                '<span class="status pass">PASS</span>' : 
+                '<span class="status fail">FAIL</span>';
+            
+            // Flexbox support test
+            const flexSupported = CSS.supports('display', 'flex');
+            document.getElementById('flexbox-test').innerHTML = flexSupported ? 
+                '<span class="status pass">PASS</span>' : 
+                '<span class="status fail">FAIL</span>';
+        }
+        
+        // Initialize tests
+        updateDeviceInfo();
+        runResponsiveTests();
+        
+        // Update on resize/orientation change
+        window.addEventListener('resize', updateDeviceInfo);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(updateDeviceInfo, 100);
+        });
+        
+        // Close modals on background click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }
+            });
+        });
+        
+        // Prevent zoom on double tap (iOS)
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (event) => {
+            const now = new Date().getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        console.log('🗺️ Kerala Map Mobile Test initialized');
+        console.log('Device Info:', {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            userAgent: navigator.userAgent,
+            touchPoints: navigator.maxTouchPoints,
+            hasTouch: 'ontouchstart' in window
+        });
+    </script>
+</body>
+</html>
