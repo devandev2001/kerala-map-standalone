@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Phone, Lock, LogIn, Eye, EyeOff, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Phone, Lock, LogIn, Eye, EyeOff, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { fetchWhitelistCsv } from '../utils/whitelistCsv';
 import { saveAuthSession, validatePhoneNumber, validatePassword } from '../utils/auth';
 
@@ -13,6 +13,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [phoneValid, setPhoneValid] = useState<boolean | null>(null);
+  const [passwordValid, setPasswordValid] = useState<boolean | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
 
   // Local whitelist fallback for phone/password validation
   const localWhitelist: Array<{ phone: string; password: string }> = [
@@ -23,18 +27,37 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     { phone: '9876543212', password: 'user123' }
   ];
 
+  // Real-time validation effects
+  useEffect(() => {
+    if (phoneNumber.length > 0) {
+      setPhoneValid(validatePhoneNumber(phoneNumber));
+    } else {
+      setPhoneValid(null);
+    }
+  }, [phoneNumber]);
+
+  useEffect(() => {
+    if (password.length > 0) {
+      setPasswordValid(validatePassword(password));
+    } else {
+      setPasswordValid(null);
+    }
+  }, [password]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate phone number format
     if (!validatePhoneNumber(phoneNumber)) {
       setError('Please enter a valid 10-digit Indian phone number');
+      setLoginAttempts(prev => prev + 1);
       return;
     }
 
     // Validate password is entered
     if (!validatePassword(password)) {
       setError('Please enter your password');
+      setLoginAttempts(prev => prev + 1);
       return;
     }
 
@@ -48,8 +71,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         (entry) => entry.phone === phoneNumber && entry.password === password
       );
       if (isCsvWhitelisted) {
-        saveAuthSession(phoneNumber);
-        onLogin(phoneNumber);
+        setShowSuccess(true);
+        setTimeout(() => {
+          saveAuthSession(phoneNumber);
+          onLogin(phoneNumber);
+        }, 1000);
         return;
       }
 
@@ -58,16 +84,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         (entry) => entry.phone === phoneNumber && entry.password === password
       );
       if (isLocallyWhitelisted) {
-        saveAuthSession(phoneNumber);
-        onLogin(phoneNumber);
+        setShowSuccess(true);
+        setTimeout(() => {
+          saveAuthSession(phoneNumber);
+          onLogin(phoneNumber);
+        }, 1000);
         return;
       }
 
       // If neither whitelist validates, show error
-      setError('Invalid phone number or password. Please check your credentials and try again.');
+      setLoginAttempts(prev => prev + 1);
+      if (loginAttempts >= 2) {
+        setError('Multiple failed attempts. Please contact your administrator for assistance.');
+      } else {
+        setError('Invalid phone number or password. Please check your credentials and try again.');
+      }
     } catch (err) {
       console.error('Login error:', err);
       setError('An error occurred during login. Please try again.');
+      setLoginAttempts(prev => prev + 1);
     } finally {
       setIsLoading(false);
     }
@@ -124,7 +159,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <div className="space-y-3 sm:space-y-4">
               {/* Phone Number Field - Mobile Optimized */}
               <div className="relative group">
-                <div className="absolute top-1/2 left-3 sm:left-4 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-400 transition-colors duration-300 z-10">
+                <div className={`absolute top-1/2 left-3 sm:left-4 transform -translate-y-1/2 transition-colors duration-300 z-10 ${
+                  phoneValid === true ? 'text-green-400' : 
+                  phoneValid === false ? 'text-red-400' : 
+                  'text-gray-400 group-focus-within:text-blue-400'
+                }`}>
                   <Phone size={18} className="sm:w-5 sm:h-5" />
                 </div>
                 <div className="absolute left-10 sm:left-12 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs sm:text-sm font-medium">+91</div>
@@ -141,15 +180,39 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                     setError(''); // Clear error when user types
                   }}
                   disabled={isLoading}
-                  className="w-full pl-16 sm:pl-20 pr-4 py-3 sm:py-4 bg-white/15 backdrop-blur-md border border-blue-400/30 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 text-base"
+                  className={`input-field w-full pl-16 sm:pl-20 pr-12 py-3 sm:py-4 transition-all duration-300 ${
+                    phoneValid === true ? 'border-green-400 bg-green-500/5' : 
+                    phoneValid === false ? 'border-red-400 bg-red-500/5' : 
+                    'border-blue-300/30'
+                  }`}
                   aria-label="Phone Number"
                   required
                 />
+                {/* Validation indicator */}
+                {phoneValid !== null && (
+                  <div className="absolute top-1/2 right-3 sm:right-4 transform -translate-y-1/2">
+                    {phoneValid ? (
+                      <CheckCircle size={18} className="text-green-400" />
+                    ) : (
+                      <AlertCircle size={18} className="text-red-400" />
+                    )}
+                  </div>
+                )}
+                {/* Phone number format hint */}
+                {phoneNumber.length > 0 && phoneNumber.length < 10 && (
+                  <div className="absolute -bottom-6 left-0 text-xs text-gray-400">
+                    {10 - phoneNumber.length} more digits needed
+                  </div>
+                )}
               </div>
 
               {/* Password Field - Mobile Optimized */}
               <div className="relative group">
-                <div className="absolute top-1/2 left-3 sm:left-4 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-400 transition-colors duration-300 z-10">
+                <div className={`absolute top-1/2 left-3 sm:left-4 transform -translate-y-1/2 transition-colors duration-300 z-10 ${
+                  passwordValid === true ? 'text-green-400' : 
+                  passwordValid === false ? 'text-red-400' : 
+                  'text-gray-400 group-focus-within:text-blue-400'
+                }`}>
                   <Lock size={18} className="sm:w-5 sm:h-5" />
                 </div>
                 <input
@@ -162,18 +225,30 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                   }}
                   onKeyPress={handlePasswordKeyPress}
                   disabled={isLoading}
-                  className="w-full pl-10 sm:pl-12 pr-12 py-3 sm:py-4 bg-white/15 backdrop-blur-md border border-blue-400/30 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 text-base"
+                  className={`input-field w-full pl-10 sm:pl-12 pr-12 py-3 sm:py-4 transition-all duration-300 ${
+                    passwordValid === true ? 'border-green-400 bg-green-500/5' : 
+                    passwordValid === false ? 'border-red-400 bg-red-500/5' : 
+                    'border-blue-300/30'
+                  }`}
                   aria-label="Password"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-400 transition-colors duration-300"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-400 transition-colors duration-300 p-1"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff size={18} className="sm:w-5 sm:h-5" /> : <Eye size={18} className="sm:w-5 sm:h-5" />}
                 </button>
+                {/* Password strength indicator */}
+                {password.length > 0 && (
+                  <div className="absolute -bottom-6 left-0 text-xs text-gray-400">
+                    {password.length < 3 ? 'Password too short' : 
+                     password.length < 6 ? 'Password is weak' : 
+                     'Password looks good'}
+                  </div>
+                )}
               </div>
 
               {/* Forgot Password Link */}
@@ -191,34 +266,67 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               {/* Submit Button - Mobile Optimized */}
               <button
                 type="submit"
-                disabled={isLoading || !phoneNumber || !password}
-                className={`w-full py-3 sm:py-4 px-6 rounded-xl font-medium text-white transition-all duration-300 ${
-                  isLoading || !phoneNumber || !password
+                disabled={isLoading || !phoneNumber || !password || showSuccess}
+                className={`w-full py-3 sm:py-4 px-6 rounded-xl font-medium text-white transition-all duration-300 relative overflow-hidden ${
+                  showSuccess 
+                    ? 'bg-gradient-to-r from-green-600 to-green-700 cursor-not-allowed'
+                    : isLoading || !phoneNumber || !password
                     ? 'bg-blue-500/50 cursor-not-allowed'
                     : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-blue-500/30 transform hover:scale-105'
                 }`}
               >
-                {isLoading ? (
+                {showSuccess ? (
                   <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <CheckCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-pulse" />
+                    <span className="text-sm sm:text-base">Login Successful!</span>
+                  </span>
+                ) : isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4 sm:h-5 sm:w-5 text-white" />
                     <span className="text-sm sm:text-base">Validating credentials...</span>
                   </span>
                 ) : (
                   <span className="flex items-center justify-center">
                     <LogIn className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                    <span className="text-sm sm:text-base">{phoneNumber && password ? 'Validate & Sign In' : 'Sign In'}</span>
+                    <span className="text-sm sm:text-base">
+                      {phoneNumber && password ? 'Validate & Sign In' : 'Sign In'}
+                    </span>
                   </span>
+                )}
+                {/* Button loading shimmer effect */}
+                {isLoading && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse"></div>
                 )}
               </button>
             </div>
             {/* Error Message with animation */}
             {error && (
-              <div className="p-3 sm:p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 text-sm flex items-center backdrop-blur-md">
-                <X size={16} className="mr-2 flex-shrink-0" />
+              <div className="p-3 sm:p-4 bg-red-500/20 border border-red-500/30 rounded-xl text-red-300 text-sm flex items-center backdrop-blur-md animate-in slide-in-from-top-2 duration-300">
+                <AlertCircle size={16} className="mr-2 flex-shrink-0" />
                 <span className="text-xs sm:text-sm">{error}</span>
+                {loginAttempts > 0 && (
+                  <div className="ml-auto text-xs text-red-400">
+                    Attempt {loginAttempts}/3
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Success Message */}
+            {showSuccess && (
+              <div className="p-3 sm:p-4 bg-green-500/20 border border-green-500/30 rounded-xl text-green-300 text-sm flex items-center backdrop-blur-md animate-in slide-in-from-top-2 duration-300">
+                <CheckCircle size={16} className="mr-2 flex-shrink-0 animate-pulse" />
+                <span className="text-xs sm:text-sm">Login successful! Redirecting to dashboard...</span>
+              </div>
+            )}
+            
+            {/* Progress indicator for multiple attempts */}
+            {loginAttempts > 0 && loginAttempts < 3 && (
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-red-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${(loginAttempts / 3) * 100}%` }}
+                ></div>
               </div>
             )}
           </form>

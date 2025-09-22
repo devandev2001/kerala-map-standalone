@@ -13,7 +13,7 @@ import { loadLocalBodyContactData, getLocalBodyContactData } from '../utils/load
 import { loadZoneTargetData, getZoneTargetData } from '../utils/loadZoneTargetData';
 import { useMobileDetection, optimizeTouchInteractions } from '../utils/mobileDetection';
 import { generateMapPDF, generateMapPDFMobile } from '../utils/mapPdfExporter';
-import { Maximize2, Minimize2, RotateCcw, MapPin, Download } from 'lucide-react';
+import { Maximize2, Minimize2, RotateCcw, MapPin, Download, Info, HelpCircle, Settings } from 'lucide-react';
 
 interface IntegratedKeralaMapProps {
   onBack?: () => void;
@@ -27,6 +27,7 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
   const [showTargetModal, setShowTargetModal] = useState(false);
   const [showLeadershipModal, setShowLeadershipModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [currentMapContext, setCurrentMapContext] = useState({ level: 'zones', zone: '', org: '', ac: '', mandal: '' });
   const [selectedOrgDistrict, setSelectedOrgDistrict] = useState<string | null>(null);
   const [selectedAC, setSelectedAC] = useState<string | null>(null);
@@ -63,6 +64,38 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
       optimizeTouchInteractions();
     }
   }, [mobileInfo]);
+
+  // Focus trap for modals
+  useEffect(() => {
+    const handleTabKey = (event: KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        const modals = document.querySelectorAll('[role="dialog"]');
+        if (modals.length > 0) {
+          const activeModal = modals[modals.length - 1];
+          const focusableElements = activeModal.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          const firstElement = focusableElements[0] as HTMLElement;
+          const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+          if (event.shiftKey) {
+            if (document.activeElement === firstElement) {
+              event.preventDefault();
+              lastElement?.focus();
+            }
+          } else {
+            if (document.activeElement === lastElement) {
+              event.preventDefault();
+              firstElement?.focus();
+            }
+          }
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleTabKey);
+    return () => document.removeEventListener('keydown', handleTabKey);
+  }, [showHelpModal, showPerformanceModal, showTargetModal, showLeadershipModal]);
 
   // Performance data for different zones
   const zonePerformanceData = {
@@ -839,6 +872,7 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
     }
   };
 
+
   const handleIframeLoad = () => {
     console.log('🗺️ Map iframe loaded');
     // Give the map a moment to fully initialize
@@ -898,79 +932,96 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
   return (
     <div 
       id="integrated-map-container"
-      className={`relative w-full bg-gradient-primary ${isFullscreen ? 'h-screen' : 'h-full'} overflow-hidden`}
+      className={`relative w-full bg-gradient-primary ${isFullscreen ? 'h-screen' : 'h-screen'} overflow-hidden`}
+      style={{
+        height: isFullscreen ? '100vh' : '100vh',
+        minHeight: '100vh',
+        maxHeight: '100vh'
+      }}
     >
+      {/* Skip Navigation Link for Accessibility */}
+      <a 
+        href="#main-map-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-md focus:shadow-lg"
+        onClick={(e) => {
+          e.preventDefault();
+          const mapElement = document.querySelector('#main-map-content');
+          if (mapElement) {
+            mapElement.focus();
+          }
+        }}
+      >
+        Skip to main map content
+      </a>
       {/* Floating Background Elements - Matching Dashboard Theme */}
       <div className="floating-bg floating-bg-1"></div>
       <div className="floating-bg floating-bg-2"></div>
       <div className="floating-bg floating-bg-3"></div>
-      {/* Map Controls - Top Right - Mobile Optimized */}
-      <div className="absolute top-2 right-2 sm:top-4 sm:right-4 md:top-6 md:right-6 z-10 flex flex-col gap-1 sm:gap-2 md:gap-3">
-        <button
-          onClick={refreshMap}
-          className="p-2 sm:p-3 md:p-3 glass-morphism hover:bg-gradient-orange text-white rounded-lg sm:rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 icon-glow touch-target"
-          title="Refresh Map"
-        >
-          <RotateCcw size={16} className="sm:w-4 sm:h-4 md:w-5 md:h-5" />
-        </button>
-        <button
-          onClick={toggleFullscreen}
-          className="p-2 sm:p-3 md:p-3 glass-morphism hover:bg-gradient-orange text-white rounded-lg sm:rounded-xl shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 icon-glow touch-target"
-          title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-        >
-          {isFullscreen ? <Minimize2 size={16} className="sm:w-4 sm:h-4 md:w-5 md:h-5" /> : <Maximize2 size={16} className="sm:w-4 sm:h-4 md:w-5 md:h-5" />}
-        </button>
-      </div>
 
 
-      {/* Dashboard Navigation Buttons - Mobile Optimized */}
-      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10 flex flex-col gap-1 sm:gap-2">
-        <div className="flex gap-1 sm:gap-2">
+
+      {/* Dashboard Navigation Buttons - Compact Design */}
+      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10 flex flex-col gap-1">
+        <div className="flex gap-1 justify-center">
           <button
             onClick={() => setShowLeadershipModal(true)}
-            className="flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 glass-morphism hover:bg-gradient-to-r hover:from-green-500 hover:to-green-600 text-white rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 icon-glow touch-target"
-            title="Leadership Contacts"
+            className="px-2 py-1 bg-green-600/80 hover:bg-green-700/80 text-white rounded-md flex items-center gap-1 transition-all duration-200 text-xs font-medium group relative"
+            title="View Contact Information"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-4 sm:h-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
               <circle cx="9" cy="7" r="4"></circle>
               <path d="m22 21-3-3m0 0a2 2 0 1 0-2.828-2.828A2 2 0 0 0 19 18Z"></path>
             </svg>
-            <span className="text-xs sm:text-sm font-medium hidden sm:inline">Contacts</span>
+            <span>Contacts</span>
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+              View Leadership Contacts
+            </div>
           </button>
           
           <button
             onClick={() => setShowPerformanceModal(true)}
-            className="flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 glass-morphism hover:bg-gradient-to-r hover:from-purple-500 hover:to-purple-600 text-white rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 icon-glow touch-target"
-            title="Vote Share Performance"
+            className="px-2 py-1 bg-blue-600/80 hover:bg-blue-700/80 text-white rounded-md flex items-center gap-1 transition-all duration-200 text-xs font-medium group relative"
+            title="View Performance Data"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-4 sm:h-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 3v18h18"></path>
               <path d="m19 9-5 5-4-4-3 3"></path>
             </svg>
-            <span className="text-xs sm:text-sm font-medium hidden sm:inline">Vote Share</span>
+            <span>Performance</span>
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+              View Vote Share Data
+            </div>
           </button>
           
           <button
             onClick={() => setShowTargetModal(true)}
-            className="flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 glass-morphism hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 text-white rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 icon-glow touch-target"
-            title="Local Body Targets"
+            className="px-2 py-1 bg-orange-600/80 hover:bg-orange-700/80 text-white rounded-md flex items-center gap-1 transition-all duration-200 text-xs font-medium group relative"
+            title="View Target Data"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-4 sm:h-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <circle cx="12" cy="12" r="6"></circle>
               <circle cx="12" cy="12" r="2"></circle>
             </svg>
-            <span className="text-xs sm:text-sm font-medium hidden sm:inline">LB Target</span>
+            <span>Targets</span>
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+              View Election Targets
+            </div>
           </button>
-          
+        </div>
+        
+        {/* Help Button */}
+        <div className="flex justify-center">
           <button
-            onClick={handleExportPDF}
-            className="flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 glass-morphism hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-600 text-white rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 icon-glow touch-target"
-            title="Export PDF Report"
+            onClick={() => setShowHelpModal(true)}
+            className="px-2 py-1 bg-gray-600/60 hover:bg-gray-700/60 text-white rounded-md transition-all duration-200 text-xs group relative"
+            title="Help & Instructions"
           >
-            <Download size={12} className="sm:w-4 sm:h-4" />
-            <span className="text-xs sm:text-sm font-medium hidden sm:inline">Export PDF</span>
+            <HelpCircle size={10} />
+            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+              Help & Instructions
+            </div>
           </button>
         </div>
       </div>
@@ -1009,24 +1060,34 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
         </div>
       )}
 
-      {/* Map Iframe - Mobile Optimized */}
+      {/* Map Iframe - Full Screen Optimized */}
       <iframe
         ref={iframeRef}
+        id="main-map-content"
         src="/map/pan.html"
-        title="Kerala Interactive Map"
+        title="Kerala Interactive Map - Navigate through zones, districts, assembly constituencies, and mandals"
         className="w-full h-full border-none bg-gradient-primary touch-manipulation"
         style={{ 
-          height: isFullscreen ? '100vh' : mobileInfo.isMobile ? 'calc(100vh - 48px)' : 'calc(100vh - 64px)',
-          minHeight: mobileInfo.isMobile ? '350px' : '400px',
+          height: '100vh',
+          width: '100vw',
+          minHeight: '100vh',
+          maxHeight: '100vh',
           backgroundColor: '#1F2937',
           touchAction: 'manipulation',
           userSelect: 'none',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          zIndex: 1
         }}
         onLoad={handleIframeLoad}
         onError={handleIframeError}
         allowFullScreen
         sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+        aria-label="Interactive map of Kerala showing political boundaries and data"
+        role="application"
+        tabIndex={0}
       />
 
       {/* Performance Modal - Mobile Optimized */}
@@ -1716,6 +1777,160 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
           </div>
         </div>
       )}
+
+      {/* Help Modal */}
+      {showHelpModal && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="help-modal-title"
+          aria-describedby="help-modal-description"
+        >
+          <div className="bg-gray-900/95 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-2xl border border-gray-700/50 max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-3 sm:p-6 border-b border-gray-700/50">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg">
+                  <HelpCircle size={16} className="text-white sm:w-6 sm:h-6" />
+                </div>
+                <div>
+                  <h2 id="help-modal-title" className="text-lg sm:text-2xl font-bold text-white">Help & Instructions</h2>
+                  <p id="help-modal-description" className="text-gray-400 text-sm">How to use the Kerala Map Dashboard</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="p-2 hover:bg-gray-700/50 rounded-lg transition-colors"
+                aria-label="Close help modal"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              <div className="space-y-6">
+                {/* Navigation */}
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <Home size={18} />
+                    Navigation
+                  </h3>
+                  <ul className="space-y-2 text-gray-300 text-sm">
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-400">•</span>
+                      <span><strong>Home Button:</strong> Returns to the main zone view</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-400">•</span>
+                      <span><strong>Back Button:</strong> Navigate to previous view</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-400">•</span>
+                      <span><strong>Zoom Controls:</strong> Zoom in/out on the map</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-400">•</span>
+                      <span><strong>Click Areas:</strong> Click on zones, districts, ACs, and mandals to drill down</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Data Views */}
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <Info size={18} />
+                    Data Views
+                  </h3>
+                  <ul className="space-y-2 text-gray-300 text-sm">
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-400">•</span>
+                      <span><strong>Contacts:</strong> View leadership contact information</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-400">•</span>
+                      <span><strong>Performance:</strong> View vote share data and trends</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-orange-400">•</span>
+                      <span><strong>Targets:</strong> View election targets and goals</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-purple-400">•</span>
+                      <span><strong>Search:</strong> Find specific locations quickly</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Mobile Tips */}
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                      <line x1="8" y1="21" x2="16" y2="21"></line>
+                      <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    Mobile Tips
+                  </h3>
+                  <ul className="space-y-2 text-gray-300 text-sm">
+                    <li className="flex items-start gap-2">
+                      <span className="text-yellow-400">•</span>
+                      <span>Use pinch gestures to zoom in/out</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-yellow-400">•</span>
+                      <span>Tap and hold for context menus</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-yellow-400">•</span>
+                      <span>Rotate device for better viewing</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-yellow-400">•</span>
+                      <span>Use landscape mode for detailed data</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Keyboard Shortcuts */}
+                <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/50">
+                  <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                      <line x1="8" y1="21" x2="16" y2="21"></line>
+                      <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    Keyboard Shortcuts
+                  </h3>
+                  <ul className="space-y-2 text-gray-300 text-sm">
+                    <li className="flex items-start gap-2">
+                      <span className="text-indigo-400">•</span>
+                      <span><strong>Esc:</strong> Close modals</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-indigo-400">•</span>
+                      <span><strong>F11:</strong> Toggle fullscreen</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-indigo-400">•</span>
+                      <span><strong>+/-:</strong> Zoom in/out</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-indigo-400">•</span>
+                      <span><strong>Ctrl+P:</strong> Export PDF</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
 
     </div>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LoginPage } from './components/LoginPage';
 import IntegratedKeralaMap from './components/IntegratedKeralaMap';
 import { isAuthenticated, getCurrentUser, clearAuthSession } from './utils/auth';
-import { LogOut, User, AlertTriangle } from 'lucide-react';
+import { LogOut, User, AlertTriangle, RotateCcw, Maximize2 } from 'lucide-react';
 
 // Error Boundary Component for graceful error handling
 class ErrorBoundary extends React.Component<
@@ -76,6 +76,61 @@ const App: React.FC = () => {
     checkAuthStatus();
   }, []);
 
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Handle global keyboard shortcuts
+      if (event.ctrlKey || event.metaKey) {
+        switch (event.key) {
+          case 'p':
+            event.preventDefault();
+            // Handle PDF export if logged in
+            if (isLoggedIn) {
+              const exportButton = document.querySelector('[title="Export PDF Report"]') as HTMLButtonElement;
+              if (exportButton) {
+                exportButton.click();
+              }
+            }
+            break;
+          case 'h':
+            event.preventDefault();
+            // Handle help modal if logged in
+            if (isLoggedIn) {
+              const helpButton = document.querySelector('[title="Help & Instructions"]') as HTMLButtonElement;
+              if (helpButton) {
+                helpButton.click();
+              }
+            }
+            break;
+        }
+      }
+
+      // Handle Escape key to close modals
+      if (event.key === 'Escape') {
+        const modals = document.querySelectorAll('[role="dialog"]');
+        if (modals.length > 0) {
+          const lastModal = modals[modals.length - 1];
+          const closeButton = lastModal.querySelector('[aria-label*="close"], [title*="Close"]') as HTMLButtonElement;
+          if (closeButton) {
+            closeButton.click();
+          }
+        }
+      }
+
+      // Handle F11 for fullscreen toggle
+      if (event.key === 'F11') {
+        event.preventDefault();
+        const fullscreenButton = document.querySelector('[title*="fullscreen"], [title*="Fullscreen"]') as HTMLButtonElement;
+        if (fullscreenButton) {
+          fullscreenButton.click();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isLoggedIn]);
+
   // Handle successful login
   const handleLogin = (phoneNumber: string) => {
     setIsLoggedIn(true);
@@ -116,9 +171,9 @@ const App: React.FC = () => {
           <LoginPage onLogin={handleLogin} />
         ) : (
           // Show map application if authenticated
-          <div className="relative min-h-screen">
+          <div className="relative w-full h-screen overflow-hidden">
             {/* Header with user info and logout - minimal design */}
-            <div className="absolute top-0 right-0 z-50 p-4">
+            <div className="absolute top-0 right-0 z-50 p-4 flex flex-col gap-2">
               <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 flex items-center space-x-3 border border-white/20">
                 <div className="flex items-center space-x-2 text-white">
                   <User size={16} />
@@ -135,10 +190,48 @@ const App: React.FC = () => {
                   <LogOut size={16} />
                 </button>
               </div>
+              
+              {/* Refresh and Fullscreen Controls */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    // We'll need to pass this function to the map component
+                    const iframe = document.querySelector('iframe');
+                    if (iframe) {
+                      iframe.src = iframe.src;
+                    }
+                  }}
+                  className="p-2 bg-gray-600/80 hover:bg-gray-700/80 text-white rounded-md transition-all duration-200"
+                  title="Refresh Map"
+                >
+                  <RotateCcw size={16} />
+                </button>
+                
+                <button
+                  onClick={async () => {
+                    const container = document.getElementById('integrated-map-container');
+                    if (!container) return;
+
+                    try {
+                      if (!document.fullscreenElement) {
+                        await container.requestFullscreen();
+                      } else {
+                        await document.exitFullscreen();
+                      }
+                    } catch (error) {
+                      console.error('Fullscreen error:', error);
+                    }
+                  }}
+                  className="p-2 bg-gray-600/80 hover:bg-gray-700/80 text-white rounded-md transition-all duration-200"
+                  title="Toggle Fullscreen"
+                >
+                  <Maximize2 size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Main Map Component - Full Screen */}
-            <div className="w-full h-screen">
+            <div className="w-full h-full">
               <IntegratedKeralaMap />
             </div>
           </div>
