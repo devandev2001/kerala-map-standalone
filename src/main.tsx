@@ -2,10 +2,17 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './styles/index.css';
+import { registerServiceWorker, initializeCacheManagement } from './utils/serviceWorkerManager';
 
 // Initialize the application
 const initializeApp = async () => {
   try {
+    // Initialize cache management first
+    await initializeCacheManagement();
+    
+    // Register service worker for PWA functionality and cache management
+    await registerServiceWorker();
+
     // Render the React application
     const rootElement = document.getElementById('root');
     if (!rootElement) {

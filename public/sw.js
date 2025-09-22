@@ -352,13 +352,33 @@ self.addEventListener('message', (event) => {
   }
   
   if (event.data && event.data.type === 'CLEAR_CACHE') {
+    console.log('🧹 Service Worker: Clearing all caches...');
     event.waitUntil(
       caches.keys().then((cacheNames) => {
+        console.log('🗑️ Service Worker: Deleting caches:', cacheNames);
         return Promise.all(
-          cacheNames.map((cacheName) => caches.delete(cacheName))
+          cacheNames.map((cacheName) => {
+            console.log('🗑️ Service Worker: Deleting cache:', cacheName);
+            return caches.delete(cacheName);
+          })
         );
+      }).then(() => {
+        console.log('✅ Service Worker: All caches cleared successfully');
+        // Notify all clients that caches have been cleared
+        return self.clients.matchAll().then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({ type: 'CACHE_CLEARED' });
+          });
+        });
+      }).catch((error) => {
+        console.error('❌ Service Worker: Error clearing caches:', error);
       })
     );
+  }
+  
+  if (event.data && event.data.type === 'CLEAR_EXPIRED_CACHE') {
+    console.log('🕐 Service Worker: Clearing expired caches...');
+    event.waitUntil(clearExpiredCache());
   }
 });
 

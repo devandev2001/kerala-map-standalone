@@ -24,7 +24,9 @@
     "test:pdf": "vitest run src/tests/*pdf*.test.tsx",
     "bundle-analyzer": "npx vite-bundle-analyzer dist",
     "size-check": "bundlesize",
-    "setup-domain": "node scripts/setup-domain.js"
+    "setup-domain": "node scripts/setup-domain.js",
+    "clear-cache": "node scripts/clear-cache.js",
+    "clear-cache:sw": "node scripts/clear-cache.js --sw-version"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",

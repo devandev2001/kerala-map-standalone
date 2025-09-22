@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LoginPage } from './components/LoginPage';
 import IntegratedKeralaMap from './components/IntegratedKeralaMap';
 import { isAuthenticated, getCurrentUser, getCurrentUserName, clearAuthSession } from './utils/auth';
+import { clearAllCaches, forceReload } from './utils/serviceWorkerManager';
 import { LogOut, User, AlertTriangle, RotateCcw, Maximize2 } from 'lucide-react';
 
 // Error Boundary Component for graceful error handling
@@ -178,18 +179,8 @@ const App: React.FC = () => {
           <p className="text-white/70 text-sm mt-2">If this takes too long, try refreshing the page</p>
           <button
             onClick={() => {
-              // Clear caches and reload if loading takes too long
-              if ('caches' in window) {
-                caches.keys().then(cacheNames => {
-                  return Promise.all(
-                    cacheNames.map(cacheName => caches.delete(cacheName))
-                  );
-                }).then(() => {
-                  window.location.reload();
-                });
-              } else {
-                window.location.reload();
-              }
+              // Use the new cache management system
+              forceReload();
             }}
             className="mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors duration-200"
           >
@@ -227,6 +218,22 @@ const App: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                  
+                  <div className="w-px h-8 bg-slate-600"></div>
+                  
+                  <button
+                    onClick={() => {
+                      if (confirm('Clear all caches and reload? This will ensure you get the latest version of the app.')) {
+                        forceReload();
+                      }
+                    }}
+                    className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-slate-700/50"
+                    title="Clear Cache & Reload"
+                    aria-label="Clear Cache & Reload"
+                  >
+                    <RotateCcw size={16} />
+                    <span className="text-sm">Clear Cache</span>
+                  </button>
                   
                   <div className="w-px h-8 bg-slate-600"></div>
                   
