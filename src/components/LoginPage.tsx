@@ -4,7 +4,7 @@ import { fetchWhitelistCsv } from '../utils/whitelistCsv';
 import { saveAuthSession, validatePhoneNumber, validatePassword } from '../utils/auth';
 
 interface LoginPageProps {
-  onLogin: (phoneNumber: string) => void;
+  onLogin: (phoneNumber: string, fullName?: string) => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
@@ -67,27 +67,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     try {
       // Check CSV whitelist first
       const csvList = await fetchWhitelistCsv();
-      const isCsvWhitelisted = csvList.some(
+      const csvUser = csvList.find(
         (entry) => entry.phone === phoneNumber && entry.password === password
       );
-      if (isCsvWhitelisted) {
+      if (csvUser) {
         setShowSuccess(true);
         setTimeout(() => {
-          saveAuthSession(phoneNumber);
-          onLogin(phoneNumber);
+          saveAuthSession(phoneNumber, csvUser.full_name);
+          onLogin(phoneNumber, csvUser.full_name);
         }, 1000);
         return;
       }
 
       // Then check local in-code whitelist as a fallback
-      const isLocallyWhitelisted = localWhitelist.some(
+      const localUser = localWhitelist.find(
         (entry) => entry.phone === phoneNumber && entry.password === password
       );
-      if (isLocallyWhitelisted) {
+      if (localUser) {
         setShowSuccess(true);
         setTimeout(() => {
-          saveAuthSession(phoneNumber);
-          onLogin(phoneNumber);
+          saveAuthSession(phoneNumber, 'Whitelisted User');
+          onLogin(phoneNumber, 'Whitelisted User');
         }, 1000);
         return;
       }

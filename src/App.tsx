@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LoginPage } from './components/LoginPage';
 import IntegratedKeralaMap from './components/IntegratedKeralaMap';
-import { isAuthenticated, getCurrentUser, clearAuthSession } from './utils/auth';
+import { isAuthenticated, getCurrentUser, getCurrentUserName, clearAuthSession } from './utils/auth';
 import { LogOut, User, AlertTriangle, RotateCcw, Maximize2 } from 'lucide-react';
 
 // Error Boundary Component for graceful error handling
@@ -51,6 +51,7 @@ class ErrorBoundary extends React.Component<
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [currentUserName, setCurrentUserName] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
   // Check authentication status on app initialization
@@ -59,15 +60,18 @@ const App: React.FC = () => {
       try {
         const authenticated = isAuthenticated();
         const user = getCurrentUser();
+        const userName = getCurrentUserName();
         
         setIsLoggedIn(authenticated);
         setCurrentUser(user);
+        setCurrentUserName(userName);
       } catch (error) {
         console.error('Error checking authentication status:', error);
         // Clear potentially corrupted session
         clearAuthSession();
         setIsLoggedIn(false);
         setCurrentUser(null);
+        setCurrentUserName(null);
       } finally {
         setIsInitializing(false);
       }
@@ -132,9 +136,10 @@ const App: React.FC = () => {
   }, [isLoggedIn]);
 
   // Handle successful login
-  const handleLogin = (phoneNumber: string) => {
+  const handleLogin = (phoneNumber: string, fullName?: string) => {
     setIsLoggedIn(true);
     setCurrentUser(phoneNumber);
+    setCurrentUserName(fullName || null);
   };
 
   // Handle logout
@@ -143,11 +148,13 @@ const App: React.FC = () => {
       clearAuthSession();
       setIsLoggedIn(false);
       setCurrentUser(null);
+      setCurrentUserName(null);
     } catch (error) {
       console.error('Error during logout:', error);
       // Force logout even if there's an error
       setIsLoggedIn(false);
       setCurrentUser(null);
+      setCurrentUserName(null);
     }
   };
 
@@ -172,67 +179,176 @@ const App: React.FC = () => {
         ) : (
           // Show map application if authenticated
           <div className="relative w-full h-screen overflow-hidden">
-            {/* Header with user info and logout - minimal design */}
-            <div className="absolute top-0 right-0 z-50 p-4 flex flex-col gap-2">
-              <div className="bg-white/10 backdrop-blur-md rounded-lg px-4 py-2 flex items-center space-x-3 border border-white/20">
-                <div className="flex items-center space-x-2 text-white">
-                  <User size={16} />
-                  <span className="text-sm font-medium">
-                    {currentUser ? `+91 ${currentUser}` : 'User'}
-                  </span>
+            {/* New Header Design - Top Section */}
+            <div className="absolute top-0 left-0 right-0 z-50 bg-slate-800/95 backdrop-blur-md border-b border-slate-700/50">
+              <div className="flex items-center justify-between px-6 py-4">
+                {/* Left side - User info */}
+                <div className="flex items-center space-x-4">
+                  <div className="bg-slate-700/50 rounded-lg px-4 py-2 flex items-center space-x-3 border border-slate-600/50">
+                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                      <User size={16} className="text-white" />
+                    </div>
+                    <div className="text-white">
+                      <div className="text-sm font-medium">
+                        {currentUserName || 'User'}
+                      </div>
+                      <div className="text-xs text-slate-300">
+                        {currentUser ? `+91 ${currentUser}` : '+91 9745895354'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="w-px h-8 bg-slate-600"></div>
+                  
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-slate-700/50"
+                    title="Logout"
+                    aria-label="Logout"
+                  >
+                    <LogOut size={16} />
+                    <span className="text-sm">Logout</span>
+                  </button>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="text-white/80 hover:text-white transition-colors duration-200 p-1 rounded hover:bg-white/10"
-                  title="Logout"
-                  aria-label="Logout"
-                >
-                  <LogOut size={16} />
-                </button>
-              </div>
-              
-              {/* Refresh and Fullscreen Controls */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    // We'll need to pass this function to the map component
-                    const iframe = document.querySelector('iframe');
-                    if (iframe) {
-                      iframe.src = iframe.src;
-                    }
-                  }}
-                  className="p-2 bg-gray-600/80 hover:bg-gray-700/80 text-white rounded-md transition-all duration-200"
-                  title="Refresh Map"
-                >
-                  <RotateCcw size={16} />
-                </button>
-                
-                <button
-                  onClick={async () => {
-                    const container = document.getElementById('integrated-map-container');
-                    if (!container) return;
 
-                    try {
-                      if (!document.fullscreenElement) {
-                        await container.requestFullscreen();
-                      } else {
-                        await document.exitFullscreen();
-                      }
-                    } catch (error) {
-                      console.error('Fullscreen error:', error);
-                    }
-                  }}
-                  className="p-2 bg-gray-600/80 hover:bg-gray-700/80 text-white rounded-md transition-all duration-200"
-                  title="Toggle Fullscreen"
-                >
-                  <Maximize2 size={16} />
-                </button>
+                {/* Center - BJP Logo and Mission */}
+                <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">BJP</span>
+                  </div>
+                  <div className="text-white">
+                    <div className="text-lg font-semibold">BJP Mission 2025</div>
+                  </div>
+                </div>
+
+                {/* Right side - Empty space for balance */}
+                <div className="w-48"></div>
               </div>
             </div>
 
-            {/* Main Map Component - Full Screen */}
+            {/* Navigation Bar - Second Section */}
+            <div className="absolute top-20 left-0 right-0 z-40 bg-slate-700/95 backdrop-blur-md border-b border-slate-600/50">
+              <div className="flex items-center justify-between px-6 py-3">
+                {/* Left side - Control buttons */}
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={async () => {
+                      const container = document.getElementById('integrated-map-container');
+                      if (!container) return;
+
+                      try {
+                        if (!document.fullscreenElement) {
+                          await container.requestFullscreen();
+                        } else {
+                          await document.exitFullscreen();
+                        }
+                      } catch (error) {
+                        console.error('Fullscreen error:', error);
+                      }
+                    }}
+                    className="w-10 h-10 bg-slate-600/80 hover:bg-slate-500/80 text-white rounded-full flex items-center justify-center transition-all duration-200"
+                    title="Toggle Fullscreen"
+                  >
+                    <Maximize2 size={18} />
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      const iframe = document.querySelector('iframe');
+                      if (iframe) {
+                        iframe.src = iframe.src;
+                      }
+                    }}
+                    className="w-10 h-10 bg-slate-600/80 hover:bg-slate-500/80 text-white rounded-full flex items-center justify-center transition-all duration-200"
+                    title="Refresh Map"
+                  >
+                    <RotateCcw size={18} />
+                  </button>
+                </div>
+
+                {/* Center - Action buttons */}
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => {
+                      // Trigger performance modal directly
+                      const event = new CustomEvent('show-performance-modal');
+                      window.dispatchEvent(event);
+                    }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center space-x-2 transition-all duration-200"
+                    title="Performance"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 3v18h18"></path>
+                      <path d="m19 9-5 5-4-4-3 3"></path>
+                    </svg>
+                    <span className="text-sm font-medium">Performance</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      // Trigger targets modal directly
+                      const event = new CustomEvent('show-target-modal');
+                      window.dispatchEvent(event);
+                    }}
+                    className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg flex items-center space-x-2 transition-all duration-200"
+                    title="Targets"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <circle cx="12" cy="12" r="6"></circle>
+                      <circle cx="12" cy="12" r="2"></circle>
+                    </svg>
+                    <span className="text-sm font-medium">Targets</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      // Trigger contacts modal directly
+                      const event = new CustomEvent('show-contacts-modal');
+                      window.dispatchEvent(event);
+                    }}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center space-x-2 transition-all duration-200"
+                    title="Contacts"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="m22 21-3-3m0 0a2 2 0 1 0-2.828-2.828A2 2 0 0 0 19 18Z"></path>
+                    </svg>
+                    <span className="text-sm font-medium">Contacts</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      // Trigger PDF export directly
+                      const event = new CustomEvent('export-pdf');
+                      window.dispatchEvent(event);
+                    }}
+                    className="px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg flex items-center space-x-2 transition-all duration-200"
+                    title="Export"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7,10 12,15 17,10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span className="text-sm font-medium">Export</span>
+                  </button>
+                </div>
+
+                {/* Right side - Empty for now, can add more controls later */}
+                <div className="w-24"></div>
+              </div>
+            </div>
+
+            {/* Main Map Component - Adjusted for header */}
             <div className="w-full h-full">
               <IntegratedKeralaMap />
+            </div>
+
+            {/* Progress Bar at Bottom */}
+            <div className="absolute bottom-0 left-0 right-0 z-30">
+              <div className="h-1 bg-blue-500"></div>
             </div>
           </div>
         )}

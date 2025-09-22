@@ -594,25 +594,29 @@
     }
     
     .custom-popup .leaflet-popup-close-button {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 107, 53, 0.9);
       border-radius: 50%;
       width: 32px;
       height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: rgba(255, 255, 255, 0.8);
+      color: white;
       font-size: 18px;
-      font-weight: 600;
+      font-weight: 700;
       text-decoration: none;
       transition: all 0.2s ease;
       backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
     }
     
     .custom-popup .leaflet-popup-close-button:hover {
-      background: rgba(255, 107, 53, 0.2);
-      color: #FF6B35;
+      background: #FF6B35;
+      color: white;
       transform: scale(1.1);
+      box-shadow: 0 6px 16px rgba(255, 107, 53, 0.6);
+      border-color: rgba(255, 255, 255, 0.5);
     }
     
     /* Scrollbar styling for popup content */
@@ -1524,7 +1528,19 @@ Trikkarippur,Neeleshwaram
         style:f=>({color:"#111",weight:1,fillColor:colorFor(prop(f,KEYS.org)),fillOpacity:0.8}),
         onEachFeature:(f,l)=>l.on('click',()=>showACs(f))
       }).addTo(map);
-      safeFit(layer);
+      
+      // Use controlled zoom instead of fitBounds to prevent excessive zooming
+      try {
+        const bounds = layer.getBounds();
+        const center = bounds.getCenter();
+        // Set a maximum zoom level for org districts view
+        const maxZoom = 9;
+        map.setView(center, Math.min(maxZoom, map.getZoom() + 1));
+      } catch(e) {
+        // Fallback to safeFit if there's an error
+        safeFit(layer);
+      }
+      
       buildLegend([...new Set(subset.features.map(f=>prop(f,KEYS.org)))]);
       addLabels(layer, KEYS.org, 'lbl-org');
       backBtn.style.display="inline-block";

@@ -2,6 +2,7 @@
 
 export interface AuthSession {
   phoneNumber: string;
+  fullName?: string;
   loginTime: number;
   isAuthenticated: boolean;
 }
@@ -12,9 +13,10 @@ const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 /**
  * Save authentication session to localStorage
  */
-export function saveAuthSession(phoneNumber: string): void {
+export function saveAuthSession(phoneNumber: string, fullName?: string): void {
   const session: AuthSession = {
     phoneNumber,
+    fullName,
     loginTime: Date.now(),
     isAuthenticated: true
   };
@@ -66,6 +68,14 @@ export function isAuthenticated(): boolean {
 export function getCurrentUser(): string | null {
   const session = getAuthSession();
   return session?.phoneNumber || null;
+}
+
+/**
+ * Get current user's full name
+ */
+export function getCurrentUserName(): string | null {
+  const session = getAuthSession();
+  return session?.fullName || null;
 }
 
 /**

@@ -13,6 +13,7 @@ import { loadLocalBodyContactData, getLocalBodyContactData } from '../utils/load
 import { loadZoneTargetData, getZoneTargetData } from '../utils/loadZoneTargetData';
 import { useMobileDetection, optimizeTouchInteractions } from '../utils/mobileDetection';
 import { generateMapPDF, generateMapPDFMobile } from '../utils/mapPdfExporter';
+import { loadZoneContactData, getZoneContactData } from '../utils/loadZoneContactData';
 import { Maximize2, Minimize2, RotateCcw, MapPin, Download, Info, HelpCircle, Settings } from 'lucide-react';
 
 interface IntegratedKeralaMapProps {
@@ -56,6 +57,8 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
     loadOrgDistrictContacts().then(setOrgDistrictContacts);
     loadMandalContactData();
     loadLocalBodyContactData();
+    // Load zone contact data
+    loadZoneContactData();
   }, []);
 
   // Initialize mobile optimizations
@@ -709,14 +712,10 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
     const mandalName = currentMapContext.mandal;
 
     if (level === 'zones') {
-      // Hardcoded zone leadership data
-      return [
-        { name: "Thiruvananthapuram", inchargeName: "Shri.B.B Gopakumar", inchargePhone: "9447472265", presidentName: "Shri Mukkam Palamood Biju", presidentPhone: "9995358151" },
-        { name: "Alappuzha", inchargeName: "Shri.N.Hari", inchargePhone: "9446924053", presidentName: "Shri Sandeep Vachaspathy", presidentPhone: "9947576800" },
-        { name: "Ernakulam", inchargeName: "Shri.V.Unnikrishnan Master", inchargePhone: "9447630600", presidentName: "KS Shyju", presidentPhone: "9747473770" },
-        { name: "Palakkad", inchargeName: "Shri.K.Narayanan Master", inchargePhone: "9447004994", presidentName: "Prasanth Sivan", presidentPhone: "9037424212" },
-        { name: "Kozhikode", inchargeName: "Shri.O.Nidheesh", inchargePhone: "8075480152", presidentName: "CR Praful Krishnan", presidentPhone: "9745334700" },
-      ];
+      // Use zone contact data from CSV
+      const zoneData = getZoneContactData();
+      console.log('🏛️ Zone contact data requested:', zoneData);
+      return zoneData;
     } else if (level === 'orgs' && zoneName) {
       // Zone mapping for org districts
       const zoneMapping: { [orgDistrict: string]: string } = {
@@ -842,9 +841,34 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     window.addEventListener('message', handleMessage);
     
+    // Handle PDF export from header
+    const handleExportPDFEvent = () => {
+      handleExportPDF();
+    };
+    window.addEventListener('export-pdf', handleExportPDFEvent);
+    
+    // Handle modal events from header
+    const handleShowPerformanceModal = () => {
+      setShowPerformanceModal(true);
+    };
+    const handleShowTargetModal = () => {
+      setShowTargetModal(true);
+    };
+    const handleShowContactsModal = () => {
+      setShowLeadershipModal(true);
+    };
+    
+    window.addEventListener('show-performance-modal', handleShowPerformanceModal);
+    window.addEventListener('show-target-modal', handleShowTargetModal);
+    window.addEventListener('show-contacts-modal', handleShowContactsModal);
+    
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       window.removeEventListener('message', handleMessage);
+      window.removeEventListener('export-pdf', handleExportPDFEvent);
+      window.removeEventListener('show-performance-modal', handleShowPerformanceModal);
+      window.removeEventListener('show-target-modal', handleShowTargetModal);
+      window.removeEventListener('show-contacts-modal', handleShowContactsModal);
     };
   }, [onBack, onHome]);
 
@@ -960,70 +984,16 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
 
 
 
-      {/* Dashboard Navigation Buttons - Compact Design */}
-      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10 flex flex-col gap-1">
-        <div className="flex gap-1 justify-center">
-          <button
-            onClick={() => setShowLeadershipModal(true)}
-            className="px-2 py-1 bg-green-600/80 hover:bg-green-700/80 text-white rounded-md flex items-center gap-1 transition-all duration-200 text-xs font-medium group relative"
-            title="View Contact Information"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="m22 21-3-3m0 0a2 2 0 1 0-2.828-2.828A2 2 0 0 0 19 18Z"></path>
-            </svg>
-            <span>Contacts</span>
-            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-              View Leadership Contacts
-            </div>
-          </button>
-          
-          <button
-            onClick={() => setShowPerformanceModal(true)}
-            className="px-2 py-1 bg-blue-600/80 hover:bg-blue-700/80 text-white rounded-md flex items-center gap-1 transition-all duration-200 text-xs font-medium group relative"
-            title="View Performance Data"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 3v18h18"></path>
-              <path d="m19 9-5 5-4-4-3 3"></path>
-            </svg>
-            <span>Performance</span>
-            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-              View Vote Share Data
-            </div>
-          </button>
-          
-          <button
-            onClick={() => setShowTargetModal(true)}
-            className="px-2 py-1 bg-orange-600/80 hover:bg-orange-700/80 text-white rounded-md flex items-center gap-1 transition-all duration-200 text-xs font-medium group relative"
-            title="View Target Data"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <circle cx="12" cy="12" r="6"></circle>
-              <circle cx="12" cy="12" r="2"></circle>
-            </svg>
-            <span>Targets</span>
-            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-              View Election Targets
-            </div>
-          </button>
-        </div>
-        
-        {/* Help Button */}
-        <div className="flex justify-center">
-          <button
-            onClick={() => setShowHelpModal(true)}
-            className="px-2 py-1 bg-gray-600/60 hover:bg-gray-700/60 text-white rounded-md transition-all duration-200 text-xs group relative"
-            title="Help & Instructions"
-          >
-            <HelpCircle size={10} />
-            <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-              Help & Instructions
-            </div>
-          </button>
-        </div>
+      {/* Help Button - Keep only help button for now */}
+      <div className="absolute top-2 right-2 z-10">
+        <button
+          onClick={() => setShowHelpModal(true)}
+          className="px-3 py-2 bg-gray-600/60 hover:bg-gray-700/60 text-white rounded-lg transition-all duration-200 text-sm group relative flex items-center space-x-2"
+          title="Help & Instructions"
+        >
+          <HelpCircle size={16} />
+          <span>Help</span>
+        </button>
       </div>
 
       {/* Loading Indicator */}
@@ -1068,16 +1038,16 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
         title="Kerala Interactive Map - Navigate through zones, districts, assembly constituencies, and mandals"
         className="w-full h-full border-none bg-gradient-primary touch-manipulation"
         style={{ 
-          height: '100vh',
+          height: 'calc(100vh - 140px)',
           width: '100vw',
-          minHeight: '100vh',
-          maxHeight: '100vh',
+          minHeight: 'calc(100vh - 140px)',
+          maxHeight: 'calc(100vh - 140px)',
           backgroundColor: '#1F2937',
           touchAction: 'manipulation',
           userSelect: 'none',
           WebkitOverflowScrolling: 'touch',
           position: 'absolute',
-          top: 0,
+          top: '140px',
           left: 0,
           zIndex: 1
         }}
