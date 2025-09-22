@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './styles/index.css';
 import { env, logEnvironmentInfo, validateEnvironment } from './utils/env';
+import './utils/cacheManager'; // Import cache manager for global access
 
 // Log environment information and validate configuration
 try {
@@ -77,12 +78,35 @@ const registerServiceWorker = async () => {
               if (env.isProduction) {
                 const shouldUpdate = confirm('A new version is available. Refresh to update?');
                 if (shouldUpdate) {
-                  window.location.reload();
+                  // Clear any existing caches before reload
+                  if ('caches' in window) {
+                    caches.keys().then(cacheNames => {
+                      return Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                      );
+                    }).then(() => {
+                      window.location.reload();
+                    });
+                  } else {
+                    window.location.reload();
+                  }
                 }
               } else {
-                // Auto-refresh in development
+                // Auto-refresh in development with cache clearing
                 console.log('🔄 Auto-refreshing in development mode...');
-                setTimeout(() => window.location.reload(), 1000);
+                setTimeout(() => {
+                  if ('caches' in window) {
+                    caches.keys().then(cacheNames => {
+                      return Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                      );
+                    }).then(() => {
+                      window.location.reload();
+                    });
+                  } else {
+                    window.location.reload();
+                  }
+                }, 1000);
               }
             } else {
               // First time install

@@ -92,6 +92,7 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
+      overflow: auto;
     }
 
     .btn {
@@ -682,6 +683,47 @@
       background: rgba(255, 107, 53, 0.7);
     }
     
+    /* Custom scrollbar styling for map */
+    html::-webkit-scrollbar,
+    body::-webkit-scrollbar,
+    #map::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+    
+    html::-webkit-scrollbar-track,
+    body::-webkit-scrollbar-track,
+    #map::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.3);
+      border-radius: 6px;
+    }
+    
+    html::-webkit-scrollbar-thumb,
+    body::-webkit-scrollbar-thumb,
+    #map::-webkit-scrollbar-thumb {
+      background: rgba(255, 107, 53, 0.6);
+      border-radius: 6px;
+      border: 2px solid rgba(15, 23, 42, 0.3);
+    }
+    
+    html::-webkit-scrollbar-thumb:hover,
+    body::-webkit-scrollbar-thumb:hover,
+    #map::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 107, 53, 0.8);
+    }
+    
+    html::-webkit-scrollbar-corner,
+    body::-webkit-scrollbar-corner,
+    #map::-webkit-scrollbar-corner {
+      background: rgba(15, 23, 42, 0.3);
+    }
+    
+    /* Firefox scrollbar styling */
+    html {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 107, 53, 0.6) rgba(15, 23, 42, 0.3);
+    }
+
     /* Responsive modal */
     @media (max-width: 768px) {
       #detailedModal > div {

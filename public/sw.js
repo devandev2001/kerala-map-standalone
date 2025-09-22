@@ -1,13 +1,13 @@
 // Kerala Map Standalone - Service Worker for PWA Functionality
-// Dynamic cache versioning based on build timestamp
-const CACHE_VERSION = Date.now(); // Dynamic version for each deployment
-const BUILD_TIMESTAMP = new Date().toISOString(); // Current build timestamp
+// Stable cache versioning based on app version
+const APP_VERSION = '1.0.0'; // This should match your app version
+const CACHE_VERSION = APP_VERSION.replace(/\./g, '-'); // Convert dots to dashes
 const CACHE_NAME = `kerala-map-standalone-v${CACHE_VERSION}`;
 const STATIC_CACHE = `kerala-map-static-v${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `kerala-map-dynamic-v${CACHE_VERSION}`;
 
-// Cache expiry time (in milliseconds) - 2 minutes for SUPER aggressive updates
-const CACHE_EXPIRY = 2 * 60 * 1000;
+// Cache expiry time (in milliseconds) - 24 hours for stable caching
+const CACHE_EXPIRY = 24 * 60 * 60 * 1000;
 
 // Assets to cache immediately
 const STATIC_ASSETS = [
@@ -43,38 +43,26 @@ const CSV_DATA_ASSETS = [
   '/data/org_districts_contacts.csv'
 ];
 
-// Install event - cache static assets and force immediate activation
+// Install event - cache static assets with stable versioning
 self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker: Installing with AGGRESSIVE cache clearing...');
+  console.log('🔧 Service Worker: Installing with stable cache versioning...');
   event.waitUntil(
     Promise.all([
-      // Clear ALL existing caches first (including browser cache)
+      // Only clear old caches, not all caches
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            console.log('🗑️ Service Worker: AGGRESSIVELY clearing old cache', cacheName);
-            return caches.delete(cacheName);
+            // Only delete caches that don't match current version
+            if (!cacheName.includes(CACHE_VERSION)) {
+              console.log('🗑️ Service Worker: Clearing old cache', cacheName);
+              return caches.delete(cacheName);
+            }
           })
         );
       }),
-      // Clear browser cache if possible
-      new Promise((resolve) => {
-        if ('storage' in navigator && 'estimate' in navigator.storage) {
-          navigator.storage.estimate().then((estimate) => {
-            console.log('🗑️ Service Worker: Clearing browser storage');
-            if ('clear' in navigator.storage) {
-              navigator.storage.clear().then(resolve).catch(resolve);
-            } else {
-              resolve();
-            }
-          });
-        } else {
-          resolve();
-        }
-      }),
-      // Then cache new static assets
+      // Cache new static assets
       caches.open(STATIC_CACHE).then((cache) => {
-        console.log('📦 Service Worker: Caching fresh static assets');
+        console.log('📦 Service Worker: Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       }),
       // Cache map data for offline functionality
@@ -87,7 +75,7 @@ self.addEventListener('install', (event) => {
       })
     ])
     .then(() => {
-      console.log('✅ Service Worker: Installation complete with AGGRESSIVE cache refresh');
+      console.log('✅ Service Worker: Installation complete');
       return self.skipWaiting(); // Force immediate activation
     })
     .catch((error) => {
@@ -96,16 +84,16 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event - clean up old caches and take control immediately
+// Activate event - clean up old caches and take control
 self.addEventListener('activate', (event) => {
-  console.log('🚀 Service Worker: Activating with aggressive cache cleanup...');
+  console.log('🚀 Service Worker: Activating with selective cache cleanup...');
   event.waitUntil(
     Promise.all([
-      // Delete ALL old caches (aggressive cleanup)
+      // Delete only old caches (not current version)
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+            if (!cacheName.includes(CACHE_VERSION)) {
               console.log('🗑️ Service Worker: Deleting old cache', cacheName);
               return caches.delete(cacheName);
             }
@@ -114,12 +102,12 @@ self.addEventListener('activate', (event) => {
       }),
       // Clear expired cache entries
       clearExpiredCache(),
-      // Take control of all clients immediately
+      // Take control of all clients
       self.clients.claim()
     ])
     .then(() => {
-      console.log('✅ Service Worker: Activation complete with cache cleanup');
-      // Notify all clients to refresh
+      console.log('✅ Service Worker: Activation complete');
+      // Notify all clients about cache update
       return self.clients.matchAll().then((clients) => {
         clients.forEach((client) => {
           client.postMessage({ type: 'CACHE_UPDATED' });

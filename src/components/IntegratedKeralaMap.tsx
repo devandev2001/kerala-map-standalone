@@ -1030,35 +1030,45 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
         </div>
       )}
 
-      {/* Map Iframe - Full Screen Optimized */}
-      <iframe
-        ref={iframeRef}
-        id="main-map-content"
-        src="/map/pan.html"
-        title="Kerala Interactive Map - Navigate through zones, districts, assembly constituencies, and mandals"
-        className="w-full h-full border-none bg-gradient-primary touch-manipulation"
-        style={{ 
-          height: 'calc(100vh - 140px)',
-          width: '100vw',
-          minHeight: 'calc(100vh - 140px)',
-          maxHeight: 'calc(100vh - 140px)',
-          backgroundColor: '#1F2937',
-          touchAction: 'manipulation',
-          userSelect: 'none',
-          WebkitOverflowScrolling: 'touch',
+      {/* Map Container with Scroll Support */}
+      <div 
+        className="map-scroll-container"
+        style={{
           position: 'absolute',
           top: '140px',
           left: 0,
-          zIndex: 1
+          width: '100vw',
+          height: 'calc(100vh - 140px)',
+          overflow: 'auto',
+          zIndex: 1,
+          backgroundColor: '#1F2937'
         }}
-        onLoad={handleIframeLoad}
-        onError={handleIframeError}
-        allowFullScreen
-        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-        aria-label="Interactive map of Kerala showing political boundaries and data"
-        role="application"
-        tabIndex={0}
-      />
+      >
+        <iframe
+          ref={iframeRef}
+          id="main-map-content"
+          src="/map/pan.html"
+          title="Kerala Interactive Map - Navigate through zones, districts, assembly constituencies, and mandals"
+          className="w-full h-full border-none bg-gradient-primary touch-manipulation"
+          style={{ 
+            height: 'calc(100vh - 140px)',
+            width: '100vw',
+            minHeight: 'calc(100vh - 140px)',
+            backgroundColor: '#1F2937',
+            touchAction: 'manipulation',
+            userSelect: 'none',
+            WebkitOverflowScrolling: 'touch',
+            display: 'block'
+          }}
+          onLoad={handleIframeLoad}
+          onError={handleIframeError}
+          allowFullScreen
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+          aria-label="Interactive map of Kerala showing political boundaries and data"
+          role="application"
+          tabIndex={0}
+        />
+      </div>
 
       {/* Performance Modal - Mobile Optimized */}
       {showPerformanceModal && (

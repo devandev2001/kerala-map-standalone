@@ -78,6 +78,16 @@ const App: React.FC = () => {
     };
 
     checkAuthStatus();
+    
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (isInitializing) {
+        console.warn('⚠️ App initialization timeout - forcing completion');
+        setIsInitializing(false);
+      }
+    }, 10000); // 10 second timeout
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Keyboard navigation support
@@ -165,6 +175,26 @@ const App: React.FC = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
           <p className="text-white text-lg">Loading Kerala Map...</p>
+          <p className="text-white/70 text-sm mt-2">If this takes too long, try refreshing the page</p>
+          <button
+            onClick={() => {
+              // Clear caches and reload if loading takes too long
+              if ('caches' in window) {
+                caches.keys().then(cacheNames => {
+                  return Promise.all(
+                    cacheNames.map(cacheName => caches.delete(cacheName))
+                  );
+                }).then(() => {
+                  window.location.reload();
+                });
+              } else {
+                window.location.reload();
+              }
+            }}
+            className="mt-4 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors duration-200"
+          >
+            Force Refresh
+          </button>
         </div>
       </div>
     );
