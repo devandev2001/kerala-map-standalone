@@ -335,48 +335,69 @@
     .lbl { 
       font-weight: 600;
       color: var(--text-primary);
-      background: none;
-      padding: 0;
-      border: none;
-      box-shadow: none;
       pointer-events: none;
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 1px 3px rgba(0, 0, 0, 0.7);
       font-family: var(--font-display);
       letter-spacing: 0.025em;
+      /* Allow text wrapping for long labels */
+      white-space: normal !important;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+      hyphens: auto !important;
+      line-height: 1.2 !important;
     }
 
     .centered-label {
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
+      display: block !important;
+      text-align: center !important;
+      width: 70px !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+    
+    .wrapped-label {
+      width: 70px !important;
+      height: auto !important;
+      white-space: normal !important;
+      word-wrap: break-word !important;
+      overflow-wrap: break-word !important;
+      text-align: center !important;
+      line-height: 1.1 !important;
+      font-size: 0.75rem !important;
+      background: rgba(0, 0, 0, 0.85) !important;
+      padding: 3px 5px !important;
+      border-radius: 4px !important;
+      border: 1px solid rgba(255, 255, 255, 0.4) !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+      backdrop-filter: blur(4px) !important;
     }
 
     .lbl-zone { 
-      font-size: 0.75rem; 
+      font-size: 0.65rem; 
       font-weight: 700; 
       color: var(--text-accent);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
     .lbl-org { 
-      font-size: 0.875rem; 
+      font-size: 0.55rem; 
       font-weight: 700; 
       color: var(--text-primary);
-      letter-spacing: 0.05em;
+      letter-spacing: 0.02em;
     }
     .lbl-ac { 
-      font-size: 0.8125rem; 
+      font-size: 0.6rem; 
       font-weight: 600;
       color: var(--text-secondary);
     }
     .lbl-mandal { 
-      font-size: 0.8125rem; 
+      font-size: 0.6rem; 
       font-weight: 700;
       color: var(--primary);
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
     }
     .lbl-pan { 
-      font-size: 0.75rem; 
+      font-size: 0.58rem; 
       font-weight: 500;
       color: var(--text-muted);
     }
@@ -528,28 +549,28 @@
       }
       
       .lbl-zone {
-        font-size: 0.625rem !important;
+        font-size: 0.55rem !important;
         font-weight: 600 !important;
         letter-spacing: 0.02em !important;
       }
       
       .lbl-org {
-        font-size: 0.75rem !important;
+        font-size: 0.48rem !important;
         font-weight: 600 !important;
       }
       
       .lbl-ac {
-        font-size: 0.6875rem !important;
+        font-size: 0.52rem !important;
         font-weight: 500 !important;
       }
       
       .lbl-mandal {
-        font-size: 0.6875rem !important;
+        font-size: 0.52rem !important;
         font-weight: 600 !important;
       }
       
       .lbl-pan {
-        font-size: 0.625rem !important;
+        font-size: 0.5rem !important;
         font-weight: 500 !important;
       }
       
@@ -1152,13 +1173,12 @@
                 text-align: center;
                 white-space: nowrap;
                 background: rgba(0, 0, 0, 0.8);
-                padding: 3px 6px;
+                padding: 2px 4px;
                 border-radius: 3px;
                 border: 1px solid rgba(255, 255, 255, 0.4);
                 backdrop-filter: blur(4px);
                 font-weight: 600;
                 letter-spacing: 0.3px;
-                min-width: fit-content;
                 display: inline-block;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
               ">${name}</div>
