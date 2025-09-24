@@ -1840,139 +1840,14 @@ Trikkarippur,Neeleshwaram
             voterSummary = findLocalBodyByName(panchayatName);
           }
           
-          // Enhanced Modern Popup Design
-          let popupContent = `<div style="font-family: 'Inter', sans-serif; max-width: 480px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%); border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);">`;
-          
-          // Header with gradient background
-          popupContent += `<div style="background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%); padding: 20px; position: relative; overflow: hidden;">`;
-          popupContent += `<div style="position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; transform: translate(30px, -30px);"></div>`;
-          popupContent += `<div style="position: relative; z-index: 2;">`;
-          popupContent += `<h2 style="color: white; margin: 0 0 8px 0; font-size: 22px; font-weight: 700; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);">🏛️ ${panchayatName}</h2>`;
-          
-          if (voterSummary) {
-            popupContent += `<p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 500;">📍 ${voterSummary.mandal} Mandal • ${voterSummary.ac} AC • ${voterSummary.zone} Zone</p>`;
-          } else {
-            popupContent += `<p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 500;">📍 ${mandalName} Mandal • ${acName} AC • ${zoneName} Zone</p>`;
-          }
-          popupContent += `</div>`;
-          popupContent += `</div>`;
-          
-          if (voterSummary) {
-            // Main content area
-            popupContent += `<div style="padding: 24px;">`;
-            
-            // Key Stats Cards
-            popupContent += `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">`;
-            popupContent += `<div style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%); border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 12px; padding: 16px; text-align: center;">`;
-            popupContent += `<div style="font-size: 24px; font-weight: 800; color: #FFD700; margin-bottom: 4px;">${voterSummary.totalWards}</div>`;
-            popupContent += `<div style="font-size: 12px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Total Wards</div>`;
-            popupContent += `</div>`;
-            popupContent += `<div style="background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 12px; padding: 16px; text-align: center;">`;
-            popupContent += `<div style="font-size: 24px; font-weight: 800; color: #34D399; margin-bottom: 4px;">${voterSummary.totalHouses.toLocaleString()}</div>`;
-            popupContent += `<div style="font-size: 12px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Total Houses</div>`;
-            popupContent += `</div>`;
-            popupContent += `<div style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 1px solid rgba(96, 165, 250, 0.2); border-radius: 12px; padding: 16px; text-align: center;">`;
-            popupContent += `<div style="font-size: 24px; font-weight: 800; color: #60A5FA; margin-bottom: 4px;">${voterSummary.totalVoters.toLocaleString()}</div>`;
-            popupContent += `<div style="font-size: 12px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Total Voters</div>`;
-            popupContent += `</div>`;
-            popupContent += `</div>`;
-            
-            // Demographics Section with Visual Bars
-            popupContent += `<div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 16px; padding: 20px; margin-bottom: 20px; backdrop-filter: blur(10px);">`;
-            popupContent += `<h4 style="color: #F8FAFC; margin: 0 0 16px 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px;">👥 Voter Demographics</h4>`;
-            
-            // Female voters with progress bar
-            popupContent += `<div style="margin-bottom: 16px;">`;
-            popupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">`;
-            popupContent += `<span style="color: #CBD5E1; font-size: 14px; font-weight: 500;">👩 Female Voters</span>`;
-            popupContent += `<span style="color: #34D399; font-weight: 700; font-size: 16px;">${voterSummary.femaleVoters.toLocaleString()} (${voterSummary.femalePercentage.toFixed(1)}%)</span>`;
-            popupContent += `</div>`;
-            popupContent += `<div style="background: rgba(52, 211, 153, 0.2); height: 8px; border-radius: 4px; overflow: hidden;">`;
-            popupContent += `<div style="background: linear-gradient(90deg, #34D399, #10B981); height: 100%; width: ${voterSummary.femalePercentage}%; border-radius: 4px; transition: width 0.8s ease;"></div>`;
-            popupContent += `</div>`;
-            popupContent += `</div>`;
-            
-            // Male voters with progress bar
-            popupContent += `<div style="margin-bottom: ${voterSummary.transgenderVoters > 0 ? '16px' : '0'};">`;
-            popupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">`;
-            popupContent += `<span style="color: #CBD5E1; font-size: 14px; font-weight: 500;">👨 Male Voters</span>`;
-            popupContent += `<span style="color: #60A5FA; font-weight: 700; font-size: 16px;">${voterSummary.maleVoters.toLocaleString()} (${voterSummary.malePercentage.toFixed(1)}%)</span>`;
-            popupContent += `</div>`;
-            popupContent += `<div style="background: rgba(96, 165, 250, 0.2); height: 8px; border-radius: 4px; overflow: hidden;">`;
-            popupContent += `<div style="background: linear-gradient(90deg, #60A5FA, #3B82F6); height: 100%; width: ${voterSummary.malePercentage}%; border-radius: 4px; transition: width 0.8s ease;"></div>`;
-            popupContent += `</div>`;
-            popupContent += `</div>`;
-            
-            // Transgender voters (if any)
-            if (voterSummary.transgenderVoters > 0) {
-              popupContent += `<div>`;
-              popupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">`;
-              popupContent += `<span style="color: #CBD5E1; font-size: 14px; font-weight: 500;">🏳️‍⚧️ Transgender Voters</span>`;
-              popupContent += `<span style="color: #F472B6; font-weight: 700; font-size: 16px;">${voterSummary.transgenderVoters.toLocaleString()} (${voterSummary.transgenderPercentage.toFixed(1)}%)</span>`;
-              popupContent += `</div>`;
-              popupContent += `<div style="background: rgba(244, 114, 182, 0.2); height: 8px; border-radius: 4px; overflow: hidden;">`;
-              popupContent += `<div style="background: linear-gradient(90deg, #F472B6, #EC4899); height: 100%; width: ${voterSummary.transgenderPercentage}%; border-radius: 4px; transition: width 0.8s ease;"></div>`;
-              popupContent += `</div>`;
-              popupContent += `</div>`;
+          // Direct click to open detailed modal instead of popup
+          l.on('click', () => {
+            if (voterSummary) {
+              openDetailedModal(panchayatName, voterSummary.mandal, voterSummary.ac, voterSummary.orgDist, voterSummary.zone, voterSummary);
+            } else {
+              // Show a simple notification if no data is available
+              alert(`Data not available for ${panchayatName}`);
             }
-            popupContent += `</div>`;
-            
-            // Top Wards Section with Enhanced Cards
-            if (voterSummary.topWards.length > 0) {
-              popupContent += `<div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 16px; padding: 20px; backdrop-filter: blur(10px);">`;
-              popupContent += `<h4 style="color: #F8FAFC; margin: 0 0 16px 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px;">📋 Wards in Order</h4>`;
-              
-              voterSummary.topWards.forEach((ward, index) => {
-                // Use consistent styling for all wards since they're in order, not ranked
-                const wardColor = '#60A5FA';
-                
-                popupContent += `<div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%); border: 1px solid rgba(96, 165, 250, 0.3); border-radius: 12px; padding: 16px; margin-bottom: ${index === voterSummary.topWards.length - 1 ? '0' : '12px'}; position: relative; overflow: hidden;">`;
-                
-                // Ward number badge
-                popupContent += `<div style="position: absolute; top: -8px; right: -8px; width: 40px; height: 40px; background: ${wardColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: white; transform: rotate(12deg); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);">`;
-                popupContent += ward.wardNumber;
-                popupContent += `</div>`;
-                
-                popupContent += `<div style="margin-right: 32px;">`;
-                popupContent += `<div style="color: #F8FAFC; font-size: 16px; font-weight: 600; margin-bottom: 8px;">${ward.ward}</div>`;
-                popupContent += `<div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">`;
-                popupContent += `<div style="display: flex; align-items: center; gap: 6px;">`;
-                popupContent += `<span style="background: rgba(52, 211, 153, 0.2); color: #34D399; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">Ward ${ward.wardNumber}</span>`;
-                popupContent += `</div>`;
-                popupContent += `<div style="color: #60A5FA; font-size: 14px; font-weight: 600;">👥 ${ward.totalVoters.toLocaleString()} voters</div>`;
-                popupContent += `<div style="color: #FFD700; font-size: 14px; font-weight: 600;">🏠 ${ward.houses.toLocaleString()} houses</div>`;
-                popupContent += `</div>`;
-                popupContent += `</div>`;
-                popupContent += `</div>`;
-              });
-              
-              popupContent += `</div>`;
-            }
-            
-            // Add detailed view button
-            popupContent += `<div style="padding: 20px; border-top: 1px solid rgba(255, 107, 53, 0.2);">`;
-            popupContent += `<button onclick="openDetailedModal('${panchayatName}', '${voterSummary.mandal}', '${voterSummary.ac}', '${voterSummary.orgDist}', '${voterSummary.zone}', ${JSON.stringify(voterSummary).replace(/"/g, '&quot;')})" style="width: 100%; background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%); color: white; border: none; border-radius: 10px; padding: 12px 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);">`;
-            popupContent += `📊 View Detailed Report`;
-            popupContent += `</button>`;
-            popupContent += `</div>`;
-            
-            popupContent += `</div>`; // Close main content
-          } else {
-            // No data available
-            popupContent += `<div style="padding: 24px; text-align: center;">`;
-            popupContent += `<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 20px;">`;
-            popupContent += `<div style="font-size: 48px; margin-bottom: 12px;">⚠️</div>`;
-            popupContent += `<h4 style="color: #F59E0B; margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">Data Not Available</h4>`;
-            popupContent += `<p style="color: #94A3B8; margin: 0; font-size: 14px;">Voter data is not available for this local body</p>`;
-            popupContent += `</div>`;
-            popupContent += `</div>`;
-          }
-          
-          popupContent += `</div>`;
-          
-          l.bindPopup(popupContent, {
-            maxWidth: 500,
-            className: 'custom-popup'
           });
         }
       }).addTo(map);
@@ -2062,105 +1937,14 @@ Trikkarippur,Neeleshwaram
             }
           }
           
-          // Enhanced Ward Popup Design
-          let wardPopupContent = `<div style="font-family: 'Inter', sans-serif; max-width: 360px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%); border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);">`;
-          
-          // Header
-          wardPopupContent += `<div style="background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%); padding: 18px; position: relative; overflow: hidden;">`;
-          wardPopupContent += `<div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%;"></div>`;
-          wardPopupContent += `<h3 style="color: white; margin: 0 0 6px 0; font-size: 20px; font-weight: 700; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);">🏘️ ${wardName}</h3>`;
-          wardPopupContent += `<p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 13px; font-weight: 500;">📍 ${mandalName} Mandal • ${acName} AC • ${zoneName} Zone</p>`;
-          wardPopupContent += `</div>`;
-          
-          if (wardData) {
-            wardPopupContent += `<div style="padding: 20px;">`;
-            
-            // Local Body Info
-            wardPopupContent += `<div style="background: rgba(255, 107, 53, 0.1); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 10px; padding: 12px; margin-bottom: 16px; text-align: center;">`;
-            wardPopupContent += `<div style="color: #FF6B35; font-size: 14px; font-weight: 600; margin-bottom: 4px;">🏛️ Local Body</div>`;
-            wardPopupContent += `<div style="color: #F8FAFC; font-size: 16px; font-weight: 700;">${wardData.localBody}</div>`;
-            wardPopupContent += `</div>`;
-            
-            // Ward Stats
-            wardPopupContent += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">`;
-            wardPopupContent += `<div style="background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 10px; padding: 14px; text-align: center;">`;
-            wardPopupContent += `<div style="font-size: 20px; font-weight: 800; color: #34D399; margin-bottom: 4px;">${wardData.houses.toLocaleString()}</div>`;
-            wardPopupContent += `<div style="font-size: 11px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Houses</div>`;
-            wardPopupContent += `</div>`;
-            wardPopupContent += `<div style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 1px solid rgba(96, 165, 250, 0.2); border-radius: 10px; padding: 14px; text-align: center;">`;
-            wardPopupContent += `<div style="font-size: 20px; font-weight: 800; color: #60A5FA; margin-bottom: 4px;">${wardData.totalVoters.toLocaleString()}</div>`;
-            wardPopupContent += `<div style="font-size: 11px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Total Voters</div>`;
-            wardPopupContent += `</div>`;
-            wardPopupContent += `</div>`;
-            
-            // Demographics with mini progress bars
-            wardPopupContent += `<div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 12px; padding: 16px; backdrop-filter: blur(10px);">`;
-            wardPopupContent += `<h4 style="color: #F8FAFC; margin: 0 0 14px 0; font-size: 16px; font-weight: 600;">👥 Demographics</h4>`;
-            
-            const femalePercentage = wardData.totalVoters > 0 ? (wardData.female / wardData.totalVoters) * 100 : 0;
-            const malePercentage = wardData.totalVoters > 0 ? (wardData.male / wardData.totalVoters) * 100 : 0;
-            const transgenderPercentage = wardData.totalVoters > 0 ? (wardData.transgender / wardData.totalVoters) * 100 : 0;
-            
-            // Female
-            wardPopupContent += `<div style="margin-bottom: 12px;">`;
-            wardPopupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
-            wardPopupContent += `<span style="color: #CBD5E1; font-size: 13px; font-weight: 500;">👩 Female</span>`;
-            wardPopupContent += `<span style="color: #34D399; font-weight: 600; font-size: 14px;">${wardData.female.toLocaleString()} (${femalePercentage.toFixed(1)}%)</span>`;
-            wardPopupContent += `</div>`;
-            wardPopupContent += `<div style="background: rgba(52, 211, 153, 0.2); height: 6px; border-radius: 3px; overflow: hidden;">`;
-            wardPopupContent += `<div style="background: #34D399; height: 100%; width: ${femalePercentage}%; border-radius: 3px;"></div>`;
-            wardPopupContent += `</div>`;
-            wardPopupContent += `</div>`;
-            
-            // Male
-            wardPopupContent += `<div style="margin-bottom: ${wardData.transgender > 0 ? '12px' : '0'};">`;
-            wardPopupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
-            wardPopupContent += `<span style="color: #CBD5E1; font-size: 13px; font-weight: 500;">👨 Male</span>`;
-            wardPopupContent += `<span style="color: #60A5FA; font-weight: 600; font-size: 14px;">${wardData.male.toLocaleString()} (${malePercentage.toFixed(1)}%)</span>`;
-            wardPopupContent += `</div>`;
-            wardPopupContent += `<div style="background: rgba(96, 165, 250, 0.2); height: 6px; border-radius: 3px; overflow: hidden;">`;
-            wardPopupContent += `<div style="background: #60A5FA; height: 100%; width: ${malePercentage}%; border-radius: 3px;"></div>`;
-            wardPopupContent += `</div>`;
-            wardPopupContent += `</div>`;
-            
-            // Transgender (if any)
-            if (wardData.transgender > 0) {
-              wardPopupContent += `<div>`;
-              wardPopupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
-              wardPopupContent += `<span style="color: #CBD5E1; font-size: 13px; font-weight: 500;">🏳️‍⚧️ Transgender</span>`;
-              wardPopupContent += `<span style="color: #F472B6; font-weight: 600; font-size: 14px;">${wardData.transgender.toLocaleString()} (${transgenderPercentage.toFixed(1)}%)</span>`;
-              wardPopupContent += `</div>`;
-              wardPopupContent += `<div style="background: rgba(244, 114, 182, 0.2); height: 6px; border-radius: 3px; overflow: hidden;">`;
-              wardPopupContent += `<div style="background: #F472B6; height: 100%; width: ${transgenderPercentage}%; border-radius: 3px;"></div>`;
-              wardPopupContent += `</div>`;
-              wardPopupContent += `</div>`;
+          // Direct click to open detailed ward modal instead of popup
+          l.on('click', () => {
+            if (wardData) {
+              openDetailedWardModal(wardName, wardData.localBody, mandalName, acName, orgDistName, zoneName, wardData);
+            } else {
+              // Show a simple notification if no data is available
+              alert(`Ward data not available for ${wardName}`);
             }
-            
-            wardPopupContent += `</div>`; // Close demographics
-            
-            // Add detailed ward view button
-            wardPopupContent += `<div style="padding: 16px; border-top: 1px solid rgba(96, 165, 250, 0.2);">`;
-            wardPopupContent += `<button onclick="openDetailedWardModal('${wardName}', '${wardData.localBody}', '${mandalName}', '${acName}', '${orgDistName}', '${zoneName}', ${JSON.stringify(wardData).replace(/"/g, '&quot;')})" style="width: 100%; background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%); color: white; border: none; border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);">`;
-            wardPopupContent += `📊 View Detailed Ward Report`;
-            wardPopupContent += `</button>`;
-            wardPopupContent += `</div>`;
-            
-            wardPopupContent += `</div>`; // Close padding
-          } else {
-            // No data available
-            wardPopupContent += `<div style="padding: 20px; text-align: center;">`;
-            wardPopupContent += `<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 16px;">`;
-            wardPopupContent += `<div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>`;
-            wardPopupContent += `<p style="color: #F59E0B; margin: 0; font-size: 14px; font-weight: 600;">Ward data not available</p>`;
-            wardPopupContent += `</div>`;
-            wardPopupContent += `</div>`;
-          }
-          
-          wardPopupContent += `</div>`; // Close main container
-          
-          l.bindPopup(wardPopupContent, {
-            maxWidth: 380,
-            className: 'custom-popup'
           });
         }
       }).addTo(map);
