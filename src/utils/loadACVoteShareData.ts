@@ -1,4 +1,6 @@
 import { normalizeOrgDistrictName, normalizeZoneName } from './nameNormalization';
+import { loadCSVWithRetry, getLoadingState, subscribeToLoadingState, clearDataCache } from './dataLoadingManager';
+import { cleanDataField, parsePercentage, parseNumeric } from './csvParser';
 
 // Utility to load AC-level vote share data from CSV
 export interface ACVoteShareRowData {
@@ -32,110 +34,94 @@ export async function loadACVoteShareData(): Promise<ACVoteShareData> {
     return acVoteShareDataCache;
   }
 
-  try {
-    console.log('📊 Loading AC vote share data from CSV...');
-    const response = await fetch('/data/votesharetarget/Local Body Target - AC level - Vote Share.csv');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const csvText = await response.text();
-    const lines = csvText.split('\n');
-    
-    console.log(`📋 Total lines in CSV: ${lines.length}`);
-    console.log(`📋 First few lines:`, lines.slice(0, 5));
-    
-    // Skip header lines (first 2 lines)
-    const dataLines = lines.slice(2).filter(line => line.trim() && !line.startsWith(',,,'));
-    
-    console.log(`📊 Processing ${dataLines.length} AC data lines...`);
-    
-    const data: ACVoteShareData = {};
-    
-    dataLines.forEach((line, index) => {
-      const columns = line.split(',').map(col => col.trim().replace(/["\r\n]/g, ''));
+  const result = await loadCSVWithRetry<ACVoteShareData>(
+    'ac-vote-share',
+    '/data/votesharetarget/Local Body Target - AC level - Vote Share.csv',
+    (parseResult) => {
+      const data: ACVoteShareData = {};
+      const errors: string[] = [];
       
-      // Debug first few entries
-      if (index < 3) {
-        console.log(`🔍 Line ${index + 3}: "${line}"`);
-        console.log(`🔍 Columns:`, columns.map((col, idx) => `[${idx}]: "${col}"`));
-      }
+      console.log(`📊 Processing ${parseResult.rows.length} rows of AC vote share data`);
       
-      if (columns.length >= 9) {
-        const zone = columns[0];
-        const orgDistrict = columns[1];
-        const ac = columns[2];
-        const lsg2020VS = columns[3] || "0%";
-        const lsg2020Votes = columns[4] || "0";
-        const ge2024VS = columns[5] || "0%";
-        const ge2024Votes = columns[6] || "0";
-        const target2025VS = columns[7] || "0%";
-        const target2025Votes = columns[8] || "0";
-
-        // Debug first few entries
-        if (index < 3) {
-          console.log(`🔍 AC ${index + 1}: ${ac}`);
-          console.log(`   Zone: "${zone}", Org: "${orgDistrict}"`);
-          console.log(`   LSG 2020: ${lsg2020VS} / ${lsg2020Votes}`);
-          console.log(`   GE 2024: ${ge2024VS} / ${ge2024Votes}`);
-          console.log(`   Target 2025: ${target2025VS} / ${target2025Votes}`);
-        }
-
-        if (zone && orgDistrict && ac) {
-          // Initialize zone if not exists
-          if (!data[zone]) {
-            data[zone] = {};
+      parseResult.rows.forEach((row, index) => {
+        try {
+          // Validate minimum column count
+          if (row.length < 9) {
+            errors.push(`Row ${index + 3}: Insufficient columns (${row.length}), skipping`);
+            return;
           }
           
-          // Initialize org district if not exists
-          if (!data[zone][orgDistrict]) {
-            data[zone][orgDistrict] = [];
+          const zone = cleanDataField(row[0]);
+          const orgDistrict = cleanDataField(row[1]);
+          const ac = cleanDataField(row[2]);
+          const lsg2020VS = parsePercentage(row[3]);
+          const lsg2020Votes = row[4]?.trim() || '0';
+          const ge2024VS = parsePercentage(row[5]);
+          const ge2024Votes = row[6]?.trim() || '0';
+          const target2025VS = parsePercentage(row[7]);
+          const target2025Votes = row[8]?.trim() || '0';
+          
+          // Validate required fields
+          if (!zone || !orgDistrict || !ac) {
+            errors.push(`Row ${index + 3}: Missing required fields (zone, orgDistrict, or AC), skipping`);
+            return;
           }
-
-          // Add AC data
-          data[zone][orgDistrict].push({
+          
+          const normalizedZone = normalizeZoneName(zone);
+          const normalizedOrgDistrict = normalizeOrgDistrictName(orgDistrict);
+          
+          if (!data[normalizedZone]) {
+            data[normalizedZone] = {};
+          }
+          if (!data[normalizedZone][normalizedOrgDistrict]) {
+            data[normalizedZone][normalizedOrgDistrict] = [];
+          }
+          
+          data[normalizedZone][normalizedOrgDistrict].push({
             name: ac,
-            lsg2020: { 
-              vs: (lsg2020VS === "NA" || lsg2020VS === "0") ? "0%" : (lsg2020VS || "0%"), 
-              votes: (lsg2020Votes === "NA" || lsg2020Votes === "0") ? "0" : (lsg2020Votes || "0")
-            },
-            ge2024: { 
-              vs: (ge2024VS === "NA" || ge2024VS === "0") ? "0%" : (ge2024VS || "0%"), 
-              votes: (ge2024Votes === "NA" || ge2024Votes === "0") ? "0" : (ge2024Votes || "0")
-            },
-            target2025: { 
-              vs: (target2025VS === "NA" || target2025VS === "0") ? "0%" : (target2025VS || "0%"), 
-              votes: (target2025Votes === "NA" || target2025Votes === "0") ? "0" : (target2025Votes || "0")
-            }
+            lsg2020: { vs: lsg2020VS, votes: lsg2020Votes },
+            ge2024: { vs: ge2024VS, votes: ge2024Votes },
+            target2025: { vs: target2025VS, votes: target2025Votes }
           });
           
-          // Debug logging for Thiruvananthapuram City entries
-          if (orgDistrict === "Thiruvananthapuram City") {
-            console.log(`✅ Added AC: ${ac} to Thiruvananthapuram City`);
-          }
-        } else {
-          console.warn(`⚠️ Skipping line ${index + 3} - missing required fields:`, { zone, orgDistrict, ac });
+        } catch (error) {
+          errors.push(`Row ${index + 3}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
-      } else {
-        console.warn(`⚠️ Skipping line ${index + 3} - insufficient columns (${columns.length}): ${line}`);
-      }
-    });
-
-    acVoteShareDataCache = data;
-    console.log('✅ AC Vote Share data loaded successfully');
-    console.log(`📊 Zones loaded: ${Object.keys(data).length}`);
-    Object.keys(data).forEach(zone => {
-      console.log(`   📍 ${zone}: ${Object.keys(data[zone]).length} org districts`);
-      Object.keys(data[zone]).forEach(org => {
-        console.log(`      🏛️ ${org}: ${data[zone][org].length} ACs`);
       });
-    });
-    
-    return data;
-  } catch (error) {
-    console.error('Error loading AC vote share data:', error);
-    return {};
+      
+      if (errors.length > 0) {
+        console.warn(`⚠️ AC vote share data loaded with ${errors.length} errors:`, errors);
+      }
+      
+      console.log('✅ AC vote share data processed successfully');
+      console.log(`📊 Zones loaded: ${Object.keys(data).length}`);
+      Object.keys(data).forEach(zone => {
+        console.log(`   📍 ${zone}: ${Object.keys(data[zone]).length} org districts`);
+        Object.keys(data[zone]).forEach(org => {
+          console.log(`      🏛️ ${org}: ${data[zone][org].length} ACs`);
+        });
+      });
+      
+      return data;
+    },
+    {
+      skipHeaderLines: 2,
+      cacheKey: 'ac-vote-share',
+      retries: 3,
+      timeout: 30000
+    }
+  );
+  
+  if (result.errors.length > 0) {
+    console.error('❌ Errors loading AC vote share data:', result.errors);
   }
+  
+  if (result.warnings.length > 0) {
+    console.warn('⚠️ Warnings loading AC vote share data:', result.warnings);
+  }
+  
+  acVoteShareDataCache = result.data;
+  return result.data;
 }
 
 export function getACVoteShareData(orgDistrict: string, zone: string): any[] {
@@ -163,3 +149,12 @@ export function getACVoteShareData(orgDistrict: string, zone: string): any[] {
   
   return result;
 }
+
+// Export loading state functions
+export const getACVoteShareLoadingState = () => getLoadingState('ac-vote-share');
+export const subscribeToACVoteShareLoading = (listener: (state: any) => void) => 
+  subscribeToLoadingState('ac-vote-share', listener);
+export const clearACVoteShareCache = () => {
+  clearDataCache('ac-vote-share');
+  acVoteShareDataCache = null;
+};

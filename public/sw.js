@@ -197,14 +197,16 @@ async function cacheFirst(request) {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
       const cache = await caches.open(STATIC_CACHE);
+      // Clone the response to avoid consuming the body
+      const responseClone = networkResponse.clone();
       // Add timestamp to response headers
-      const responseWithTimestamp = new Response(networkResponse.body, {
-        status: networkResponse.status,
-        statusText: networkResponse.statusText,
-        headers: {
-          ...Object.fromEntries(networkResponse.headers.entries()),
+      const responseWithTimestamp = new Response(responseClone.body, {
+        status: responseClone.status,
+        statusText: responseClone.statusText,
+        headers: new Headers({
+          ...Object.fromEntries(responseClone.headers.entries()),
           'sw-cached-time': Date.now().toString()
-        }
+        })
       });
       cache.put(request, responseWithTimestamp.clone());
       return responseWithTimestamp;
@@ -222,14 +224,16 @@ async function networkFirst(request) {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
       const cache = await caches.open(DYNAMIC_CACHE);
+      // Clone the response to avoid consuming the body
+      const responseClone = networkResponse.clone();
       // Add timestamp to response headers
-      const responseWithTimestamp = new Response(networkResponse.body, {
-        status: networkResponse.status,
-        statusText: networkResponse.statusText,
-        headers: {
-          ...Object.fromEntries(networkResponse.headers.entries()),
+      const responseWithTimestamp = new Response(responseClone.body, {
+        status: responseClone.status,
+        statusText: responseClone.statusText,
+        headers: new Headers({
+          ...Object.fromEntries(responseClone.headers.entries()),
           'sw-cached-time': Date.now().toString()
-        }
+        })
       });
       cache.put(request, responseWithTimestamp.clone());
       return responseWithTimestamp;

@@ -182,3 +182,22 @@ export const getOptimalTableConfig = (mobileInfo: MobileInfo) => {
   }
 };
 
+/**
+ * Force desktop view mode (for testing or specific use cases)
+ */
+export const forceDesktopView = () => {
+  // Add a class to body to force desktop styling
+  document.body.classList.add('force-desktop-view');
+  
+  // Set viewport meta tag to desktop width
+  const viewport = document.querySelector('meta[name="viewport"]');
+  if (viewport) {
+    viewport.setAttribute('content', 'width=1200, initial-scale=1.0');
+  }
+  
+  // Dispatch custom event for components to react
+  window.dispatchEvent(new CustomEvent('force-desktop-view'));
+  
+  console.log('🖥️ Desktop view mode forced');
+};
+
