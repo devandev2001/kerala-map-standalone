@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { loadACData, ACData } from '../utils/loadACData';
 import { loadMandalData, MandalData } from '../utils/loadMandalData';
-import { loadACVoteShareData, getACVoteShareData } from '../utils/loadACVoteShareData';
-import { loadMandalVoteShareData, getMandalVoteShareData } from '../utils/loadMandalVoteShareData';
+import { loadACVoteShareData, getACVoteShareData, getACVoteShareLoadingState, subscribeToACVoteShareLoading } from '../utils/loadACVoteShareData';
+import { loadMandalVoteShareData, getMandalVoteShareData, getMandalVoteShareLoadingState, subscribeToMandalVoteShareLoading } from '../utils/loadMandalVoteShareData';
 import { loadLocalBodyVoteShareData, getLocalBodyVoteShareData } from '../utils/loadLocalBodyVoteShareData';
 import { loadOrgDistrictTargetData, getOrgDistrictTargetData } from '../utils/loadOrgDistrictTargetData';
 import { loadACTargetData, getACTargetData } from '../utils/loadACTargetData';
@@ -15,6 +15,7 @@ import { useMobileDetection, optimizeTouchInteractions } from '../utils/mobileDe
 import { generateMapPDF, generateMapPDFMobile } from '../utils/mapPdfExporter';
 import { loadZoneContactData, getZoneContactData } from '../utils/loadZoneContactData';
 import { Maximize2, Minimize2, RotateCcw, MapPin, Download, Info, HelpCircle, Settings } from 'lucide-react';
+import { getDrilldownData, MapContext } from '../utils/drilldownDataManager';
 
 interface IntegratedKeralaMapProps {
   onBack?: () => void;
@@ -35,6 +36,8 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
   const [acData, setAcData] = useState<ACData>({});
   const [mandalData, setMandalData] = useState<MandalData>({});
   const [orgDistrictContacts, setOrgDistrictContacts] = useState<any[]>([]);
+  const [dataLoadingStates, setDataLoadingStates] = useState<Record<string, any>>({});
+  const [dataLoadingErrors, setDataLoadingErrors] = useState<Record<string, string>>({});
   const iframeRef = useRef<HTMLIFrameElement>(null);
   
   // Mobile detection hook
@@ -42,23 +45,87 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
 
   // Load AC and Mandal data from CSV
   useEffect(() => {
-    loadACData().then(setAcData);
-    loadMandalData().then(setMandalData);
-    // Load vote share data for performance modal
-    loadACVoteShareData();
-    loadMandalVoteShareData();
-    loadLocalBodyVoteShareData();
-    // Load target data for target modal
-    loadZoneTargetData();
-    loadOrgDistrictTargetData();
-    loadACTargetData();
-    loadMandalTargetData();
-    // Load contact data for contact modal
-    loadOrgDistrictContacts().then(setOrgDistrictContacts);
-    loadMandalContactData();
-    loadLocalBodyContactData();
-    // Load zone contact data
-    loadZoneContactData();
+    const loadAllData = async () => {
+      try {
+        console.log('🔄 Starting data loading...');
+        
+        // Load AC and Mandal data
+        const [acDataResult, mandalDataResult, orgContactsResult] = await Promise.allSettled([
+          loadACData(),
+          loadMandalData(),
+          loadOrgDistrictContacts()
+        ]);
+        
+        if (acDataResult.status === 'fulfilled') {
+          setAcData(acDataResult.value);
+        } else {
+          console.error('❌ Failed to load AC data:', acDataResult.reason);
+          setDataLoadingErrors(prev => ({ ...prev, acData: acDataResult.reason.message }));
+        }
+        
+        if (mandalDataResult.status === 'fulfilled') {
+          setMandalData(mandalDataResult.value);
+        } else {
+          console.error('❌ Failed to load Mandal data:', mandalDataResult.reason);
+          setDataLoadingErrors(prev => ({ ...prev, mandalData: mandalDataResult.reason.message }));
+        }
+        
+        if (orgContactsResult.status === 'fulfilled') {
+          setOrgDistrictContacts(orgContactsResult.value);
+        } else {
+          console.error('❌ Failed to load Org District contacts:', orgContactsResult.reason);
+          setDataLoadingErrors(prev => ({ ...prev, orgContacts: orgContactsResult.reason.message }));
+        }
+        
+        // Load vote share data for performance modal
+        const voteSharePromises = [
+          loadACVoteShareData(),
+          loadMandalVoteShareData(),
+          loadLocalBodyVoteShareData()
+        ];
+        
+        // Load target data for target modal
+        const targetPromises = [
+          loadZoneTargetData(),
+          loadOrgDistrictTargetData(),
+          loadACTargetData(),
+          loadMandalTargetData()
+        ];
+        
+        // Load contact data for contact modal
+        const contactPromises = [
+          loadMandalContactData(),
+          loadLocalBodyContactData(),
+          loadZoneContactData()
+        ];
+        
+        // Execute all data loading in parallel
+        const allPromises = [...voteSharePromises, ...targetPromises, ...contactPromises];
+        
+        const results = await Promise.allSettled(allPromises);
+        
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`❌ Data loading failed for promise ${index}:`, result.reason);
+            setDataLoadingErrors(prev => ({ 
+              ...prev, 
+              [`data_${index}`]: result.reason.message 
+            }));
+          }
+        });
+        
+        console.log('✅ Data loading completed');
+        
+      } catch (error) {
+        console.error('❌ Error in data loading:', error);
+        setDataLoadingErrors(prev => ({ 
+          ...prev, 
+          general: error instanceof Error ? error.message : 'Unknown error'
+        }));
+      }
+    };
+    
+    loadAllData();
   }, []);
 
   // Initialize mobile optimizations
@@ -67,6 +134,22 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
       optimizeTouchInteractions();
     }
   }, [mobileInfo]);
+
+  // Subscribe to data loading states
+  useEffect(() => {
+    const unsubscribeAC = subscribeToACVoteShareLoading((state) => {
+      setDataLoadingStates(prev => ({ ...prev, acVoteShare: state }));
+    });
+    
+    const unsubscribeMandal = subscribeToMandalVoteShareLoading((state) => {
+      setDataLoadingStates(prev => ({ ...prev, mandalVoteShare: state }));
+    });
+    
+    return () => {
+      unsubscribeAC();
+      unsubscribeMandal();
+    };
+  }, []);
 
   // Focus trap for modals
   useEffect(() => {
@@ -892,7 +975,7 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
       setIsLoading(true);
       setMapError(false);
       // Only refresh if needed, don't add random parameters that cause constant reloading
-      iframeRef.current.src = `/map/pan.html`;
+      iframeRef.current.src = `/map/pan.html?v=${Date.now()}`;
     }
   };
 
@@ -984,6 +1067,7 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
 
 
 
+
       {/* Help Button - Keep only help button for now */}
       <div className="absolute top-2 right-2 z-10">
         <button
@@ -1041,13 +1125,14 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
           height: 'calc(100vh - 140px)',
           overflow: 'auto',
           zIndex: 1,
-          backgroundColor: '#1F2937'
+          backgroundColor: '#1F2937',
+          background: 'linear-gradient(135deg, #1F2937 0%, #111827 50%, #0F172A 100%)'
         }}
       >
         <iframe
           ref={iframeRef}
           id="main-map-content"
-          src="/map/pan.html"
+          src={`/map/pan.html?v=${Date.now()}`}
           title="Kerala Interactive Map - Navigate through zones, districts, assembly constituencies, and mandals"
           className="w-full h-full border-none bg-gradient-primary touch-manipulation"
           style={{ 
@@ -1055,6 +1140,7 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
             width: '100vw',
             minHeight: 'calc(100vh - 140px)',
             backgroundColor: '#1F2937',
+            background: 'linear-gradient(135deg, #1F2937 0%, #111827 50%, #0F172A 100%)',
             touchAction: 'manipulation',
             userSelect: 'none',
             WebkitOverflowScrolling: 'touch',
@@ -1110,7 +1196,45 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
 
             {/* Table Container */}
             <div className="p-6 overflow-x-auto">
-              <div className="bg-gray-800/50 rounded-xl border border-gray-700/50 overflow-hidden">
+              {/* Loading State */}
+              {dataLoadingStates.acVoteShare?.isLoading && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500/30 border-t-purple-500 mx-auto mb-4"></div>
+                    <p className="text-gray-300">Loading performance data...</p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Error State */}
+              {dataLoadingStates.acVoteShare?.error && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="text-red-400 mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                      </svg>
+                    </div>
+                    <p className="text-red-300 mb-2">Failed to load performance data</p>
+                    <p className="text-gray-400 text-sm">{dataLoadingStates.acVoteShare.error}</p>
+                    <button
+                      onClick={() => {
+                        // Retry loading
+                        loadACVoteShareData();
+                      }}
+                      className="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* Data Table */}
+              {!dataLoadingStates.acVoteShare?.isLoading && !dataLoadingStates.acVoteShare?.error && (
+                <div className="bg-gray-800/50 rounded-xl border border-gray-700/50 overflow-hidden">
                 <table className="w-full">
                   {/* Table Header */}
                   <thead className="bg-gradient-to-r from-gray-800 to-gray-700">
@@ -1206,7 +1330,8 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
                     </tfoot>
                   )}
                 </table>
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
