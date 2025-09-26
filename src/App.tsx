@@ -291,10 +291,9 @@ const App: React.FC = () => {
                   
                   <button
                     onClick={() => {
-                      const iframe = document.querySelector('iframe');
-                      if (iframe) {
-                        iframe.src = iframe.src;
-                      }
+                      // Trigger refresh map event that IntegratedKeralaMap will handle
+                      const event = new CustomEvent('refresh-map');
+                      window.dispatchEvent(event);
                     }}
                     className="w-10 h-10 bg-slate-600/80 hover:bg-slate-500/80 text-white rounded-full flex items-center justify-center transition-all duration-200"
                     title="Refresh Map"

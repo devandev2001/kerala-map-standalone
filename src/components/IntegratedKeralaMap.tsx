@@ -31,6 +31,11 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
   const [showLeadershipModal, setShowLeadershipModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [currentMapContext, setCurrentMapContext] = useState({ level: 'zones', zone: '', org: '', ac: '', mandal: '' });
+  
+  // Debug context changes
+  useEffect(() => {
+    console.log('🔄 Map context updated:', currentMapContext);
+  }, [currentMapContext]);
   const [selectedOrgDistrict, setSelectedOrgDistrict] = useState<string | null>(null);
   const [selectedAC, setSelectedAC] = useState<string | null>(null);
   const [acData, setAcData] = useState<ACData>({});
@@ -794,6 +799,9 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
     const acName = currentMapContext.ac;
     const mandalName = currentMapContext.mandal;
 
+    console.log('📞 getContactData called with context:', { level, zoneName, orgName, acName, mandalName });
+    console.log('📞 orgDistrictContacts loaded:', orgDistrictContacts.length, 'contacts');
+
     if (level === 'zones') {
       // Use zone contact data from CSV
       const zoneData = getZoneContactData();
@@ -822,7 +830,7 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
         'Ernakulam City': 'Ernakulam',
         'Ernakulam East': 'Ernakulam',
         'Ernakulam North': 'Ernakulam',
-        'Thrissur City': 'Ernakulam',
+        'Thrissur Central': 'Ernakulam',
         'Thrissur North': 'Ernakulam',
         'Thrissur South': 'Ernakulam',
         
@@ -843,10 +851,12 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
         'Kozhikode Rural': 'Kozhikode'
       };
       
-      // Filter contacts by zone
+      // Filter contacts by zone - fix the property name
       const zoneContacts = orgDistrictContacts.filter(contact => 
         zoneMapping[contact.orgDistrict] === zoneName
       );
+      
+      console.log('📞 Filtered org district contacts for zone', zoneName, ':', zoneContacts.length);
       
       // Transform to the expected format
       return zoneContacts.map(contact => ({
@@ -858,12 +868,17 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
       }));
     } else if (level === 'acs' && orgName) {
       // AC level contacts are empty as per user request
+      console.log('📞 AC level - no contact data available');
       return [];
     } else if (level === 'mandals' && acName) {
+      console.log('📞 Mandal level - getting mandal contacts');
       return getMandalContactData(zoneName, orgName);
     } else if (level === 'panchayats' && mandalName) {
+      console.log('📞 Local body level - getting local body contacts');
       return getLocalBodyContactData(zoneName, orgName, acName, mandalName);
     }
+    
+    console.log('📞 No matching condition - returning empty array');
     return [];
   };
 
@@ -900,6 +915,8 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       
+      console.log('📨 Received message from iframe:', event.data);
+      
       if (event.data && event.data.type === 'map-navigation') {
         switch (event.data.action) {
           case 'back':
@@ -915,9 +932,14 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
             break;
           case 'context-change':
             // Update map context when drill-down level changes
+            console.log('🔄 Updating context from map-navigation:', event.data.context);
             setCurrentMapContext(event.data.context || { level: 'zones', zone: '', org: '', ac: '', mandal: '' });
             break;
         }
+      } else if (event.data && event.data.type === 'context-change') {
+        // Handle direct context-change messages from iframe
+        console.log('🔄 Updating context from direct context-change:', event.data.context);
+        setCurrentMapContext(event.data.context || { level: 'zones', zone: '', org: '', ac: '', mandal: '' });
       }
     };
 
@@ -940,10 +962,14 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
     const handleShowContactsModal = () => {
       setShowLeadershipModal(true);
     };
+    const handleRefreshMap = () => {
+      refreshMap();
+    };
     
     window.addEventListener('show-performance-modal', handleShowPerformanceModal);
     window.addEventListener('show-target-modal', handleShowTargetModal);
     window.addEventListener('show-contacts-modal', handleShowContactsModal);
+    window.addEventListener('refresh-map', handleRefreshMap);
     
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
@@ -952,6 +978,7 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
       window.removeEventListener('show-performance-modal', handleShowPerformanceModal);
       window.removeEventListener('show-target-modal', handleShowTargetModal);
       window.removeEventListener('show-contacts-modal', handleShowContactsModal);
+      window.removeEventListener('refresh-map', handleRefreshMap);
     };
   }, [onBack, onHome]);
 
@@ -1132,7 +1159,7 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
         <iframe
           ref={iframeRef}
           id="main-map-content"
-          src={`/map/pan.html?v=${Date.now()}`}
+          src="/map/pan.html"
           title="Kerala Interactive Map - Navigate through zones, districts, assembly constituencies, and mandals"
           className="w-full h-full border-none bg-gradient-primary touch-manipulation"
           style={{ 

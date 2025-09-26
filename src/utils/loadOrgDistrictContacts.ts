@@ -8,22 +8,38 @@ export interface OrgDistrictContact {
 
 export const loadOrgDistrictContacts = async (): Promise<OrgDistrictContact[]> => {
   try {
-    const response = await fetch('/data/org_districts_contacts.csv');
+    const response = await fetch('/data/contacts/org_districts_contacts.csv');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch org district contacts: ${response.statusText}`);
+    }
+    
     const csvText = await response.text();
-    
     const lines = csvText.trim().split('\n');
-    const headers = lines[0].split(',');
     
-    return lines.slice(1).map(line => {
+    console.log('📞 Loading org district contacts from CSV, total lines:', lines.length);
+    
+    return lines.slice(1).map((line, index) => {
       const values = line.split(',');
-      return {
+      if (values.length < 5) {
+        console.warn(`📞 Line ${index + 2}: Insufficient columns (${values.length}), skipping`);
+        return null;
+      }
+      
+      const contact = {
         orgDistrict: values[0]?.trim() || '',
         inchargeName: values[1]?.trim() || '',
         inchargePhone: values[2]?.trim() || '',
         presidentName: values[3]?.trim() || '',
         presidentPhone: values[4]?.trim() || ''
       };
-    });
+      
+      // Skip empty rows
+      if (!contact.orgDistrict) {
+        return null;
+      }
+      
+      return contact;
+    }).filter(contact => contact !== null) as OrgDistrictContact[];
   } catch (error) {
     console.error('Error loading org district contacts:', error);
     return [];
