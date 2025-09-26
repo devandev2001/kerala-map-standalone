@@ -422,7 +422,7 @@
       mandal: 'org_mandal_with_corporations_comprehensive.geojson?v=' + Date.now(),  // ← Updated with corporation mandals + cache busting
       pan:    'hierarchy_output/kerala_panchayats_mapped.geojson',
       corps:  'hierarchy_output/kerala_corporations_mapped.geojson',
-      wards:  'kerala_wards.geojson.gz',  // ← Ward level data (compressed)
+      wards:  'kerala_wards.geojson',  // ← Ward level data
       // Corporation ward files
       corp_wards: {
         'Thiruvananthapuram': 'ward_jsons/Thiruvanathapuram/Corporation/Thiruvananthapuram.json',
@@ -2012,28 +2012,8 @@ Vypen,Vypin
       panGJ = await (await fetch(FILES.pan)).json();
       corpsGJ = await (await fetch(FILES.corps)).json();
       
-      // Load compressed wards data
-      try {
-        const wardsResponse = await fetch(FILES.wards);
-        const wardsArrayBuffer = await wardsResponse.arrayBuffer();
-        const wardsUint8Array = new Uint8Array(wardsArrayBuffer);
-        
-        // Use pako library for gzip decompression
-        const decompressed = pako.inflate(wardsUint8Array, { to: 'string' });
-        wardsGJ = JSON.parse(decompressed);
-        console.log(`✅ Loaded ${wardsGJ.features.length} wards from compressed ${FILES.wards}`);
-      } catch (error) {
-        console.error('❌ Error loading compressed ward data:', error);
-        // Fallback: try to load uncompressed version
-        try {
-          wardsGJ = await (await fetch('kerala_wards.geojson')).json();
-          console.log(`✅ Loaded ${wardsGJ.features.length} wards from uncompressed file`);
-        } catch (fallbackError) {
-          console.error('❌ Error loading uncompressed ward data:', fallbackError);
-          wardsGJ = { type: "FeatureCollection", features: [] };
-        }
-      }
-      
+      wardsGJ = await (await fetch(FILES.wards)).json();  // ← Load wards data
+      console.log(`✅ Loaded ${wardsGJ.features.length} wards from ${FILES.wards}`);
       if (wardsGJ.features.length > 0) {
         console.log('Sample ward properties:', wardsGJ.features[0].properties);
       }

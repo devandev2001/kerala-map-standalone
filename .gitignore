@@ -37,6 +37,6 @@ coverage
 # Build outputs
 build/
 out/
-# Large uncompressed files for local development
-public/map/kerala_wards.geojson
-public/map/hierarchy_output/kerala_panchayats_mapped.geojson
+# Large uncompressed files for local development (commented out to allow local use)
+# public/map/kerala_wards.geojson
+# public/map/hierarchy_output/kerala_panchayats_mapped.geojson
