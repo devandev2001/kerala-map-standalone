@@ -419,9 +419,9 @@
       org:    'kerala_org_districts.geojson',
       ac:     'KERALA_ASSEMBLY_filtered.geojson',
       mandal: 'org_mandal_with_corporations_comprehensive.geojson?v=' + Date.now(),  // ← Updated with corporation mandals + cache busting
-      pan:    'hierarchy_output/kerala_panchayats_mapped.geojson',
+      pan:    'panchayats_tagged.geojson',  // ← Using smaller panchayats file instead
       corps:  'hierarchy_output/kerala_corporations_mapped.geojson',
-      wards:  'kerala_wards.geojson',  // ← Ward level data
+      // wards:  'kerala_wards.geojson',  // ← Removed large wards file
       // Corporation ward files
       corp_wards: {
         'Thiruvananthapuram': 'ward_jsons/Thiruvanathapuram/Corporation/Thiruvananthapuram.json',
@@ -444,7 +444,7 @@
     const colorFor=n=>{const k=(n||'').toString(); if(!colormap.has(k)) colormap.set(k,palette[colormap.size%palette.length]); return colormap.get(k);};
     const prop=(f,k)=>f?.properties?.[k];
 
-    let zonesGJ,orgGJ,acGJ,mandalGJ,panGJ,corpsGJ,wardsGJ;  // ← Added corpsGJ
+    let zonesGJ,orgGJ,acGJ,mandalGJ,panGJ,corpsGJ;  // ← Removed wardsGJ
     let corpWardsGJ = {}; // Store loaded corporation ward data
     let voterData = []; // Store voter data
     let ctx={ level:'zones' };   // ← track current view level
@@ -1674,32 +1674,9 @@ Vypen,Vypin
         }
       }
 
-      // Fallback to general wards data if corporation data not available
-      if (!subset.features.length && wardsGJ) {
-        if (wardList && wardList.length > 0){
-          // Filter wards by the ward names in the mandal's Ward_Names
-          subset.features = wardsGJ.features.filter(f => {
-            const wardName = prop(f, 'Ward_Name') || prop(f, KEYS.ward_name);
-            return wardList.includes(wardName);
-          });
-        }
-
-        if (!subset.features.length){
-          // Fallback: filter by corporation name
-          if (corporationName){
-            subset.features = wardsGJ.features.filter(f => {
-              const wardCorp = prop(f, 'LSGD') || prop(f, 'Corporation');
-              return norm(wardCorp) === norm(corporationName);
-            });
-          }
-        }
-
-        if (!subset.features.length){
-          // Final fallback: spatial filtering
-          subset.features = wardsGJ.features.filter(f=>{
-            try{ return turf.booleanPointInPolygon(turf.pointOnFeature(f), mF); }catch(e){return false;}
-          });
-        }
+      // Fallback: if no corporation ward data available, show mandal area
+      if (!subset.features.length) {
+        console.log(`No corporation ward data available for ${mName}`);
       }
 
       if (subset.features.length > 0) {
@@ -1765,8 +1742,7 @@ Vypen,Vypin
           corporationName,
           mName,
           corpWardsGJ: corpWardsGJ[corporationName] ? `${corpWardsGJ[corporationName].features.length} features` : 'not loaded',
-          wardList,
-          wardsGJ: wardsGJ ? `${wardsGJ.features.length} features` : 'not loaded'
+          wardList
         });
         
         // Create a fallback layer with the mandal itself as a clickable area
@@ -1851,123 +1827,70 @@ Vypen,Vypin
       const localBodyKey = KEYS.ward_lb;
       let subset = {type:"FeatureCollection", features:[]};
 
-      if (localBodyKey){
-        const target = norm(panName);
-        subset.features = wardsGJ.features.filter(f => norm(prop(f, localBodyKey)) === target);
-      }
-      if (!subset.features.length){
-        // Fallback: spatial filtering
-        subset.features = wardsGJ.features.filter(f=>{
-          try{ return turf.booleanPointInPolygon(turf.pointOnFeature(f), panF); }catch(e){return false;}
-        });
-      }
-
-      const layer=L.geoJSON(subset,{
-        style:f=>({color:"#84cc16",weight:1,fillColor:colorFor(prop(f,KEYS.ward_name)),fillOpacity:0.6}),
-        onEachFeature:(f,l)=>{
-          const wardName = prop(f,KEYS.ward_name) || 'Unknown Ward';
-          const wardNo = prop(f,KEYS.ward_no) || '';
-          const localBody = prop(f,KEYS.ward_lb) || 'Unknown Local Body';
-          const wardInfo = wardNo ? `Ward ${wardNo}: ${wardName}` : `Ward: ${wardName}`;
-            console.log(`🏘️ Regular ward popup: ${wardInfo} in ${localBody}`);
-            console.log('🔍 Looking for voter data for ward:', wardName, 'in local body:', localBody);
-            console.log('🔍 Available voter data for this local body:', voterData.filter(row => norm(row.lbName) === norm(localBody)).map(row => row.ward).slice(0, 10));
-          
-          // Find voter data for this ward with improved matching
-          let wardData = voterData.find(row => 
-            norm(row.ward) === norm(wardName) && 
-            norm(row.lbName) === norm(localBody)
-          );
-          
-          // If exact match not found, try fuzzy matching
-          if (!wardData) {
-            wardData = voterData.find(row => {
-              if (norm(row.lbName) !== norm(localBody)) return false;
-              
-              const csvWard = norm(row.ward);
-              const geoWard = norm(wardName);
-              
-              // Try exact match first
-              if (csvWard === geoWard) return true;
-              
-              // Try fuzzy matching with high threshold
-              const similarity = sim(csvWard, geoWard);
-              if (similarity >= 0.85) return true;
-              
-              // Try matching with common variations
-              const variations = [
-                csvWard.replace(/\s+/g, ''),
-                csvWard.replace(/[^a-z0-9]/g, ''),
-                geoWard.replace(/\s+/g, ''),
-                geoWard.replace(/[^a-z0-9]/g, '')
-              ];
-              
-              return variations.some(v1 => 
-                variations.some(v2 => v1 === v2 && v1.length > 3)
-              );
+      // Ward data removed - show panchayat area instead
+      console.log(`Ward data not available for ${panName} - showing panchayat area`);
+      
+      // Show the panchayat area with voter data
+      const localBodyData = findLocalBodyByName(panName);
+      if (localBodyData) {
+        console.log('📊 Found local body data for panchayat:', panName);
+        
+        const layer = L.geoJSON(panF, {
+          style: f => ({
+            color: "#84cc16",
+            weight: 2,
+            fillColor: "#84cc16",
+            fillOpacity: 0.6
+          }),
+          onEachFeature: (f, l) => {
+            l.bindPopup(`<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; padding: 10px;">
+              <b style="color: #f97316; font-size: 16px;">${panName}</b><br/>
+              <span style="color: #3b82f6;">Local Body:</span> ${panName}<br/>
+              <span style="color: #10b981;">Mandal:</span> ${prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd) || 'Unknown'}<br/>
+              <span style="color: #6b7280; font-size: 12px;">Click for detailed voter data</span>
+            </div>`, {
+              maxWidth: 300,
+              className: 'custom-panchayat-popup'
             });
-          }
-          
-          console.log('🔍 Voter data found:', wardData ? 'YES' : 'NO');
-          if (wardData) {
-            console.log('📊 Ward data:', wardData);
-            // Create individual ward data summary for modal
-            const wardSummary = {
-              mandal: prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd) || 'Unknown',
-              ac: wardData.ac,
-              orgDist: wardData.orgDist,
-              zone: wardData.zone,
-              totalWards: 1,
-              totalHouses: wardData.houses,
-              totalVoters: wardData.totalVoters,
-              femaleVoters: wardData.female,
-              maleVoters: wardData.male,
-              transgenderVoters: wardData.transgender,
-              femalePercentage: wardData.totalVoters > 0 ? (wardData.female / wardData.totalVoters) * 100 : 0,
-              malePercentage: wardData.totalVoters > 0 ? (wardData.male / wardData.totalVoters) * 100 : 0,
-              transgenderPercentage: wardData.totalVoters > 0 ? (wardData.transgender / wardData.totalVoters) * 100 : 0,
-              topWards: [{
-                ward: wardData.ward,
-                wardNumber: wardData.wardNumber,
-                houses: wardData.houses,
-                totalVoters: wardData.totalVoters,
-                female: wardData.female,
-                male: wardData.male,
-                transgender: wardData.transgender
-              }]
-            };
-            // Show full-screen modal directly
+            
+            // Show full-screen modal with local body data
             l.on('click', (e) => {
-              console.log('🏘️ Regular ward clicked:', wardInfo);
+              console.log('🏘️ Panchayat clicked:', panName);
               e.originalEvent.stopPropagation();
-              showModal(wardInfo, localBody, prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd) || 'Unknown', wardSummary);
+              showModal(panName, panName, prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd) || 'Unknown', localBodyData);
             });
-          } else {
-            // Show detailed popup even without voter data - use local body data
-            const localBodyData = findLocalBodyByName(localBody);
-            if (localBodyData) {
-              console.log('📊 Found local body data for local body:', localBody);
-              // Show full-screen modal directly with local body data
-              l.on('click', (e) => {
-                console.log('🏘️ Regular ward clicked (local body data):', wardInfo);
-                e.originalEvent.stopPropagation();
-                showModal(wardInfo, localBody, prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd) || 'Unknown', localBodyData);
-              });
-            } else {
-              // Simple popup if no data at all
-              l.bindPopup(`<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4;">
-                <b style="color: #f97316;">${wardInfo}</b><br/>
-                <span style="color: #3b82f6;">Local Body:</span> ${localBody}<br/>
-                <span style="color: #10b981;">Mandal:</span> ${prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd) || 'Unknown'}<br/>
-                <span style="color: #6b7280; font-size: 12px;">Voter data not available</span>
-              </div>`);
-            }
           }
-        }
-      }).addTo(map);
-      safeFit(layer);
-      buildLegend([...new Set(subset.features.map(f=>`Ward ${prop(f,KEYS.ward_no)}`))]);
-      addLabels(layer, KEYS.ward_name, 'lbl-ward');
+        }).addTo(map);
+        
+        safeFit(layer);
+        buildLegend([panName]);
+        legendNote.textContent = `Showing panchayat area for ${panName}. Ward-level data not available.`;
+      } else {
+        // Simple panchayat display without voter data
+        const layer = L.geoJSON(panF, {
+          style: f => ({
+            color: "#84cc16",
+            weight: 2,
+            fillColor: "#84cc16",
+            fillOpacity: 0.6
+          }),
+          onEachFeature: (f, l) => {
+            l.bindPopup(`<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; padding: 10px;">
+              <b style="color: #f97316; font-size: 16px;">${panName}</b><br/>
+              <span style="color: #3b82f6;">Local Body:</span> ${panName}<br/>
+              <span style="color: #10b981;">Mandal:</span> ${prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd) || 'Unknown'}<br/>
+              <span style="color: #6b7280; font-size: 12px;">Voter data not available</span>
+            </div>`, {
+              maxWidth: 300,
+              className: 'custom-panchayat-popup'
+            });
+          }
+        }).addTo(map);
+        
+        safeFit(layer);
+        buildLegend([panName]);
+        legendNote.textContent = `Showing panchayat area for ${panName}. Voter data not available.`;
+      }
       
       // Send context update to parent
       window.parent.postMessage({
@@ -2010,11 +1933,8 @@ Vypen,Vypin
       mandalGJ=await (await fetch(FILES.mandal)).json();
       panGJ = await (await fetch(FILES.pan)).json();
       corpsGJ = await (await fetch(FILES.corps)).json();
-      wardsGJ = await (await fetch(FILES.wards)).json();  // ← Load wards data
-      console.log(`✅ Loaded ${wardsGJ.features.length} wards from ${FILES.wards}`);
-      if (wardsGJ.features.length > 0) {
-        console.log('Sample ward properties:', wardsGJ.features[0].properties);
-      }
+      // wardsGJ removed - using corporation ward files instead
+      console.log(`✅ Loaded panchayats and corporations data`);
       
       // Load voter data
       try {
@@ -2039,10 +1959,10 @@ Vypen,Vypin
       KEYS.pan_mnd = detectKey(panGJ, ["Org Mandal","Mandal","Org_Mandal","OrgMandal","mandal","org_mandal","Mandal_Name","ORG_MANDAL"]);
       KEYS.corp    = detectKey(corpsGJ, ["CorpName","Corporation","NAME","name"]);
       
-      // ← NEW: Ward keys
-      KEYS.ward_name = detectKey(wardsGJ, ["Ward_Name","WARD_NAME","WardName","name"]);
-      KEYS.ward_no   = detectKey(wardsGJ, ["Ward_No","WARD_NO","WardNo","ward_number"]);
-      KEYS.ward_lb   = detectKey(wardsGJ, ["Local_Body","LOCAL_BODY","LSGD","local_body","LocalBody"]);
+      // ← Ward keys removed - using corporation ward files instead
+      KEYS.ward_name = "Ward_Name";  // Default key for corporation wards
+      KEYS.ward_no   = "Ward_No";    // Default key for corporation wards
+      KEYS.ward_lb   = "Local_Body"; // Default key for corporation wards
 
       buildMandalIndex();
       showZones();
