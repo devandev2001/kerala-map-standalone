@@ -36,4 +36,5 @@ coverage
 
 # Build outputs
 build/
-out/
+out/public/map/hierarchy_output/kerala_panchayats_mapped.geojson
+public/map/kerala_wards.geojson
