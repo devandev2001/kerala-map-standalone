@@ -758,6 +758,12 @@
     // Global variable to store current ward data
     let currentWardData = null;
     
+    // Global function to show corporation ward modal
+    window.showCorporationWardModal = function(wardInfo, corporationName, mandalName, wardSummary) {
+      console.log('🏘️ Corporation ward modal triggered:', wardInfo);
+      showModal(wardInfo, corporationName, mandalName, wardSummary);
+    };
+    
     function createDetailedPopup(wardInfo, localBodyName, mandalName, voterSummary) {
       // Store the data globally for the modal
       currentWardData = {
@@ -909,11 +915,117 @@
       "thirunnavaya":"thirunavaya","eranad":"ernaad","manjery":"manjeri","kalikavu":"kalikkavu",
       "koduvalli":"koduvally","ayanad":"aryanad","kattakada":"kattakkada",
       "neyyatinkara":"neyyattinkara","kazhakuttam":"kazhakkoottam","thodupuzha":"thodupuzha",
+      "punalur":"punaloor","punaloor":"punalur",
       // Ward name aliases for better matching
       "valiyathura":"valiathura","mudavanmugall":"mudavanmukal","mudavanmukal":"mudavanmugall",
       "pattom":"pattom","kazhakkoottam":"kazhakkoottam","ulloor":"ulloor",
       "vattiyoorkavu":"vattiyoorkavu","thiruvananthapuram central":"thiruvananthapuram central",
       "attukal":"attukal","nemom":"nemom","kovalam":"kovalam","thiruvananthapuram west":"thiruvananthapuram west",
+      // Thiruvananthapuram Corporation ward aliases - Comprehensive mapping
+      "kazhakkuttom":"kazhakkoottam","kazhakkoottam":"kazhakkuttom",
+      "sainika school":"sainik school","sainik school":"sainika school",
+      "kattayikkonam":"kattaikonam","kattaikonam":"kattayikkonam",
+      "njandoorkkonam":"njandoorkonam","njandoorkonam":"njandoorkkonam",
+      "powdikkonam":"powdikonam","powdikonam":"powdikkonam",
+      "chenkottukonam":"chenkottukonam","chembazhanthi":"chempazhanthy","chempazhanthy":"chembazhanthi",
+      "karyavattom":"kariavattom","kariavattom":"karyavattom",
+      "sreekaryam":"sreekariyam","sreekariyam":"sreekaryam",
+      "chellamangalam":"chellamangalam","mannanthala":"mannanthala",
+      "edavakkod":"edavacode","edavacode":"edavakkod",
+      // Additional comprehensive aliases for all Thiruvananthapuram wards
+      "kazhakkuttom":"kazhakkoottam","kazhakkoottam":"kazhakkuttom",
+      "sainika school":"sainik school","sainik school":"sainika school",
+      "chanthavila":"chanthavila","kattaikonam":"kattaikonam",
+      "njandoorkonam":"njandoorkonam","powdikonam":"powdikonam",
+      "chenkottukonam":"chenkottukonam","chempazhanthy":"chempazhanthy",
+      "kariavattom":"kariavattom","pangappara":"pangappara",
+      "sreekariyam":"sreekariyam","chellamangalam":"chellamangalam",
+      "mannanthala":"mannanthala","edavacode":"edavacode",
+      "ulloor":"ulloor","medical college":"medical college",
+      "pathirapalli":"pathirapalli","ambalamukku":"ambalamukku",
+      "kudappanakunnu":"kudappanakunnu","thuruthummoola":"thuruthummoola",
+      "kuravankonam":"kuravankonam","muttada":"muttada",
+      "chettivilakam":"chettivilakam","kinavoor":"kinavoor",
+      "nalanchira":"nalanchira","pattom":"pattom",
+      "kesavadasapuram":"kesavadasapuram","gowreeshapattom":"gowreeshapattom",
+      "kunnukuzhy":"kunnukuzhy","nanthancode":"nanthancode",
+      "nettayam":"nettayam","kachani":"kachani",
+      "vazhottukonam":"vazhottukonam","kodunganoor":"kodunganoor",
+      "vattiyoorkavu":"vattiyoorkavu","kanjirampara":"kanjirampara",
+      "peroorkada":"peroorkada","kowdiar":"kowdiar",
+      "sasthamangalam":"sasthamangalam","valiyavila":"valiyavila",
+      "palayam":"palayam","vazhuthacaud":"vazhuthacaud",
+      "jagathy":"jagathy","thycaud":"thycaud",
+      "valiyasala":"valiyasala","arannoor":"arannoor",
+      "pangode":"pangode","thirumala":"thirumala",
+      "thrikkannapuram":"thrikkannapuram","punnakkamugal":"punnakkamugal",
+      "poojappura":"poojappura","mudavanmugal":"mudavanmugal",
+      "estate":"estate","nemom":"nemom",
+      "ponnumangalam":"ponnumangalam","melamcode":"melamcode",
+      "pappanamcode":"pappanamcode","karumom":"karumom",
+      "punchakkari":"punchakkari","karamana":"karamana",
+      "nedumcaud":"nedumcaud","kaladi":"kaladi",
+      "poonkulam":"poonkulam","vellar":"vellar",
+      "thiruvallam":"thiruvallam","ambalathara":"ambalathara",
+      "attukal":"attukal","kalippankulam":"kalippankulam",
+      "kamaleswaram":"kamaleswaram","venganur":"venganur",
+      "port ward":"port ward","vizhinjam":"vizhinjam",
+      "harbor":"harbor","poonthura":"poonthura",
+      "puthenppalli":"puthenppalli","beemapalli":"beemapalli",
+      "valiathura":"valiathura","vallaccaud":"vallaccaud",
+      "sreevaraham":"sreevaraham","pettah":"pettah",
+      "chakkai":"chakkai","vettukadu":"vettukadu",
+      "medical college":"medical college","karikkakam":"karikkakam",
+      "kadakampally":"kadakampally","anamukham":"anamukham",
+      "akkulam":"akkulam","cheruvaykkal":"cheruvaykkal",
+      "alathara":"alathara","kuzhivila":"kuzhivila",
+      "poundkadavu":"poundkadavu","kulathur":"kulathur",
+      "attipra":"attipra","pallithura":"pallithura",
+      "pathirappally":"pathirapalli","pathirapalli":"pathirappally",
+      "ambalamukku":"ambalamukku","kudappanakunnu":"kudappanakunnu",
+      "thurutthumoola":"thuruthummoola","thuruthummoola":"thurutthumoola",
+      "kuravankonam":"kuravankonam","muttada":"muttada",
+      "chettivilakam":"chettivilakam","kinavoor":"kinavoor",
+      "nallanchira":"nalanchira","nalanchira":"nallanchira",
+      "keshavadasapuram":"kesavadasapuram","kesavadasapuram":"keshavadasapuram",
+      "gourishapattom":"gowreeshapattom","gowreeshapattom":"gourishapattom",
+      "kunnukuzhi":"kunnukuzhy","kunnukuzhy":"kunnukuzhi",
+      "nanthanakodu":"nanthancode","nanthancode":"nanthanakodu",
+      "kannammoola":"kannammoola","nettayam":"nettayam",
+      "kachani":"kachani","vazhottukonam":"vazhottukonam",
+      "kodunganoor":"kodunganoor","vattiyoorkavu":"vattiyoorkavu",
+      "kanjirampara":"kanjirampara","kawadiyar":"kowdiar","kowdiar":"kawadiyar",
+      "sasthamangalam":"sasthamangalam","valiyavila":"valiyavila",
+      "palayam":"palayam","vazhuthakkad":"vazhuthacaud","vazhuthacaud":"vazhuthakkad",
+      "jagathy":"jagathy","thykkadu":"thycaud","thycaud":"thykkadu",
+      "valiyashala":"valiyashala","arannoor":"arannoor",
+      "manakkadu":"manakkadu","chalai":"chalai",
+      "fort":"fort","perunthanni":"perunthanni",
+      "sreekanthaswaram":"sreekanthaswaram","thampanoor":"thampanoor",
+      "vanchiyoor":"vanchiyoor","nedunkadu":"nedunkadu",
+      "kalady":"kalady","poongulam":"poongulam",
+      "vellarr":"vellarr","thiruvallam":"thiruvallam",
+      "ambalathara":"ambalathara","attukal":"attukal",
+      "kalippankulam":"kalippankulam","kamaleswaram":"kamaleswaram",
+      // Attukal specific ward aliases
+      "nedumcaud":"nedunkadu","nedunkadu":"nedumcaud",
+      "vellar":"vellarr","vellarr":"vellar",
+      "poonkulam":"poongulam","poongulam":"poonkulam",
+      "kaladi":"kalady","kalady":"kaladi",
+      "karamana":"karamana","karamana":"karamana",
+      "thrikkannapuram":"thrikkannapuram","punnakka mugall":"punnakkamugal","punnakkamugal":"punnakka mugall",
+      "poojappura":"poojappura","pangode":"pangode",
+      "thirumala":"thirumala","mudavanmukal":"mudavanmukal",
+      "estate":"estate","nemom":"nemom",
+      "ponnumangalam":"ponnumangalam","melamangod":"melamangod",
+      "pappanamcode":"pappanamcode","karamana":"karamana",
+      "karumam":"karumam","punchakkari":"punchakkari",
+      "venganur":"venganur","port ward":"port ward",
+      "vizhinjam":"vizhinjam","harbor":"harbor",
+      "poonthura":"poonthura","putthanpalli":"putthanpalli",
+      "beemapalli":"beemapalli","valiathura":"valiathura",
+      "vallakkadavu":"vallakkadavu","sreevaraham":"sreevaraham",
+      "pettah":"pettah","chakkai":"chakkai","vettukadu":"vettukadu",
       "chavara":"chavara","kollam":"kollam","thrikkadavoor":"thrikkadavoor","kilikolloor":"kilikolloor",
       "eravipuram":"eravipuram","mattancherry":"mattancherry","kochi":"kochi","ernakulam city":"ernakulam city",
       "thrissur west":"thrissur west","thrissur east":"thrissur east","ollur":"ollur",
@@ -983,16 +1095,16 @@
     // ========= CORPORATION MANDAL WARD MAPPING =========
     // Based on the CSV data, map each corporation mandal to its specific wards
     const CORPORATION_MANDAL_WARDS = {
-      // Thiruvananthapuram Corporation Mandals
-      'Kazhakkoottam': ['Kazhakkoottam', 'SainikSchool', 'Chanthavila', 'Kattaayikkonam', 'Njandoorkkonam', 'Powdikkonam', 'Chenkottukonam', 'Chembazhanthi', 'Karyavattom', 'Pangappara', 'Sreekaryam', 'Chellamangalam', 'Mannanthala', 'Edavakkod'],
-      'Ulloor': ['Ulloor', 'Medical College', 'Karikkakam', 'Kadakampally', 'Anamukham', 'Akkulam', 'Cheruvaykkal', 'Alathara', 'Kuzhivila', 'Poundkadavu', 'Kulathur', 'Attipra', 'Pallithura'],
-      'Pattom': ['Pathirappally', 'Ambalamukku', 'Kudappanakunnu', 'Peroorkkada', 'Thurutthumoola', 'Kuravankonam', 'Muttada', 'Chettivilakam', 'Kinavoor', 'Nallanchira', 'Pattom', 'Keshavadasapuram', 'Gourishapattom', 'Kunnukuzhi', 'Nanthanakodu', 'Kannammoola'],
-      'Vattiyoorkavu': ['Nettayam', 'Kachani', 'Vazhottukonam', 'Kodunganoor', 'Vattiyoorkavu', 'Kanjirampara', 'Kawadiyar', 'Sasthamangalam', 'Valiyavila'],
-      'Thiruvananthapuram Central': ['Palayam', 'Vazhuthakkad', 'Jagathy', 'Thykkadu', 'Valiyashala', 'Arannoor', 'Manakkadu', 'Chalai', 'Fort', 'Perunthanni', 'Sreekanthaswaram', 'Thampanoor', 'Vanchiyoor'],
-      'Attukal': ['Nedunkadu', 'Kalady', 'Poongulam', 'Vellarr', 'Thiruvallam', 'Ambalathara', 'Attukal', 'Kalippankulam', 'Kamaleswaram'],
-      'Nemom': ['Thrikkannapuram', 'Punnakka Mugall', 'Poojappura', 'Pangode', 'Thirumala', 'Mudavanmukal', 'Estate', 'Nemom', 'Ponnumangalam', 'Melamangod', 'Pappanamcode', 'Karamana', 'Karumam', 'Punchakkari'],
-      'Kovalam': ['Venganur', 'Port Ward', 'Vizhinjam', 'Harbor'],
-      'Thiruvananthapuram West': ['Poonthura', 'Putthanpalli', 'Beemapalli', 'Valiathura', 'Vallakkadavu', 'Sreevaraham', 'Pettah', 'Chakkai', 'Vettukadu'],
+      // Thiruvananthapuram Corporation Mandals - Updated to match CSV data
+      'Kazhakkoottam': ['KAZHAKKUTTOM', 'SAINIKA SCHOOL', 'CHANTHAVILA', 'KATTAIKONAM', 'NJANDOORKONAM', 'POWDIKONAM', 'CHENKOTTUKONAM', 'CHEMPAZHANTHY', 'KARIAVATTOM', 'PANGAPPARA', 'SREEKARIYAM', 'CHELLAMANGALAM', 'MANNANTHALA', 'EDAVACODE'],
+      'Ulloor': ['ULLOOR', 'MEDICAL COLLEGE'],
+      'Pattom': ['PATHIRAPALLI', 'AMBALAMUKKU', 'KUDAPPANAKUNNU', 'THURUTHUMMOOLA', 'KURAVANKONAM', 'MUTTADA', 'CHETTIVILAKAM', 'KINAVOOR', 'NALANCHIRA', 'PATTOM', 'KESAVADASAPURAM', 'GOWREESHAPATTOM', 'KUNNUKUZHY', 'NANTHANCODE'],
+      'Vattiyoorkavu': ['NETTAYAM', 'KACHANI', 'VAZHOTTUKONAM', 'KODUNGANOOR', 'VATTIYOORKAVU', 'KANJIRAMPARA', 'PEROORKADA', 'KOWDIAR', 'SASTHAMANGALAM', 'VALIYAVILA'],
+      'Thiruvananthapuram Central': ['PALAYAM', 'VAZHUTHACAUD', 'JAGATHY', 'THYCAUD', 'VALIYASALA', 'ARANNOOR'],
+      'Attukal': ['KARAMANA', 'NEDUMCAUD', 'KALADI', 'POONKULAM', 'VELLAR', 'THIRUVALLAM', 'AMBALATHARA', 'ATTUKAL', 'KALIPPANKULAM', 'KAMALESWARAM'],
+      'Nemom': ['PANGODE', 'THIRUMALA', 'THRIKKANNAPURAM', 'PUNNAKKAMUGAL', 'POOJAPPURA', 'MUDAVANMUGAL', 'ESTATE', 'NEMOM', 'PONNUMANGALAM', 'MELAMCODE', 'PAPPANAMCODE', 'KARUMOM', 'PUNCHAKKARI'],
+      'Kovalam': ['VENGANUR', 'PORT WARD', 'VIZHINJAM', 'HARBOR'],
+      'Thiruvananthapuram West': ['POONTHURA', 'PUTHENPPALLI', 'BEEMAPALLI', 'VALIATHURA', 'VALLACCAUD', 'SREEVARAHAM', 'PETTAH', 'CHAKKAI', 'VETTUKADU'],
       
       // Kollam Corporation Mandals
       'Chavara': ['Sakthikulangara Harbor', 'Sakthikulangara', 'Meenathu Chery', 'Kavanad', 'Vallikkeezh', 'Aalattukavu', 'Kannimel West', 'Kannimel'],
@@ -1457,8 +1569,10 @@ Vypen,Vypin
     }
 
     function showMandals(acF){
+      console.log('🏛️ showMandals called with:', acF);
       clearLayers(); clearLabels(); ctx.level='mandals'; ctx.ac=acF; ctx.mandal=null;
       const acName = prop(acF, KEYS.ac);
+      console.log('🏛️ AC Name:', acName);
       titleEl.textContent=`Kerala — ${prop(ctx.zone,KEYS.zone)} — ${prop(ctx.org,KEYS.org)} — ${acName} — Mandals & Corporation Mandals`;
       legendTitle.textContent="Mandals & Corporation Mandals";
 
@@ -1518,7 +1632,8 @@ Vypen,Vypin
 
       // Debug: Count corporation mandals
       const corpMandals = subset.features.filter(f => prop(f, 'Type') === 'Corporation');
-      console.log(`Loaded ${subset.features.length} mandals, ${corpMandals.length} are corporation mandals`);
+      console.log(`🏛️ Loaded ${subset.features.length} mandals, ${corpMandals.length} are corporation mandals`);
+      console.log('🏛️ All mandals:', subset.features.map(f => prop(f, LABEL_KEY)));
       if (corpMandals.length > 0) {
         console.log('Corporation mandals:', corpMandals.map(f => ({
           name: prop(f, LABEL_KEY),
@@ -1592,12 +1707,13 @@ Vypen,Vypin
     }
 
     async function showCorporationWards(mF){
-      clearLayers(); clearLabels(); ctx.level='wards'; ctx.mandal=mF;
-      const mName = prop(mF,"__label") || prop(mF, KEYS.mnd);
-      const corporationName = prop(mF, 'LocalBody');
-      titleEl.textContent=`Kerala — ${corporationName} — ${mName} — Wards`;
-      legendTitle.textContent="Wards";
-      legendNote.textContent = "Loading ward data...";
+      try {
+        clearLayers(); clearLabels(); ctx.level='wards'; ctx.mandal=mF;
+        const mName = prop(mF,"__label") || prop(mF, KEYS.mnd);
+        const corporationName = prop(mF, 'LocalBody');
+        titleEl.textContent=`Kerala — ${corporationName} — ${mName} — Wards`;
+        legendTitle.textContent="Wards";
+        legendNote.textContent = "Loading ward data...";
       
       console.log('🏛️ showCorporationWards called with:', {
         mName,
@@ -1714,22 +1830,176 @@ Vypen,Vypin
             
             console.log(`🏘️ Setting up popup for corporation ward: ${wardInfo}`);
             
-            // Use simple popup like the old working implementation
-            l.bindPopup(`<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; padding: 10px;">
-              <b style="color: #f97316; font-size: 16px;">${wardInfo}</b><br/>
-              <span style="color: #3b82f6;">Corporation:</span> ${corporationName}<br/>
-              <span style="color: #10b981;">Mandal:</span> ${mName}<br/>
-              <span style="color: #6b7280; font-size: 12px;">Click for ward details</span>
-            </div>`, {
-              maxWidth: 300,
-              className: 'custom-ward-popup'
+            // Find voter data for this corporation ward first
+            let wardData = voterData.find(row => {
+              const csvWard = norm(row.ward);
+              const geoWard = norm(wardName);
+              const aliasedWard = aliases.get(geoWard) || geoWard;
+              
+              return (csvWard === geoWard || csvWard === aliasedWard) && 
+                     norm(row.lbName) === norm('Thiruvananthapuram') &&
+                     norm(row.mandal) === norm(mName);
             });
             
-            // Also add click event for debugging
-            l.on('click', (e) => {
-              console.log('🏘️ Corporation ward clicked:', wardInfo);
-              console.log('🏘️ Click event fired for ward:', wardName);
-            });
+            // If not found with mandal matching, try without mandal matching
+            if (!wardData) {
+              wardData = voterData.find(row => {
+                const csvWard = norm(row.ward);
+                const geoWard = norm(wardName);
+                const aliasedWard = aliases.get(geoWard) || geoWard;
+                
+                return (csvWard === geoWard || csvWard === aliasedWard) && 
+                       norm(row.lbName) === norm('Thiruvananthapuram');
+              });
+            }
+            
+            // If exact match not found, try fuzzy matching
+            if (!wardData) {
+              wardData = voterData.find(row => {
+                if (norm(row.lbName) !== norm('Thiruvananthapuram')) return false;
+                
+                const csvWard = norm(row.ward);
+                const geoWard = norm(wardName);
+                const aliasedWard = aliases.get(geoWard) || geoWard;
+                
+                if (csvWard === geoWard || csvWard === aliasedWard) return true;
+                
+                const similarity = sim(csvWard, geoWard);
+                if (similarity >= 0.85) return true;
+                
+                const aliasedSimilarity = sim(csvWard, aliasedWard);
+                if (aliasedSimilarity >= 0.85) return true;
+                
+                return false;
+              });
+            }
+            
+            console.log('🔍 Voter data found for corporation ward:', wardData ? 'YES' : 'NO');
+            
+            // Create popup with button based on whether we found data
+            if (wardData) {
+              console.log('📊 Corporation ward data:', wardData);
+              const wardSummary = {
+                mandal: mName,
+                ac: wardData.ac,
+                orgDist: wardData.orgDist,
+                zone: wardData.zone,
+                totalWards: 1,
+                totalHouses: wardData.houses,
+                totalVoters: wardData.totalVoters,
+                femaleVoters: wardData.female,
+                maleVoters: wardData.male,
+                transgenderVoters: wardData.transgender,
+                femalePercentage: wardData.totalVoters > 0 ? (wardData.female / wardData.totalVoters) * 100 : 0,
+                malePercentage: wardData.totalVoters > 0 ? (wardData.male / wardData.totalVoters) * 100 : 0,
+                transgenderPercentage: wardData.totalVoters > 0 ? (wardData.transgender / wardData.totalVoters) * 100 : 0,
+                topWards: [{
+                  ward: wardData.ward,
+                  wardNumber: wardData.wardNumber,
+                  houses: wardData.houses,
+                  totalVoters: wardData.totalVoters,
+                  female: wardData.female,
+                  male: wardData.male,
+                  transgender: wardData.transgender
+                }]
+              };
+              
+              // No popup binding - direct modal only
+              
+              // Show modal directly on click
+              l.on('click', (e) => {
+                console.log('🏘️ Corporation ward clicked:', wardInfo);
+                console.log('🔍 Opening modal directly...');
+                e.originalEvent.stopPropagation();
+                // Show modal directly instead of popup
+                showModal(wardInfo, corporationName, mName, wardSummary);
+                console.log('🔍 Modal opened successfully');
+              });
+              
+              console.log(`✅ Popup bound for ward: ${wardInfo}`);
+              console.log(`🔍 Popup test for ${wardInfo}:`, l.getPopup() ? 'HAS POPUP' : 'NO POPUP');
+              
+              // Add multiple event types to catch the interaction
+              l.on('mousedown', (e) => {
+                console.log('🏘️ Corporation ward mousedown:', wardInfo);
+              });
+              
+              l.on('mouseup', (e) => {
+                console.log('🏘️ Corporation ward mouseup:', wardInfo);
+              });
+              
+              l.on('mouseover', (e) => {
+                console.log('🏘️ Corporation ward mouseover:', wardInfo);
+              });
+              
+              // Test popup immediately
+              setTimeout(() => {
+                console.log(`✅ Popup ready for ward: ${wardInfo}`);
+              }, 100);
+            } else {
+              // Show detailed popup even without voter data - use local body data
+              const localBodyData = findLocalBodyByName(corporationName);
+              if (localBodyData) {
+                console.log('📊 Found local body data for corporation:', corporationName);
+                // No popup binding - direct modal only
+                console.log(`✅ Direct modal setup for ward (local body data): ${wardInfo}`);
+                
+                // Show modal directly on click
+                l.on('click', (e) => {
+                  console.log('🏘️ Corporation ward clicked (local body data):', wardInfo);
+                  console.log('🔍 Opening modal directly...');
+                  e.originalEvent.stopPropagation();
+                  // Show modal directly with local body data
+                  showModal(wardInfo, corporationName, mName, localBodyData);
+                  console.log('🔍 Modal opened successfully');
+                });
+                
+                l.on('mouseover', (e) => {
+                  console.log('🏘️ Corporation ward mouseover (local body data):', wardInfo);
+                });
+              } else {
+                // No popup binding - direct modal only
+                console.log(`✅ Direct modal setup for ward (no data): ${wardInfo}`);
+                
+                // Show modal for no data case
+                l.on('click', (e) => {
+                  console.log('🏘️ Corporation ward clicked (no data):', wardInfo);
+                  console.log('🔍 Opening modal for no data...');
+                  e.originalEvent.stopPropagation();
+                  // Create a simple modal for no data case
+                  const noDataSummary = {
+                    mandal: mName,
+                    ac: 'Unknown',
+                    orgDist: 'Unknown',
+                    zone: 'Unknown',
+                    totalWards: 1,
+                    totalHouses: 0,
+                    totalVoters: 0,
+                    femaleVoters: 0,
+                    maleVoters: 0,
+                    transgenderVoters: 0,
+                    femalePercentage: 0,
+                    malePercentage: 0,
+                    transgenderPercentage: 0,
+                    topWards: [{
+                      ward: wardInfo,
+                      wardNumber: wardNo || 'Unknown',
+                      houses: 0,
+                      totalVoters: 0,
+                      female: 0,
+                      male: 0,
+                      transgender: 0
+                    }]
+                  };
+                  showModal(wardInfo, corporationName, mName, noDataSummary);
+                  console.log('🔍 Modal opened for no data case');
+                });
+                
+                l.on('mouseover', (e) => {
+                  console.log('🏘️ Corporation ward mouseover (no data):', wardInfo);
+                });
+              }
+            }
           }
       }).addTo(map);
         
@@ -1748,7 +2018,8 @@ Vypen,Vypin
               fillColor: "transparent",
               fillOpacity: 0,
               dashArray: "5,5"
-            }
+            },
+            interactive: false
           }).addTo(map);
           
           console.log(`Created mandal boundary for ${mName} from ${subset.features.length} wards`);
@@ -1805,6 +2076,18 @@ Vypen,Vypin
           mandal: mName
         }
       }, '*');
+      
+      } catch (error) {
+        console.error('❌ Error in showCorporationWards:', error);
+        console.log('🔄 Restoring mandals view due to error...');
+        
+        // Restore the mandals view on error
+        if (ctx.ac) {
+          showMandals(ctx.ac);
+        } else {
+          console.error('❌ Cannot restore mandals view - no AC context');
+        }
+      }
     }
 
     function getCorporationName(mandalName){
