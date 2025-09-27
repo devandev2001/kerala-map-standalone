@@ -1,12 +1,13 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App';
+import App from './App.simple';
 import './styles/index.css';
 
-// Initialize the application
-const initializeApp = async () => {
+// Simple initialization without service worker
+const initializeApp = () => {
   try {
-    // Render the React application
+    console.log('🚀 Starting Kerala Map Standalone...');
+    
     const rootElement = document.getElementById('root');
     if (!rootElement) {
       throw new Error('Root element not found');
@@ -27,10 +28,19 @@ const initializeApp = async () => {
     const rootElement = document.getElementById('root');
     if (rootElement) {
       rootElement.innerHTML = `
-        <div class="error-container">
-          <h1 class="error-title">Application Error</h1>
-          <p class="error-message">Failed to initialize the Kerala Map application.</p>
-          <button class="error-retry-btn" onclick="window.location.reload()">
+        <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
+          <h1 style="color: #dc2626;">Application Error</h1>
+          <p>Failed to initialize the Kerala Map application.</p>
+          <p style="color: #666; font-size: 14px;">Error: ${error.message}</p>
+          <button onclick="window.location.reload()" style="
+            background: #dc2626; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer;
+            margin-top: 10px;
+          ">
             Retry
           </button>
         </div>

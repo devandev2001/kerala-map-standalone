@@ -15,6 +15,10 @@ const AC_NAME_MAPPINGS: Record<string, string> = {
   // Thodupuzha (example - add if needed)
   'thodupuzha': 'Thodupuzha',
   'Thodupuzha': 'Thodupuzha',
+  
+  // Punalur/Punaloor mapping
+  'Punalur': 'Punaloor',
+  'punalur': 'Punaloor',
 };
 
 /**
@@ -71,4 +75,108 @@ export function normalizeZoneName(zoneName: string): string {
   };
   
   return ZONE_MAPPINGS[zoneName] || zoneName;
+}
+
+/**
+ * Normalizes Local Body names to match CSV data format
+ */
+export function normalizeLocalBodyName(localBodyName: string): string {
+  if (!localBodyName) return localBodyName;
+  
+  // Add local body mappings if needed
+  const LOCAL_BODY_MAPPINGS: Record<string, string> = {
+    // Pathanapuram mappings
+    'Pathanapuram': 'Pathanapuram Gramapanchayath',
+    'pathanapuram': 'Pathanapuram Gramapanchayath',
+    
+    // Kulathupuzha mappings
+    'Kulathupuzha': 'Kulathupuzha Gramapanchayath',
+    'kulathupuzha': 'Kulathupuzha Gramapanchayath',
+    
+    // Anchal mappings
+    'Anchal': 'Anchal Gramapanchayath',
+    'anchal': 'Anchal Gramapanchayath',
+    
+    // Piravanthur mappings
+    'Piravanthur': 'Piravanthur Gramapanchayat',
+    'piravanthur': 'Piravanthur Gramapanchayat',
+    
+    // Pattazhi Vadakkekara mappings
+    'Pattazhi_Vadakkekara': 'Pattazhi Vadakkekara Gramapanchayath',
+    'Pattazhi Vadakkekara': 'Pattazhi Vadakkekara Gramapanchayath',
+    'pattazhi_vadakkekara': 'Pattazhi Vadakkekara Gramapanchayath',
+    'pattazhi vadakkekara': 'Pattazhi Vadakkekara Gramapanchayath',
+    
+    // Perayam mappings
+    'Perayam': 'Perayam Gramapanchayath',
+    'perayam': 'Perayam Gramapanchayath',
+    
+    // Kottarakara mappings (this one doesn't have Gramapanchayath suffix)
+    'Kottarakara': 'Kottarakara',
+    'kottarakara': 'Kottarakara',
+    
+    // Add more mappings as discovered
+  };
+  
+  // First, check direct mapping
+  if (LOCAL_BODY_MAPPINGS[localBodyName]) {
+    console.log(`🔧 Mapped Local Body name: ${localBodyName} → ${LOCAL_BODY_MAPPINGS[localBodyName]}`);
+    return LOCAL_BODY_MAPPINGS[localBodyName];
+  }
+  
+  // Check case-insensitive mapping
+  const lowerLB = localBodyName.toLowerCase();
+  for (const [key, value] of Object.entries(LOCAL_BODY_MAPPINGS)) {
+    if (key.toLowerCase() === lowerLB) {
+      console.log(`🔧 Mapped Local Body name (case): ${localBodyName} → ${value}`);
+      return value;
+    }
+  }
+  
+  // Return original if no mapping found
+  return localBodyName;
+}
+
+/**
+ * Normalizes Ward names to match CSV data format
+ */
+export function normalizeWardName(wardName: string): string {
+  if (!wardName) return wardName;
+  
+  // Add ward name mappings if needed
+  const WARD_NAME_MAPPINGS: Record<string, string> = {
+    // KADASSERY variations
+    'KADASSERY': 'KADASSERI',
+    'kadassery': 'KADASSERI',
+    'Kadassery': 'KADASSERI',
+    
+    // THENGAMANMADOM variations
+    'THENGAMANMADOM': 'THENGAMANMADAM',
+    'thengamanmadom': 'THENGAMANMADAM',
+    'Thengamanmadom': 'THENGAMANMADAM',
+    
+    // ERATHUVADAKKU variations (case insensitive)
+    'erathuvadakku': 'ERATHUVADAKKU',
+    'Erathuvadakku': 'ERATHUVADAKKU',
+    
+    // Add more ward name mappings as discovered
+  };
+  
+  // First, check direct mapping
+  if (WARD_NAME_MAPPINGS[wardName]) {
+    console.log(`🔧 Mapped Ward name: ${wardName} → ${WARD_NAME_MAPPINGS[wardName]}`);
+    return WARD_NAME_MAPPINGS[wardName];
+  }
+  
+  // Check case-insensitive mapping
+  const lowerWard = wardName.toLowerCase();
+  for (const [key, value] of Object.entries(WARD_NAME_MAPPINGS)) {
+    if (key.toLowerCase() === lowerWard) {
+      console.log(`🔧 Mapped Ward name (case): ${wardName} → ${value}`);
+      return value;
+    }
+  }
+  
+  // Return original if no mapping found
+  return wardName;
 }
