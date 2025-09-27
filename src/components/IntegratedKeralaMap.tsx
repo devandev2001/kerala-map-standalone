@@ -14,6 +14,7 @@ import { loadZoneTargetData, getZoneTargetData } from '../utils/loadZoneTargetDa
 import { useMobileDetection, optimizeTouchInteractions } from '../utils/mobileDetection';
 import { generateMapPDF, generateMapPDFMobile } from '../utils/mapPdfExporter';
 import { loadZoneContactData, getZoneContactData } from '../utils/loadZoneContactData';
+import { loadVoterData, VoterData, getVoterDataForWard } from '../utils/loadVoterData';
 import { Maximize2, Minimize2, RotateCcw, MapPin, Download, Info, HelpCircle, Settings } from 'lucide-react';
 import { getDrilldownData, MapContext } from '../utils/drilldownDataManager';
 
@@ -31,15 +32,26 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
   const [showLeadershipModal, setShowLeadershipModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [currentMapContext, setCurrentMapContext] = useState({ level: 'zones', zone: '', org: '', ac: '', mandal: '' });
+  const [preserveModalState, setPreserveModalState] = useState(false);
+  const [isDataUpdating, setIsDataUpdating] = useState(false);
   
   // Debug context changes
   useEffect(() => {
     console.log('🔄 Map context updated:', currentMapContext);
-  }, [currentMapContext]);
+    console.log('📊 Modal states:', {
+      showPerformanceModal,
+      showTargetModal,
+      showLeadershipModal,
+      showHelpModal,
+      preserveModalState,
+      isDataUpdating
+    });
+  }, [currentMapContext, showPerformanceModal, showTargetModal, showLeadershipModal, showHelpModal, preserveModalState, isDataUpdating]);
   const [selectedOrgDistrict, setSelectedOrgDistrict] = useState<string | null>(null);
   const [selectedAC, setSelectedAC] = useState<string | null>(null);
   const [acData, setAcData] = useState<ACData>({});
   const [mandalData, setMandalData] = useState<MandalData>({});
+  const [voterData, setVoterData] = useState<VoterData>({});
   const [orgDistrictContacts, setOrgDistrictContacts] = useState<any[]>([]);
   const [dataLoadingStates, setDataLoadingStates] = useState<Record<string, any>>({});
   const [dataLoadingErrors, setDataLoadingErrors] = useState<Record<string, string>>({});
@@ -55,9 +67,10 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
         console.log('🔄 Starting data loading...');
         
         // Load AC and Mandal data
-        const [acDataResult, mandalDataResult, orgContactsResult] = await Promise.allSettled([
+        const [acDataResult, mandalDataResult, voterDataResult, orgContactsResult] = await Promise.allSettled([
           loadACData(),
           loadMandalData(),
+          loadVoterData(),
           loadOrgDistrictContacts()
         ]);
         
@@ -73,6 +86,45 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
         } else {
           console.error('❌ Failed to load Mandal data:', mandalDataResult.reason);
           setDataLoadingErrors(prev => ({ ...prev, mandalData: mandalDataResult.reason.message }));
+        }
+        
+        if (voterDataResult.status === 'fulfilled') {
+          setVoterData(voterDataResult.value);
+          console.log('✅ Voter data loaded successfully');
+          
+          // Test UDYAWAR MADA ward data
+          const udyawarMadaData = getVoterDataForWard(
+            voterDataResult.value,
+            'Kasaragod',
+            'Manjeshwaram',
+            'Manjeshwar',
+            'Manjeswaram',
+            'UDYAWAR MADA'
+          );
+          
+          if (udyawarMadaData) {
+            console.log('✅ UDYAWAR MADA ward data found:', udyawarMadaData);
+          } else {
+            console.log('❌ UDYAWAR MADA ward data not found');
+          }
+          
+          // Test data from different districts
+          console.log('📊 Total voter data loaded for districts:', Object.keys(voterDataResult.value));
+          console.log('📊 Sample data structure:', {
+            districts: Object.keys(voterDataResult.value).length,
+            totalRecords: Object.values(voterDataResult.value).reduce((total, district) => {
+              return total + Object.values(district).reduce((acTotal, ac) => {
+                return acTotal + Object.values(ac).reduce((mandalTotal, mandal) => {
+                  return mandalTotal + Object.values(mandal).reduce((lbTotal, lb) => {
+                    return lbTotal + Object.keys(lb).length;
+                  }, 0);
+                }, 0);
+              }, 0);
+            }, 0)
+          });
+        } else {
+          console.error('❌ Failed to load Voter data:', voterDataResult.reason);
+          setDataLoadingErrors(prev => ({ ...prev, voterData: voterDataResult.reason.message }));
         }
         
         if (orgContactsResult.status === 'fulfilled') {
@@ -883,12 +935,17 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
   };
 
   // Auto-sync Target modal state with current map context
+  // Only update when modal is open and context has meaningful changes
   useEffect(() => {
-    if (showTargetModal) {
+    if (showTargetModal && !preserveModalState) {
+      // Preserve modal state during context changes - don't clear selections unnecessarily
       if (currentMapContext.level === 'orgs' && currentMapContext.org) {
         // At Org District level - show AC targets for this org district
         setSelectedOrgDistrict(currentMapContext.org);
-        setSelectedAC(null); // Clear AC to show AC list
+        // Only clear AC if we're actually changing org districts
+        if (selectedOrgDistrict !== currentMapContext.org) {
+          setSelectedAC(null);
+        }
       } else if (currentMapContext.level === 'acs' && currentMapContext.org && currentMapContext.ac) {
         // At AC level - show mandal targets for this AC
         setSelectedOrgDistrict(currentMapContext.org);
@@ -897,13 +954,10 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
         // At Mandal level - show mandal targets for this AC
         setSelectedOrgDistrict(currentMapContext.org);
         setSelectedAC(currentMapContext.ac);
-      } else {
-        // At Zone level or other levels - clear selections
-        setSelectedOrgDistrict(null);
-        setSelectedAC(null);
       }
+      // Don't clear selections when going to zone level - preserve modal state
     }
-  }, [showTargetModal, currentMapContext]);
+  }, [showTargetModal, currentMapContext, selectedOrgDistrict, preserveModalState]);
 
   useEffect(() => {
     // Handle fullscreen changes
@@ -933,13 +987,36 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
           case 'context-change':
             // Update map context when drill-down level changes
             console.log('🔄 Updating context from map-navigation:', event.data.context);
-            setCurrentMapContext(event.data.context || { level: 'zones', zone: '', org: '', ac: '', mandal: '' });
+            const newContext = event.data.context || { level: 'zones', zone: '', org: '', ac: '', mandal: '' };
+            // Only update if context actually changed to prevent unnecessary re-renders
+            setCurrentMapContext(prevContext => {
+              if (JSON.stringify(prevContext) !== JSON.stringify(newContext)) {
+                return newContext;
+              }
+              return prevContext;
+            });
             break;
         }
       } else if (event.data && event.data.type === 'context-change') {
         // Handle direct context-change messages from iframe
         console.log('🔄 Updating context from direct context-change:', event.data.context);
-        setCurrentMapContext(event.data.context || { level: 'zones', zone: '', org: '', ac: '', mandal: '' });
+        const newContext = event.data.context || { level: 'zones', zone: '', org: '', ac: '', mandal: '' };
+        
+        // Check if this is a mandal-level update
+        if (newContext.level === 'mandals' && newContext.mandal) {
+          console.log('🏛️ Mandal data update detected - preserving modal state');
+          setPreserveModalState(true);
+          // Reset preserve state after a short delay
+          setTimeout(() => setPreserveModalState(false), 2000);
+        }
+        
+        // Only update if context actually changed to prevent unnecessary re-renders
+        setCurrentMapContext(prevContext => {
+          if (JSON.stringify(prevContext) !== JSON.stringify(newContext)) {
+            return newContext;
+          }
+          return prevContext;
+        });
       }
     };
 
@@ -963,13 +1040,24 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
       setShowLeadershipModal(true);
     };
     const handleRefreshMap = () => {
-      refreshMap();
+      refreshMap(true); // Force refresh when user explicitly clicks refresh
     };
     
     window.addEventListener('show-performance-modal', handleShowPerformanceModal);
     window.addEventListener('show-target-modal', handleShowTargetModal);
     window.addEventListener('show-contacts-modal', handleShowContactsModal);
     window.addEventListener('refresh-map', handleRefreshMap);
+    
+    // Handle data update events
+    const handleDataUpdateStart = () => {
+      setIsDataUpdating(true);
+    };
+    const handleDataUpdateEnd = () => {
+      setIsDataUpdating(false);
+    };
+    
+    window.addEventListener('data-update-start', handleDataUpdateStart);
+    window.addEventListener('data-update-end', handleDataUpdateEnd);
     
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
@@ -979,6 +1067,8 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
       window.removeEventListener('show-target-modal', handleShowTargetModal);
       window.removeEventListener('show-contacts-modal', handleShowContactsModal);
       window.removeEventListener('refresh-map', handleRefreshMap);
+      window.removeEventListener('data-update-start', handleDataUpdateStart);
+      window.removeEventListener('data-update-end', handleDataUpdateEnd);
     };
   }, [onBack, onHome]);
 
@@ -997,12 +1087,43 @@ const IntegratedKeralaMap: React.FC<IntegratedKeralaMapProps> = ({ onBack, onHom
     }
   };
 
-  const refreshMap = () => {
+  const refreshMap = (forceRefresh = false) => {
     if (iframeRef.current) {
+      // Don't refresh if modals are open and it's not a forced refresh
+      if (!forceRefresh && (showPerformanceModal || showTargetModal || showLeadershipModal || showHelpModal)) {
+        console.log('🔄 Skipping map refresh - modals are open');
+        return;
+      }
+      
+      // Don't refresh if data is currently being updated
+      if (!forceRefresh && isDataUpdating) {
+        console.log('🔄 Skipping map refresh - data is being updated');
+        return;
+      }
+      
+      // Preserve modal state during refresh
+      const modalStates = {
+        showPerformanceModal,
+        showTargetModal,
+        showLeadershipModal,
+        showHelpModal
+      };
+      
       setIsLoading(true);
       setMapError(false);
+      setPreserveModalState(true);
+      
       // Only refresh if needed, don't add random parameters that cause constant reloading
       iframeRef.current.src = `/map/pan.html?v=${Date.now()}`;
+      
+      // Restore modal states after a short delay to allow iframe to load
+      setTimeout(() => {
+        setShowPerformanceModal(modalStates.showPerformanceModal);
+        setShowTargetModal(modalStates.showTargetModal);
+        setShowLeadershipModal(modalStates.showLeadershipModal);
+        setShowHelpModal(modalStates.showHelpModal);
+        setPreserveModalState(false);
+      }, 1000);
     }
   };
 

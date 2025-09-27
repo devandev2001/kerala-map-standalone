@@ -1,0 +1,2368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>BJP Kerala Dashboard - Interactive Map | Mission 2025-2026</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
+    body { 
+      font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+      background: linear-gradient(135deg, #1F2937 0%, #111827 50%, #0F172A 100%);
+      color: #ffffff;
+    }
+    .toolbar { 
+      position:absolute; top:10px; left:10px; z-index:1000; 
+      background: rgba(31, 41, 55, 0.95); 
+      backdrop-filter: blur(10px);
+      padding:8px 12px; border-radius:8px; 
+      box-shadow: 0 4px 6px rgba(0,0,0,.3), 0 2px 4px rgba(0,0,0,.2);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+    }
+    
+    /* Ensure popups are visible */
+    .leaflet-popup {
+      z-index: 2000 !important;
+    }
+    
+    .leaflet-popup-content-wrapper {
+      background: white !important;
+      border: 2px solid #f97316 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+    }
+    
+    .leaflet-popup-content {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    .custom-ward-popup {
+      z-index: 2000 !important;
+    }    }
+    .toolbar button {
+      background: rgba(249, 115, 22, 0.8);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      margin-left: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .toolbar button:hover {
+      background: rgba(249, 115, 22, 1);
+      transform: translateY(-1px);
+    }
+    .toolbar span {
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .legend { 
+      position:absolute; bottom:10px; right:10px; z-index:1000; 
+      background: rgba(31, 41, 55, 0.95); 
+      backdrop-filter: blur(10px);
+      padding:8px 12px; border-radius:8px; 
+      box-shadow: 0 4px 6px rgba(0,0,0,.3), 0 2px 4px rgba(0,0,0,.2);
+      border: 1px solid rgba(249, 115, 22, 0.2);
+    }
+    
+    /* Ensure popups are visible */
+    .leaflet-popup {
+      z-index: 2000 !important;
+    }
+    
+    .leaflet-popup-content-wrapper {
+      background: white !important;
+      border: 2px solid #f97316 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+    }
+    
+    .leaflet-popup-content {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    .custom-ward-popup {
+      z-index: 2000 !important;
+    }      max-width: 40vw; 
+      color: #ffffff;
+    }
+    .legend strong {
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .legend-swatch{ 
+      width:12px; height:12px; display:inline-block; margin-right:6px; 
+      border:1px solid rgba(255,255,255,0.3);
+      border-radius: 2px;
+    }
+    .warn { color:#f59e0b; font-size:12px; margin-top:6px; }
+    .lbl { 
+      font-weight:700; color:#ffffff; 
+      text-shadow:0 0 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6); 
+      pointer-events:none; 
+    }
+    .lbl-zone { font-size:14px; }
+    .lbl-org { font-size:13px; }
+    .lbl-ac { font-size:12px; }
+    .lbl-mandal { font-size:12px; font-style:italic; }
+    .lbl-pan { font-size:11px; }
+    .lbl-ward { font-size:10px; }
+    
+    /* Leaflet map container styling */
+    .leaflet-container {
+      background: linear-gradient(135deg, #1F2937 0%, #111827 50%, #0F172A 100%) !important;
+    }
+    
+    /* Leaflet control styling */
+    .leaflet-control-zoom a {
+      background: rgba(31, 41, 55, 0.9) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(249, 115, 22, 0.3) !important;
+    }
+    .leaflet-control-zoom a:hover {
+      background: rgba(249, 115, 22, 0.8) !important;
+    }
+    
+    /* Leaflet attribution styling */
+    .leaflet-control-attribution {
+      background: rgba(31, 41, 55, 0.8) !important;
+      color: #ffffff !important;
+    }
+    
+    /* Full-screen modal popup styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .modal-overlay.show {
+      opacity: 1;
+    }
+    
+    .modal-content {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%);
+      border-radius: 20px;
+      padding: 0;
+      max-width: 95vw;
+      max-height: 95vh;
+      width: 1200px;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      position: relative;
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+    
+    .modal-overlay.show .modal-content {
+      transform: scale(1);
+    }
+    
+    @media (max-width: 768px) {
+      .modal-content {
+        width: 95vw;
+        max-width: 95vw;
+        margin: 10px;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+      }
+      
+      .wards-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .modal-body {
+        padding: 20px;
+      }
+    }
+    
+    .modal-header {
+      background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%);
+      padding: 24px;
+      border-radius: 20px 20px 0 0;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .modal-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200px;
+      height: 200px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      transform: rotate(45deg);
+    }
+    
+    .modal-title {
+      color: white;
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      position: relative;
+      z-index: 2;
+    }
+    
+    .modal-subtitle {
+      color: rgba(255, 255, 255, 0.9);
+      margin: 8px 0 0 0;
+      font-size: 16px;
+      font-weight: 500;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      z-index: 3;
+    }
+    
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+    
+    .modal-body {
+      padding: 32px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+    
+    .stat-number {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .stat-label {
+      font-size: 14px;
+      color: #CBD5E1;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .demographics-section {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 107, 53, 0.2);
+      border-radius: 20px;
+      padding: 32px;
+      margin-bottom: 32px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .section-title {
+      color: #F8FAFC;
+      margin: 0 0 24px 0;
+      font-size: 24px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .demographic-item {
+      margin-bottom: 24px;
+    }
+    
+    .demographic-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .demographic-label {
+      color: #CBD5E1;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .demographic-value {
+      font-weight: 700;
+      font-size: 18px;
+    }
+    
+    .progress-bar {
+      background: rgba(255, 255, 255, 0.1);
+      height: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 1s ease;
+    }
+    
+    .wards-section {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 20px;
+      padding: 32px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .wards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    
+    .ward-card {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%);
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .ward-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      border-color: rgba(96, 165, 250, 0.6);
+    }
+    
+    .ward-number-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #60A5FA, #3B82F6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      transform: rotate(12deg);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .ward-name {
+      color: #F8FAFC;
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      margin-right: 40px;
+    }
+    
+    .ward-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .ward-stat {
+      color: #60A5FA;
+      font-size: 14px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span id="title">Kerala — Zones</span>
+    <button id="backBtn" style="display:none;">⬅ Back</button>
+    <button id="homeBtn">🏠 Home</button>
+  </div>
+  <div id="map"></div>
+  <div class="legend"><strong id="legendTitle">Zones</strong><div id="legendItems"></div><div id="legendNote" class="warn"></div></div>
+  
+  <!-- Full-screen modal popup -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle" class="modal-title">Ward Details</h2>
+        <p id="modalSubtitle" class="modal-subtitle">Loading...</p>
+        <button id="modalClose" class="modal-close">×</button>
+      </div>
+      <div id="modalBody" class="modal-body">
+        <!-- Content will be populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
+  <script>
+    // ========= FILES =========
+    const FILES = {
+      zones:  'kerala_zones.geojson',
+      org:    'kerala_org_districts.geojson',
+      ac:     'KERALA_ASSEMBLY_filtered.geojson',
+      mandal: 'org_mandal_with_corporations_comprehensive.geojson?v=' + Date.now(),  // ← Updated with corporation mandals + cache busting
+      pan:    'hierarchy_output/kerala_panchayats_mapped.geojson',
+      corps:  'hierarchy_output/kerala_corporations_mapped.geojson',
+      wards:  'kerala_wards.geojson',  // ← Ward level data
+      // Corporation ward files
+      corp_wards: {
+        'Thiruvananthapuram': 'ward_jsons/Thiruvanathapuram/Corporation/Thiruvananthapuram.json',
+        'Kollam': 'ward_jsons/Kollam/Corporation/Kollam.json',
+        'Cochin': 'ward_jsons/Ernakulam/Corporation/Kochi.json',
+        'Thrissur': 'ward_jsons/Thrissur/Corporation/Thrissur.json',
+        'Kozhikode': 'ward_jsons/Kozhikode/Corporation/Kozhikode.json',
+        'Kannur': 'ward_jsons/Kannur/Corporation/Kannur.json'
+      }
+    };
+
+    // ========= MAP =========
+    const map = L.map('map').setView([10.3, 76.5], 7);
+    const backBtn=document.getElementById('backBtn'), homeBtn=document.getElementById('homeBtn');
+    const titleEl=document.getElementById('title'), legendTitle=document.getElementById('legendTitle'),
+          legendItems=document.getElementById('legendItems'), legendNote=document.getElementById('legendNote');
+
+    const palette=['#f97316','#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#84cc16','#f97316','#eab308','#10b981','#38bdf8','#e879f9'];
+    const colormap=new Map();
+    const colorFor=n=>{const k=(n||'').toString(); if(!colormap.has(k)) colormap.set(k,palette[colormap.size%palette.length]); return colormap.get(k);};
+    const prop=(f,k)=>f?.properties?.[k];
+
+    let zonesGJ,orgGJ,acGJ,mandalGJ,panGJ,corpsGJ,wardsGJ;  // ← Added corpsGJ
+    let corpWardsGJ = {}; // Store loaded corporation ward data
+    let voterData = []; // Store voter data
+    let ctx={ level:'zones' };   // ← track current view level
+    let KEYS={};
+
+    // ========= VOTER DATA PARSING =========
+    function parseVoterCSV(csvText) {
+      const lines = csvText.split('\n');
+      const data = [];
+      
+      // Skip header line
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const columns = line.split(',');
+        if (columns.length >= 11) {
+          data.push({
+            zone: columns[0]?.trim(),
+            orgDist: columns[1]?.trim(),
+            ac: columns[2]?.trim(),
+            mandal: columns[3]?.trim(),
+            lbName: columns[4]?.trim(),
+            ward: columns[5]?.trim(),
+            wardNumber: parseInt(columns[6]) || 0,
+            houses: parseInt(columns[7]) || 0,
+            totalVoters: parseInt(columns[8]) || 0,
+            female: parseInt(columns[9]) || 0,
+            male: parseInt(columns[10]) || 0,
+            transgender: parseInt(columns[11]) || 0
+          });
+        }
+      }
+      
+      return data;
+    }
+    
+    function findLocalBodyByName(lbName) {
+      if (!voterData.length) return null;
+      
+      const lbData = voterData.filter(row => 
+        norm(row.lbName) === norm(lbName)
+      );
+      
+      if (lbData.length === 0) return null;
+      
+      // Calculate totals
+      const totalWards = lbData.length;
+      const totalHouses = lbData.reduce((sum, row) => sum + row.houses, 0);
+      const totalVoters = lbData.reduce((sum, row) => sum + row.totalVoters, 0);
+      const femaleVoters = lbData.reduce((sum, row) => sum + row.female, 0);
+      const maleVoters = lbData.reduce((sum, row) => sum + row.male, 0);
+      const transgenderVoters = lbData.reduce((sum, row) => sum + row.transgender, 0);
+      
+      // Calculate percentages
+      const femalePercentage = totalVoters > 0 ? (femaleVoters / totalVoters) * 100 : 0;
+      const malePercentage = totalVoters > 0 ? (maleVoters / totalVoters) * 100 : 0;
+      const transgenderPercentage = totalVoters > 0 ? (transgenderVoters / totalVoters) * 100 : 0;
+      
+      // Sort wards by ward number
+      const topWards = lbData
+        .sort((a, b) => a.wardNumber - b.wardNumber)
+        .map(row => ({
+          ward: row.ward,
+          wardNumber: row.wardNumber,
+          houses: row.houses,
+          totalVoters: row.totalVoters,
+          female: row.female,
+          male: row.male,
+          transgender: row.transgender
+        }));
+      
+      return {
+        mandal: lbData[0].mandal,
+        ac: lbData[0].ac,
+        orgDist: lbData[0].orgDist,
+        zone: lbData[0].zone,
+        totalWards,
+        totalHouses,
+        totalVoters,
+        femaleVoters,
+        maleVoters,
+        transgenderVoters,
+        femalePercentage,
+        malePercentage,
+        transgenderPercentage,
+        topWards
+      };
+    }
+    
+    // Modal functionality
+    function showModal(wardInfo, localBodyName, mandalName, voterSummary) {
+      const modalOverlay = document.getElementById('modalOverlay');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalSubtitle = document.getElementById('modalSubtitle');
+      const modalBody = document.getElementById('modalBody');
+      
+      // Set modal title and subtitle
+      modalTitle.textContent = `🏛️ ${wardInfo}`;
+      modalSubtitle.textContent = `📍 ${voterSummary.mandal} Mandal • ${voterSummary.ac} AC • ${voterSummary.zone} Zone`;
+      
+      // Create modal content
+      let content = '';
+      
+      // Check if this is individual ward data (totalWards = 1) or local body data (totalWards > 1)
+      const isIndividualWard = voterSummary.totalWards === 1;
+      
+      // Key Statistics Grid
+      content += '<div class="stats-grid">';
+      if (isIndividualWard) {
+        // For individual ward, show ward-specific stats
+        content += `<div class="stat-card">
+          <div class="stat-number">${voterSummary.topWards[0].wardNumber}</div>
+          <div class="stat-label">Ward Number</div>
+        </div>`;
+        content += `<div class="stat-card">
+          <div class="stat-number">${voterSummary.totalHouses.toLocaleString()}</div>
+          <div class="stat-label">Houses in Ward</div>
+        </div>`;
+        content += `<div class="stat-card">
+          <div class="stat-number">${voterSummary.totalVoters.toLocaleString()}</div>
+          <div class="stat-label">Voters in Ward</div>
+        </div>`;
+        content += `<div class="stat-card">
+          <div class="stat-number">${voterSummary.femaleVoters.toLocaleString()}</div>
+          <div class="stat-label">Female Voters</div>
+        </div>`;
+        content += `<div class="stat-card">
+          <div class="stat-number">${voterSummary.maleVoters.toLocaleString()}</div>
+          <div class="stat-label">Male Voters</div>
+        </div>`;
+        if (voterSummary.transgenderVoters > 0) {
+          content += `<div class="stat-card">
+            <div class="stat-number">${voterSummary.transgenderVoters.toLocaleString()}</div>
+            <div class="stat-label">Transgender Voters</div>
+          </div>`;
+        }
+      } else {
+        // For local body data, show local body stats
+        content += `<div class="stat-card">
+          <div class="stat-number">${voterSummary.totalWards}</div>
+          <div class="stat-label">Total Wards</div>
+        </div>`;
+        content += `<div class="stat-card">
+          <div class="stat-number">${voterSummary.totalHouses.toLocaleString()}</div>
+          <div class="stat-label">Total Houses</div>
+        </div>`;
+        content += `<div class="stat-card">
+          <div class="stat-number">${voterSummary.totalVoters.toLocaleString()}</div>
+          <div class="stat-label">Total Voters</div>
+        </div>`;
+        content += `<div class="stat-card">
+          <div class="stat-number">${voterSummary.femaleVoters.toLocaleString()}</div>
+          <div class="stat-label">Female Voters</div>
+        </div>`;
+        content += `<div class="stat-card">
+          <div class="stat-number">${voterSummary.maleVoters.toLocaleString()}</div>
+          <div class="stat-label">Male Voters</div>
+        </div>`;
+        if (voterSummary.transgenderVoters > 0) {
+          content += `<div class="stat-card">
+            <div class="stat-number">${voterSummary.transgenderVoters.toLocaleString()}</div>
+            <div class="stat-label">Transgender Voters</div>
+          </div>`;
+        }
+      }
+      content += '</div>';
+      
+      // Demographics Section
+      content += '<div class="demographics-section">';
+      if (isIndividualWard) {
+        content += '<h3 class="section-title">👥 Ward Demographics</h3>';
+      } else {
+        content += '<h3 class="section-title">👥 Local Body Demographics</h3>';
+      }
+      
+      // Female voters
+      content += '<div class="demographic-item">';
+      content += '<div class="demographic-header">';
+      content += '<span class="demographic-label">👩 Female Voters</span>';
+      content += `<span class="demographic-value" style="color: #34D399;">${voterSummary.femaleVoters.toLocaleString()} (${voterSummary.femalePercentage.toFixed(1)}%)</span>`;
+      content += '</div>';
+      content += '<div class="progress-bar">';
+      content += `<div class="progress-fill" style="background: linear-gradient(90deg, #34D399, #10B981); width: ${voterSummary.femalePercentage}%;"></div>`;
+      content += '</div>';
+      content += '</div>';
+      
+      // Male voters
+      content += '<div class="demographic-item">';
+      content += '<div class="demographic-header">';
+      content += '<span class="demographic-label">👨 Male Voters</span>';
+      content += `<span class="demographic-value" style="color: #60A5FA;">${voterSummary.maleVoters.toLocaleString()} (${voterSummary.malePercentage.toFixed(1)}%)</span>`;
+      content += '</div>';
+      content += '<div class="progress-bar">';
+      content += `<div class="progress-fill" style="background: linear-gradient(90deg, #60A5FA, #3B82F6); width: ${voterSummary.malePercentage}%;"></div>`;
+      content += '</div>';
+      content += '</div>';
+      
+      // Transgender voters (if any)
+      if (voterSummary.transgenderVoters > 0) {
+        content += '<div class="demographic-item">';
+        content += '<div class="demographic-header">';
+        content += '<span class="demographic-label">🏳️‍⚧️ Transgender Voters</span>';
+        content += `<span class="demographic-value" style="color: #F472B6;">${voterSummary.transgenderVoters.toLocaleString()} (${voterSummary.transgenderPercentage.toFixed(1)}%)</span>`;
+        content += '</div>';
+        content += '<div class="progress-bar">';
+        content += `<div class="progress-fill" style="background: linear-gradient(90deg, #F472B6, #EC4899); width: ${voterSummary.transgenderPercentage}%;"></div>`;
+        content += '</div>';
+        content += '</div>';
+      }
+      
+      content += '</div>';
+      
+      // Wards Section - only show if it's local body data (multiple wards)
+      if (!isIndividualWard && voterSummary.topWards.length > 0) {
+        content += '<div class="wards-section">';
+        content += '<h3 class="section-title">📋 All Wards in Local Body</h3>';
+        content += '<div class="wards-grid">';
+        
+        voterSummary.topWards.forEach((ward, index) => {
+          content += '<div class="ward-card">';
+          content += `<div class="ward-number-badge">${ward.wardNumber}</div>`;
+          content += `<div class="ward-name">${ward.ward}</div>`;
+          content += '<div class="ward-stats">';
+          content += `<div class="ward-stat">👥 ${ward.totalVoters.toLocaleString()} voters</div>`;
+          content += `<div class="ward-stat">🏠 ${ward.houses.toLocaleString()} houses</div>`;
+          content += `<div class="ward-stat">👩 ${ward.female.toLocaleString()} female</div>`;
+          content += `<div class="ward-stat">👨 ${ward.male.toLocaleString()} male</div>`;
+          if (ward.transgender > 0) {
+            content += `<div class="ward-stat">🏳️‍⚧️ ${ward.transgender.toLocaleString()} transgender</div>`;
+          }
+          content += '</div>';
+          content += '</div>';
+        });
+        
+        content += '</div>';
+        content += '</div>';
+      } else if (isIndividualWard) {
+        // For individual ward, show detailed ward information
+        content += '<div class="wards-section">';
+        content += '<h3 class="section-title">📋 Ward Details</h3>';
+        content += '<div class="wards-grid">';
+        
+        const ward = voterSummary.topWards[0];
+        content += '<div class="ward-card" style="max-width: 100%;">';
+        content += `<div class="ward-number-badge">${ward.wardNumber}</div>`;
+        content += `<div class="ward-name">${ward.ward}</div>`;
+        content += '<div class="ward-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 16px;">';
+        content += `<div class="ward-stat" style="background: rgba(52, 211, 153, 0.1); padding: 12px; border-radius: 8px; text-align: center;">
+          <div style="font-size: 18px; font-weight: 700; color: #34D399;">${ward.totalVoters.toLocaleString()}</div>
+          <div style="font-size: 12px; color: #CBD5E1;">Total Voters</div>
+        </div>`;
+        content += `<div class="ward-stat" style="background: rgba(96, 165, 250, 0.1); padding: 12px; border-radius: 8px; text-align: center;">
+          <div style="font-size: 18px; font-weight: 700; color: #60A5FA;">${ward.houses.toLocaleString()}</div>
+          <div style="font-size: 12px; color: #CBD5E1;">Total Houses</div>
+        </div>`;
+        content += `<div class="ward-stat" style="background: rgba(244, 114, 182, 0.1); padding: 12px; border-radius: 8px; text-align: center;">
+          <div style="font-size: 18px; font-weight: 700; color: #F472B6;">${ward.female.toLocaleString()}</div>
+          <div style="font-size: 12px; color: #CBD5E1;">Female Voters</div>
+        </div>`;
+        content += `<div class="ward-stat" style="background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; text-align: center;">
+          <div style="font-size: 18px; font-weight: 700; color: #3B82F6;">${ward.male.toLocaleString()}</div>
+          <div style="font-size: 12px; color: #CBD5E1;">Male Voters</div>
+        </div>`;
+        if (ward.transgender > 0) {
+          content += `<div class="ward-stat" style="background: rgba(236, 72, 153, 0.1); padding: 12px; border-radius: 8px; text-align: center;">
+            <div style="font-size: 18px; font-weight: 700; color: #EC4899;">${ward.transgender.toLocaleString()}</div>
+            <div style="font-size: 12px; color: #CBD5E1;">Transgender Voters</div>
+          </div>`;
+        }
+        content += '</div>';
+        content += '</div>';
+        
+        content += '</div>';
+        content += '</div>';
+      }
+      
+      modalBody.innerHTML = content;
+      modalOverlay.style.display = 'flex';
+      
+      // Add animation
+      setTimeout(() => {
+        modalOverlay.classList.add('show');
+      }, 10);
+    }
+    
+    function hideModal() {
+      const modalOverlay = document.getElementById('modalOverlay');
+      modalOverlay.classList.remove('show');
+      setTimeout(() => {
+        modalOverlay.style.display = 'none';
+      }, 300);
+    }
+    
+    // Modal event listeners
+    document.getElementById('modalClose').addEventListener('click', hideModal);
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        hideModal();
+      }
+    });
+    
+    // ESC key to close modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        hideModal();
+      }
+    });
+    
+    // Global variable to store current ward data
+    let currentWardData = null;
+    
+    // Global function to show corporation ward modal
+    window.showCorporationWardModal = function(wardInfo, corporationName, mandalName, wardSummary) {
+      console.log('🏘️ Corporation ward modal triggered:', wardInfo);
+      showModal(wardInfo, corporationName, mandalName, wardSummary);
+    };
+    
+    function createDetailedPopup(wardInfo, localBodyName, mandalName, voterSummary) {
+      // Store the data globally for the modal
+      currentWardData = {
+        wardInfo: wardInfo,
+        localBodyName: localBodyName,
+        mandalName: mandalName,
+        voterSummary: voterSummary
+      };
+      
+      // Check if this is individual ward data or local body data
+      const isIndividualWard = voterSummary.totalWards === 1;
+      const buttonText = isIndividualWard ? "📊 View Full Report" : "📊 View Complete Data";
+      const descriptionText = isIndividualWard ? "Click for comprehensive ward analysis" : "Click for detailed local body analysis";
+      
+      // Create a large, detailed popup with key statistics
+      let popupContent = `<div style="font-family: 'Inter', sans-serif; max-width: 500px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.98) 100%); border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6); border: 1px solid rgba(249, 115, 22, 0.3);">`;
+      
+      // Header with gradient background
+      popupContent += `<div style="background: linear-gradient(135deg, #FF6B35 0%, #E55A2B 100%); padding: 20px; position: relative; overflow: hidden;">`;
+      popupContent += `<div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; transform: rotate(45deg);"></div>`;
+      popupContent += `<div style="position: relative; z-index: 2;">`;
+      popupContent += `<h2 style="color: white; margin: 0 0 8px 0; font-size: 20px; font-weight: 700; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);">🏛️ ${wardInfo}</h2>`;
+      popupContent += `<p style="margin: 0; color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 500;">📍 ${localBodyName} • ${mandalName} Mandal</p>`;
+      popupContent += `</div>`;
+      popupContent += `</div>`;
+      
+      // Main content area
+      popupContent += `<div style="padding: 24px;">`;
+      
+      // Key Stats Cards
+      popupContent += `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px;">`;
+      
+      if (isIndividualWard) {
+        popupContent += `<div style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%); border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 12px; padding: 16px; text-align: center;">`;
+        popupContent += `<div style="font-size: 24px; font-weight: 800; color: #FFD700; margin-bottom: 4px;">${voterSummary.topWards[0].wardNumber}</div>`;
+        popupContent += `<div style="font-size: 12px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Ward Number</div>`;
+        popupContent += `</div>`;
+      } else {
+        popupContent += `<div style="background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%); border: 1px solid rgba(255, 215, 0, 0.2); border-radius: 12px; padding: 16px; text-align: center;">`;
+        popupContent += `<div style="font-size: 24px; font-weight: 800; color: #FFD700; margin-bottom: 4px;">${voterSummary.totalWards}</div>`;
+        popupContent += `<div style="font-size: 12px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Total Wards</div>`;
+        popupContent += `</div>`;
+      }
+      
+      popupContent += `<div style="background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 12px; padding: 16px; text-align: center;">`;
+      popupContent += `<div style="font-size: 24px; font-weight: 800; color: #34D399; margin-bottom: 4px;">${voterSummary.totalHouses.toLocaleString()}</div>`;
+      popupContent += `<div style="font-size: 12px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${isIndividualWard ? 'Houses in Ward' : 'Total Houses'}</div>`;
+      popupContent += `</div>`;
+      
+      popupContent += `<div style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(96, 165, 250, 0.05) 100%); border: 1px solid rgba(96, 165, 250, 0.2); border-radius: 12px; padding: 16px; text-align: center;">`;
+      popupContent += `<div style="font-size: 24px; font-weight: 800; color: #60A5FA; margin-bottom: 4px;">${voterSummary.totalVoters.toLocaleString()}</div>`;
+      popupContent += `<div style="font-size: 12px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">${isIndividualWard ? 'Voters in Ward' : 'Total Voters'}</div>`;
+      popupContent += `</div>`;
+      
+      popupContent += `<div style="background: linear-gradient(135deg, rgba(244, 114, 182, 0.1) 0%, rgba(244, 114, 182, 0.05) 100%); border: 1px solid rgba(244, 114, 182, 0.2); border-radius: 12px; padding: 16px; text-align: center;">`;
+      popupContent += `<div style="font-size: 24px; font-weight: 800; color: #F472B6; margin-bottom: 4px;">${voterSummary.femaleVoters.toLocaleString()}</div>`;
+      popupContent += `<div style="font-size: 12px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Female Voters</div>`;
+      popupContent += `</div>`;
+      
+      popupContent += `</div>`;
+      
+      // Demographics Section
+      popupContent += `<div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 20px; backdrop-filter: blur(10px);">`;
+      popupContent += `<h4 style="color: #F8FAFC; margin: 0 0 12px 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px;">👥 ${isIndividualWard ? 'Ward Demographics' : 'Local Body Demographics'}</h4>`;
+      
+      // Female voters
+      popupContent += `<div style="margin-bottom: 12px;">`;
+      popupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
+      popupContent += `<span style="color: #CBD5E1; font-size: 13px; font-weight: 500;">👩 Female</span>`;
+      popupContent += `<span style="color: #34D399; font-weight: 700; font-size: 14px;">${voterSummary.femaleVoters.toLocaleString()} (${voterSummary.femalePercentage.toFixed(1)}%)</span>`;
+      popupContent += `</div>`;
+      popupContent += `<div style="background: rgba(52, 211, 153, 0.2); height: 6px; border-radius: 3px; overflow: hidden;">`;
+      popupContent += `<div style="background: linear-gradient(90deg, #34D399, #10B981); height: 100%; width: ${voterSummary.femalePercentage}%; border-radius: 3px; transition: width 0.8s ease;"></div>`;
+      popupContent += `</div>`;
+      popupContent += `</div>`;
+      
+      // Male voters
+      popupContent += `<div style="margin-bottom: ${voterSummary.transgenderVoters > 0 ? '12px' : '0'};">`;
+      popupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
+      popupContent += `<span style="color: #CBD5E1; font-size: 13px; font-weight: 500;">👨 Male</span>`;
+      popupContent += `<span style="color: #60A5FA; font-weight: 700; font-size: 14px;">${voterSummary.maleVoters.toLocaleString()} (${voterSummary.malePercentage.toFixed(1)}%)</span>`;
+      popupContent += `</div>`;
+      popupContent += `<div style="background: rgba(96, 165, 250, 0.2); height: 6px; border-radius: 3px; overflow: hidden;">`;
+      popupContent += `<div style="background: linear-gradient(90deg, #60A5FA, #3B82F6); height: 100%; width: ${voterSummary.malePercentage}%; border-radius: 3px; transition: width 0.8s ease;"></div>`;
+      popupContent += `</div>`;
+      popupContent += `</div>`;
+      
+      // Transgender voters (if any)
+      if (voterSummary.transgenderVoters > 0) {
+        popupContent += `<div>`;
+        popupContent += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
+        popupContent += `<span style="color: #CBD5E1; font-size: 13px; font-weight: 500;">🏳️‍⚧️ Transgender</span>`;
+        popupContent += `<span style="color: #F472B6; font-weight: 700; font-size: 14px;">${voterSummary.transgenderVoters.toLocaleString()} (${voterSummary.transgenderPercentage.toFixed(1)}%)</span>`;
+        popupContent += `</div>`;
+        popupContent += `<div style="background: rgba(244, 114, 182, 0.2); height: 6px; border-radius: 3px; overflow: hidden;">`;
+        popupContent += `<div style="background: linear-gradient(90deg, #F472B6, #EC4899); height: 100%; width: ${voterSummary.transgenderPercentage}%; border-radius: 3px; transition: width 0.8s ease;"></div>`;
+        popupContent += `</div>`;
+        popupContent += `</div>`;
+      }
+      
+      popupContent += `</div>`;
+      
+      // Action Button
+      popupContent += `<div style="text-align: center;">`;
+      popupContent += `<button onclick="showModalFromStoredData()" 
+                style="background: linear-gradient(135deg, #f97316 0%, #e55a2b 100%); 
+                       color: white; 
+                       border: none; 
+                       padding: 14px 28px; 
+                       border-radius: 10px; 
+                       font-size: 15px; 
+                       font-weight: 600; 
+                       cursor: pointer; 
+                       transition: all 0.3s ease;
+                       box-shadow: 0 6px 16px rgba(249, 115, 22, 0.4);
+                       width: 100%;
+                       margin-bottom: 8px;">`;
+      popupContent += `${buttonText}`;
+      popupContent += `</button>`;
+      popupContent += `<p style="color: #6b7280; margin: 0; font-size: 12px;">${descriptionText}</p>`;
+      popupContent += `</div>`;
+      
+      popupContent += `</div>`; // Close main content
+      popupContent += `</div>`;
+      
+      return popupContent;
+    }
+    
+    function showModalFromStoredData() {
+      if (currentWardData) {
+        showModal(
+          currentWardData.wardInfo,
+          currentWardData.localBodyName,
+          currentWardData.mandalName,
+          currentWardData.voterSummary
+        );
+      }
+    }
+
+    // ========= NORMALIZATION / FUZZY =========
+    const FUZZY = 0.92;
+    const aliases = new Map(Object.entries({
+      "quilandy":"koyilandy","vilyapally":"villiappally","narippatta":"naripatta",
+      "kilikollur":"kilikolloor","palarivattom":"pallarivattom","thriprangodu":"thrippangodu",
+      "ochira":"oachira","karumaloor":"karumalloor","nedumbassery":"nedumbassery",
+      "kolancherry":"kolenchery","erumappettyy":"erumapetty","chalakkudy":"chalakudy",
+      "chithra":"chithara","kumarakam":"kumarakom","puthupally":"puthuppally",
+      "kanjirapally":"kanjirappally","edappara":"elappara","vazhakkancherry":"vadakkenchery",
+      "thirunnavaya":"thirunavaya","eranad":"ernaad","manjery":"manjeri","kalikavu":"kalikkavu",
+      "koduvalli":"koduvally","ayanad":"aryanad","kattakada":"kattakkada",
+      "neyyatinkara":"neyyattinkara","kazhakuttam":"kazhakkoottam","thodupuzha":"thodupuzha",
+      // Ward name aliases for better matching
+      "valiyathura":"valiathura","mudavanmugall":"mudavanmukal","mudavanmukal":"mudavanmugall",
+      "pattom":"pattom","kazhakkoottam":"kazhakkoottam","ulloor":"ulloor",
+      "vattiyoorkavu":"vattiyoorkavu","thiruvananthapuram central":"thiruvananthapuram central",
+      "attukal":"attukal","nemom":"nemom","kovalam":"kovalam","thiruvananthapuram west":"thiruvananthapuram west",
+      // Thiruvananthapuram Corporation ward aliases - Comprehensive mapping
+      "kazhakkuttom":"kazhakkoottam","kazhakkoottam":"kazhakkuttom",
+      "sainika school":"sainik school","sainik school":"sainika school",
+      "kattayikkonam":"kattaikonam","kattaikonam":"kattayikkonam",
+      "njandoorkkonam":"njandoorkonam","njandoorkonam":"njandoorkkonam",
+      "powdikkonam":"powdikonam","powdikonam":"powdikkonam",
+      "chenkottukonam":"chenkottukonam","chembazhanthi":"chempazhanthy","chempazhanthy":"chembazhanthi",
+      "karyavattom":"kariavattom","kariavattom":"karyavattom",
+      "sreekaryam":"sreekariyam","sreekariyam":"sreekaryam",
+      "chellamangalam":"chellamangalam","mannanthala":"mannanthala",
+      "edavakkod":"edavacode","edavacode":"edavakkod",
+      // Additional comprehensive aliases for all Thiruvananthapuram wards
+      "kazhakkuttom":"kazhakkoottam","kazhakkoottam":"kazhakkuttom",
+      "sainika school":"sainik school","sainik school":"sainika school",
+      "chanthavila":"chanthavila","kattaikonam":"kattaikonam",
+      "njandoorkonam":"njandoorkonam","powdikonam":"powdikonam",
+      "chenkottukonam":"chenkottukonam","chempazhanthy":"chempazhanthy",
+      "kariavattom":"kariavattom","pangappara":"pangappara",
+      "sreekariyam":"sreekariyam","chellamangalam":"chellamangalam",
+      "mannanthala":"mannanthala","edavacode":"edavacode",
+      "ulloor":"ulloor","medical college":"medical college",
+      "pathirapalli":"pathirapalli","ambalamukku":"ambalamukku",
+      "kudappanakunnu":"kudappanakunnu","thuruthummoola":"thuruthummoola",
+      "kuravankonam":"kuravankonam","muttada":"muttada",
+      "chettivilakam":"chettivilakam","kinavoor":"kinavoor",
+      "nalanchira":"nalanchira","pattom":"pattom",
+      "kesavadasapuram":"kesavadasapuram","gowreeshapattom":"gowreeshapattom",
+      "kunnukuzhy":"kunnukuzhy","nanthancode":"nanthancode",
+      "nettayam":"nettayam","kachani":"kachani",
+      "vazhottukonam":"vazhottukonam","kodunganoor":"kodunganoor",
+      "vattiyoorkavu":"vattiyoorkavu","kanjirampara":"kanjirampara",
+      "peroorkada":"peroorkada","kowdiar":"kowdiar",
+      "sasthamangalam":"sasthamangalam","valiyavila":"valiyavila",
+      "palayam":"palayam","vazhuthacaud":"vazhuthacaud",
+      "jagathy":"jagathy","thycaud":"thycaud",
+      "valiyasala":"valiyasala","arannoor":"arannoor",
+      "pangode":"pangode","thirumala":"thirumala",
+      "thrikkannapuram":"thrikkannapuram","punnakkamugal":"punnakkamugal",
+      "poojappura":"poojappura","mudavanmugal":"mudavanmugal",
+      "estate":"estate","nemom":"nemom",
+      "ponnumangalam":"ponnumangalam","melamcode":"melamcode",
+      "pappanamcode":"pappanamcode","karumom":"karumom",
+      "punchakkari":"punchakkari","karamana":"karamana",
+      "nedumcaud":"nedumcaud","kaladi":"kaladi",
+      "poonkulam":"poonkulam","vellar":"vellar",
+      "thiruvallam":"thiruvallam","ambalathara":"ambalathara",
+      "attukal":"attukal","kalippankulam":"kalippankulam",
+      "kamaleswaram":"kamaleswaram","venganur":"venganur",
+      "port ward":"port ward","vizhinjam":"vizhinjam",
+      "harbor":"harbor","poonthura":"poonthura",
+      "puthenppalli":"puthenppalli","beemapalli":"beemapalli",
+      "valiathura":"valiathura","vallaccaud":"vallaccaud",
+      "sreevaraham":"sreevaraham","pettah":"pettah",
+      "chakkai":"chakkai","vettukadu":"vettukadu",
+      "medical college":"medical college","karikkakam":"karikkakam",
+      "kadakampally":"kadakampally","anamukham":"anamukham",
+      "akkulam":"akkulam","cheruvaykkal":"cheruvaykkal",
+      "alathara":"alathara","kuzhivila":"kuzhivila",
+      "poundkadavu":"poundkadavu","kulathur":"kulathur",
+      "attipra":"attipra","pallithura":"pallithura",
+      "pathirappally":"pathirapalli","pathirapalli":"pathirappally",
+      "ambalamukku":"ambalamukku","kudappanakunnu":"kudappanakunnu",
+      "thurutthumoola":"thuruthummoola","thuruthummoola":"thurutthumoola",
+      "kuravankonam":"kuravankonam","muttada":"muttada",
+      "chettivilakam":"chettivilakam","kinavoor":"kinavoor",
+      "nallanchira":"nalanchira","nalanchira":"nallanchira",
+      "keshavadasapuram":"kesavadasapuram","kesavadasapuram":"keshavadasapuram",
+      "gourishapattom":"gowreeshapattom","gowreeshapattom":"gourishapattom",
+      "kunnukuzhi":"kunnukuzhy","kunnukuzhy":"kunnukuzhi",
+      "nanthanakodu":"nanthancode","nanthancode":"nanthanakodu",
+      "kannammoola":"kannammoola","nettayam":"nettayam",
+      "kachani":"kachani","vazhottukonam":"vazhottukonam",
+      "kodunganoor":"kodunganoor","vattiyoorkavu":"vattiyoorkavu",
+      "kanjirampara":"kanjirampara","kawadiyar":"kowdiar","kowdiar":"kawadiyar",
+      "sasthamangalam":"sasthamangalam","valiyavila":"valiyavila",
+      "palayam":"palayam","vazhuthakkad":"vazhuthacaud","vazhuthacaud":"vazhuthakkad",
+      "jagathy":"jagathy","thykkadu":"thycaud","thycaud":"thykkadu",
+      "valiyashala":"valiyashala","arannoor":"arannoor",
+      "manakkadu":"manakkadu","chalai":"chalai",
+      "fort":"fort","perunthanni":"perunthanni",
+      "sreekanthaswaram":"sreekanthaswaram","thampanoor":"thampanoor",
+      "vanchiyoor":"vanchiyoor","nedunkadu":"nedunkadu",
+      "kalady":"kalady","poongulam":"poongulam",
+      "vellarr":"vellarr","thiruvallam":"thiruvallam",
+      "ambalathara":"ambalathara","attukal":"attukal",
+      "kalippankulam":"kalippankulam","kamaleswaram":"kamaleswaram",
+      // Attukal specific ward aliases
+      "nedumcaud":"nedunkadu","nedunkadu":"nedumcaud",
+      "vellar":"vellarr","vellarr":"vellar",
+      "poonkulam":"poongulam","poongulam":"poonkulam",
+      "kaladi":"kalady","kalady":"kaladi",
+      "karamana":"karamana","karamana":"karamana",
+      "thrikkannapuram":"thrikkannapuram","punnakka mugall":"punnakkamugal","punnakkamugal":"punnakka mugall",
+      "poojappura":"poojappura","pangode":"pangode",
+      "thirumala":"thirumala","mudavanmukal":"mudavanmukal",
+      "estate":"estate","nemom":"nemom",
+      "ponnumangalam":"ponnumangalam","melamangod":"melamangod",
+      "pappanamcode":"pappanamcode","karamana":"karamana",
+      "karumam":"karumam","punchakkari":"punchakkari",
+      "venganur":"venganur","port ward":"port ward",
+      "vizhinjam":"vizhinjam","harbor":"harbor",
+      "poonthura":"poonthura","putthanpalli":"putthanpalli",
+      "beemapalli":"beemapalli","valiathura":"valiathura",
+      "vallakkadavu":"vallakkadavu","sreevaraham":"sreevaraham",
+      "pettah":"pettah","chakkai":"chakkai","vettukadu":"vettukadu",
+      "chavara":"chavara","kollam":"kollam","thrikkadavoor":"thrikkadavoor","kilikolloor":"kilikolloor",
+      "eravipuram":"eravipuram","mattancherry":"mattancherry","kochi":"kochi","ernakulam city":"ernakulam city",
+      "thrissur west":"thrissur west","thrissur east":"thrissur east","ollur":"ollur",
+      "elathoor":"elathoor","kozhikode north":"kozhikode north","puthiyara":"puthiyara",
+      "kozhikode south":"kozhikode south","beypore":"beypore","nadakkavu":"nadakkavu",
+      "azhikkode":"azhikkode","edakkadu":"edakkadu","kannur":"kannur"
+    }));
+    function norm(s){
+      if (!s) return "";
+      let x = s.toString().trim().toLowerCase();
+      try { x = x.normalize('NFD').replace(/\p{Diacritic}/gu,''); } catch(e){}
+      x = x.replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+      if (aliases.has(x)) x = aliases.get(x);
+      return x;
+    }
+    function stripParens(s){ return (s||"").replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim(); }
+    function levenshtein(a,b){
+      a = norm(a); b = norm(b);
+      const m=a.length, n=b.length; if(!m) return n; if(!n) return m;
+      const dp = new Array(n+1); for(let j=0;j<=n;j++) dp[j]=j;
+      for(let i=1;i<=m;i++){ let prev=dp[0]; dp[0]=i;
+        for(let j=1;j<=n;j++){ const t=dp[j];
+          dp[j]=Math.min(dp[j]+1, dp[j-1]+1, prev+(a[i-1]===b[j-1]?0:1)); prev=t; } }
+      return dp[n];
+    }
+    const sim=(a,b)=>{ const d=levenshtein(a,b), L=Math.max(norm(a).length,norm(b).length)||1; return 1-d/L; };
+
+    // ========= HELPERS =========
+    function detectKey(gj, candidates) {
+      if (!gj || !gj.features.length) return null;
+      const props = Object.keys(gj.features[0].properties || {});
+      for (const c of candidates) {
+        const hit = props.find(p => p.toLowerCase() === c.toLowerCase());
+        if (hit) return hit;
+      }
+      return props[0];
+    }
+    function buildLegend(values){ legendItems.innerHTML=''; legendNote.textContent='';
+      values.forEach(v=>{ const d=document.createElement('div');
+        d.innerHTML=`<span class="legend-swatch" style="background:${colorFor(v)}"></span>${v}`;
+        legendItems.appendChild(d);});
+    }
+    function clearLayers(){ map.eachLayer(l=>{if(l.feature) map.removeLayer(l);}); }
+
+    const labelLayer = L.layerGroup().addTo(map);
+    const clearLabels=()=>labelLayer.clearLayers();
+    function addLabels(layer, field, cls){
+      layer.eachLayer(l=>{
+        try{
+          const pt=turf.pointOnFeature(l.feature).geometry.coordinates.reverse();
+          const name=l.feature.properties[field];
+          if(name){ labelLayer.addLayer(L.marker(pt,{icon:L.divIcon({className:'',html:`<div class="lbl ${cls}">${name}</div>`})}));}
+        }catch(e){}
+      });
+    }
+
+    function filterChildrenSmart(gj,parentF,parentField){
+      let subset = gj.features.filter(f=>prop(f,parentField)===prop(parentF,parentField));
+      if (!subset.length){
+        subset = gj.features.filter(f=>{
+          try{ return turf.booleanPointInPolygon(turf.pointOnFeature(f), parentF); }catch(e){return false;}
+        });
+      }
+      return {type:"FeatureCollection",features:subset};
+    }
+
+    // ========= CORPORATION MANDAL WARD MAPPING =========
+    // Based on the CSV data, map each corporation mandal to its specific wards
+    const CORPORATION_MANDAL_WARDS = {
+      // Thiruvananthapuram Corporation Mandals - Updated to match CSV data
+      'Kazhakkoottam': ['KAZHAKKUTTOM', 'SAINIKA SCHOOL', 'CHANTHAVILA', 'KATTAIKONAM', 'NJANDOORKONAM', 'POWDIKONAM', 'CHENKOTTUKONAM', 'CHEMPAZHANTHY', 'KARIAVATTOM', 'PANGAPPARA', 'SREEKARIYAM', 'CHELLAMANGALAM', 'MANNANTHALA', 'EDAVACODE'],
+      'Ulloor': ['ULLOOR', 'MEDICAL COLLEGE'],
+      'Pattom': ['PATHIRAPALLI', 'AMBALAMUKKU', 'KUDAPPANAKUNNU', 'THURUTHUMMOOLA', 'KURAVANKONAM', 'MUTTADA', 'CHETTIVILAKAM', 'KINAVOOR', 'NALANCHIRA', 'PATTOM', 'KESAVADASAPURAM', 'GOWREESHAPATTOM', 'KUNNUKUZHY', 'NANTHANCODE'],
+      'Vattiyoorkavu': ['NETTAYAM', 'KACHANI', 'VAZHOTTUKONAM', 'KODUNGANOOR', 'VATTIYOORKAVU', 'KANJIRAMPARA', 'PEROORKADA', 'KOWDIAR', 'SASTHAMANGALAM', 'VALIYAVILA'],
+      'Thiruvananthapuram Central': ['PALAYAM', 'VAZHUTHACAUD', 'JAGATHY', 'THYCAUD', 'VALIYASALA', 'ARANNOOR'],
+      'Attukal': ['KARAMANA', 'NEDUMCAUD', 'KALADI', 'POONKULAM', 'VELLAR', 'THIRUVALLAM', 'AMBALATHARA', 'ATTUKAL', 'KALIPPANKULAM', 'KAMALESWARAM'],
+      'Nemom': ['PANGODE', 'THIRUMALA', 'THRIKKANNAPURAM', 'PUNNAKKAMUGAL', 'POOJAPPURA', 'MUDAVANMUGAL', 'ESTATE', 'NEMOM', 'PONNUMANGALAM', 'MELAMCODE', 'PAPPANAMCODE', 'KARUMOM', 'PUNCHAKKARI'],
+      'Kovalam': ['VENGANUR', 'PORT WARD', 'VIZHINJAM', 'HARBOR'],
+      'Thiruvananthapuram West': ['POONTHURA', 'PUTHENPPALLI', 'BEEMAPALLI', 'VALIATHURA', 'VALLACCAUD', 'SREEVARAHAM', 'PETTAH', 'CHAKKAI', 'VETTUKADU'],
+      
+      // Kollam Corporation Mandals
+      'Chavara': ['Sakthikulangara Harbor', 'Sakthikulangara', 'Meenathu Chery', 'Kavanad', 'Vallikkeezh', 'Aalattukavu', 'Kannimel West', 'Kannimel'],
+      'Kollam': ['Kureepuzha West', 'Thevalli', 'Vadakkumbhagam', 'Ashramam', 'Uliyakkovil', 'Uliyakkovil East', 'Kadappakkada', 'Thamarakkulam', 'Port', 'Kaikkulangara', 'Kacheri', 'Thankassery', 'Thirumullavaram', 'Mulamkadam'],
+      'Thrikkadavoor': ['Kureepuzha', 'Neeravil', 'Anchalumoodu West', 'Anchalumoodu East', 'Kadavoor', 'Mathilil', 'Mangad', 'Arunnottumangalam', 'Chathinamkulam', 'Karikkodu'],
+      'Kilikolloor': ['Koyikkal', 'Kallumthazham', 'College Division', 'Palakkulangara', 'Ammananada', 'Vadakkevila', 'Pallimukku', 'Ayathil', 'Kilikollur', 'Punthalathazham', 'Palathara', 'Manakkad', 'Mundakkal', 'Pattathanam', 'Cantonment', 'Udayamarthanda Puram'],
+      'Eravipuram': ['Kollurvila', 'Kayyalakkal', 'Valathungal', 'Aakkolil', 'Thekkumbhagam', 'Iravippuram', 'Bharanikkavu', 'Thekkevila'],
+      
+      // Kochi Corporation Mandals
+      'Mattancherry': ['FORT KOCHI', 'KALVATHY', 'EARAVELY', 'KARIPPALAM', 'CHERALAI', 'MATTANCHERY', 'CHAKKAMADAM', 'KARUVELIPPADY', 'MOOLAMKUZHI', 'CHULLICKAL', 'NAZARETH', 'PANAYAPPILLY', 'AMARAVATHY', 'FORTKOCHI VELI'],
+      'Kochi': ['PULLARDESAM', 'THAREBHAGAM', 'THOPPUMPADY', 'MUNDAMVELI EAST', 'MUNDAMVELI', 'MANASSERY'],
+      'Ernakulam City': ['ISLAND NORTH', 'RAVIPURAM', 'ERNAKULAM SOUTH', 'GANDHI NAGAR', 'KATHRIKADAVU', 'ERNAKULAM CENTRAL', 'ERNAKULAM NORTH', 'KALOOR SOUTH', 'KALOOR NORTH', 'THRIKKANARVATTOM', 'AYYAPPANKAVU', 'POTTAKUZHY', 'ELAMAKKARA SOUTH', 'PACHALAM', 'THATTAZHAM', 'VADUTHALA WEST', 'VADUTHALA EAST', 'ELAMAKKARA NORTH', 'PUTHUKKALAVATTAM', 'KUNNUMPURAM', 'PONEKKARA', 'EDAPPALLY', 'CHANGAMPPUZHA', 'DEVANKULANGARA', 'PALARIVATTAM', 'STADIUM', 'KARANAKKODAM', 'PUTHIYA ROAD', 'PADIVATTAM', 'VENNALA', 'CHAKKARAPARAMBU', 'CHALIKKAVATTAM', 'THAMMANAM', 'ELAMKULAM', 'GIRINAGAR', 'PONNURUNNI', 'PONNURUNNI EAST', 'VYTTILA', 'POONITHURA', 'VYTTILA JANATHA', 'KADAVANTHRA', 'PANAMPILLI NAGAR', 'PERUMANUR', 'KONTHURUTHY', 'THEVARA', 'ISLAND SOUTH', 'KADEBHAGAM', 'PALLURUTHY EAST', 'THAZHUPPU', 'EDAKOCHI NORTH', 'EDAKOCHI SOUTH', 'PERUMBADAPPU', 'KONAM', 'PALLURUTHY-KACHERIPADY', 'NAMBYAPURAM', 'PALLLURUTHY'],
+      
+      // Thrissur Corporation Mandals
+      'Thrissur West': ['PUNKUNNAM', 'KUTTANKULANGARA', 'PATTURAIKAL', 'VIYYUR', 'PERINGAVU', 'RAMAVARMAPURAM', 'VILLADAM', 'THEKKINKADU', 'THIRUAMBADI', 'KOTTAPPURAM', 'KARIATTUKARA', 'LALOOR', 'ARANATTUKARA', 'KANATTUKARA', 'AYYANTHOLE', 'CIVIL STATION', 'OLARI', 'ELTHURUTH', 'CHETTUPUZHA', 'PULLAZHI', 'PUTHURKARA'],
+      'Thrissur East': ['KUTTUMUKKU', 'CHEROOR', 'GANDHI NAGAR', 'MUKKATTUKARA', 'NETTISSERI', 'OLLUKARA', 'Krishnapuram', 'KUTTANELLUR', 'CHELAKOTTUKARA', 'KALATHODU', 'PARAVATTANI', 'KIZHAKUMPATTUKARA', 'CHEMBUKKAVU', 'MISSION QUARTERS', 'KURIYACHIRA WEST', 'KANNAMKULANGARA', 'POOTHOLE', 'KOKKALA', 'VADUKKARA'],
+      'Ollur': ['MULLAKKARA', 'MANNUTHY', 'KURIYACHIRA', 'VALARKAVU', 'ANCHERI', 'PADAVARADU', 'OLLUR CENTER', 'EDAKUNNI', 'THAIKATTUSSERY', 'OLLUR', 'CHIYYARAM', 'CHIYYARAM SOUTH', 'KOORKANCHERY', 'KANIMANGALAM', 'PANAMUKKU', 'NEDUPUZHA'],
+      
+      // Kozhikode Corporation Mandals
+      'Elathoor': ['Elathoor', 'Chettikulam', 'ERANHIKKAL', 'Puthur', 'MOKAVUR', 'Puthiyappa'],
+      'Kozhikode North': ['Kundooparamb', 'Karuvissery', 'Malaparamb', 'Thadambattu Thazham', 'Vengeri', 'Poolakkadavu', 'Paroppadi', 'Civil Station', 'Chevarambalam', 'Vellimadukunnu', 'Moozhikkal', 'Chelavoor', 'Mayanad', 'Medical College South', 'Medical College', 'Chevayur', 'Kudilthod', 'Kottooli'],
+      'Puthiyara': ['KOVOOR', 'NELLIKKODE', 'PARAYANCHERI', 'PUTHIYARA', 'KUTHIRAVATTAM', 'POTTAMMAL', 'KOMMERI', 'methottutazham', 'kuttiyil thazham', 'POKKUNNU', 'KINASSERY', 'MANKAVU', 'AZHCHAVATTAM'],
+      'Kozhikode South': ['KALLAI', 'PANNIYANKARA', 'MEENCHANTHA', 'THIRUVANNUR', 'PAYYANAKKAL', 'NADI NAGAR', 'CHAKKUMKADAVU', 'MUKHADAR', 'KUTTICHIRA', 'CHALAPPURAM', 'PALAYAM'],
+      'Beypore': ['AREEKAD NORTH', 'AREEKAD', 'NALLALAM', 'KOLATHARA', 'KUNDAYITHODE', 'CHERUVANNUR EAST', 'CHERUVANNUR WEST', 'BEYPORE PORT', 'BEYPORE', 'MARADU', 'NADUVATTAM', 'NADUVATTAM EAST', 'ARAKKINAR', 'MATHOTTAM'],
+      'Nadakkavu': ['Mavoor Road', 'Moonnalingal', 'THIRUTHIYAD', 'ERANHIPPALAM', 'Nadakkavu', 'Vellayil', 'Thoppayil', 'CHAKKORATHKULAM', 'Karapparamb', 'East Hill', 'Athanikkal', 'Westhill', 'Edakkad', 'Puthiyangadi'],
+      
+      // Kannur Corporation Mandals
+      'Azhikkode': ['Palliyammoola', 'Kunnavu', 'Kokkenpara', 'Pallikkunnu', 'Thalappu', 'Udayamkunnu', 'Podikundu', 'Kottali', 'Athazhakkunnu', 'Kakkad', 'Thulicheri', 'Kakkad North', 'Shadulippalli', 'Chalad', 'Panjikkayil'],
+      'Edakkadu': ['Pallipram', 'Varam', 'Valiyannur', 'Chelora', 'Macheri', 'Pallippoyil', 'Kappad', 'Thilannur', 'Aatadappa', 'Chala', 'Edakkad', 'Ezhara', 'Alinkeel', 'Kizhunna', 'Thottada', 'Adikadalayi', 'Kanjira', 'Kuruva'],
+      'Kannur': ['Elayavoor North', 'Elayavoor South', 'Mundayad', 'Edachovva', 'Athirakam', 'Kappicheri', 'Melechovva', 'Thazhechovva', 'Keezhthalli', 'Padne', 'Vethilappalli', 'Neerchal', 'Arakkal', 'Chovva', 'Thana', 'South Bazar', 'Temple', 'Thayatheru', 'Kasanakotta', 'Ayikkara', 'Kanathur', 'Payyambalam', 'Thalikavu']
+    };
+
+    // ========= AC → Mandals (your table) =========
+    const MAPPING_TEXT = `/* (same full table you sent; truncated here for brevity in this comment) */`.replace(/^\/\*[\s\S]*\*\/$/,'').trim();
+    //  — Paste your full mapping back in (unchanged) —
+    // For brevity in this message, I'll reconstruct it programmatically at runtime from the same block you pasted.
+    const MAPPING_BLOCK = `
+AC,Mandal
+Kazhakkoottam,Kazhakkoottam
+Kazhakkoottam,Ulloor
+Vattiyoorkavu,Vattiyoorkavu
+Vattiyoorkavu,Pattom
+Thiruvananthapuram,Thiruvananthapuram Central
+Thiruvananthapuram,Thiruvananthapuram West
+Nemom,Nemom
+Nemom,Attukal
+Chirayinkeezhu,Chirayinkeezhu
+Chirayinkeezhu,Kadakkavoor
+Varkala,Varkala
+Varkala,Navaikulam
+Attingal,Attingal
+Attingal,Kilimanoor
+Nedumangad,Nedumangad
+Nedumangad,Pothencode
+Vamanapuram,Vamanapuram
+Vamanapuram,Palode
+Aruvikkara,Aruvikkara
+Aruvikkara,Aryanadu
+Parasala,Parassala
+Parasala,Vellarada
+Kattakkada,Kattakkada
+Kattakkada,Malayinkeezhu
+Neyyattinkara,Neyyattinkara
+Neyyattinkara,Kulathoor
+Kovalam,Kovalam
+Kovalam,Balaramapuram
+Karunagappally,Karunagappally
+Karunagappally,Oachira
+Chavara,Chavara
+Chavara,Panmana
+Kollam,Kollam
+Kollam,Thrikkadavoor
+Kundara,Kundara
+Kundara,Mukhathala
+Eravipuram,Eravipuram
+Eravipuram,Kilikolloor
+Chathannoor,Chathannoor
+Chathannoor,Paravur
+Kunnathur,Kunnathur
+Kunnathur,Sasthamcotta
+Kottarakkara,Kottarakkara
+Kottarakkara,Neduvathur
+Pathanapuram,Pathanapuram
+Pathanapuram,Kunnikkodu
+Punaloor,Punalur
+Punaloor,Anchal
+Chadayamangalam,Chadayamangalam
+Chadayamangalam,Chithara
+Thiruvalla,Thiruvalla
+Thiruvalla,Mallappally
+Aranmula,Aranmula
+Aranmula,Pathanamthitta
+Adoor,Adoor
+Adoor,Pandalam
+Ranni,Ranni
+Ranni,Ayiroor
+Konni,Konni
+Konni,Chittar
+Aroor,Aroor
+Aroor,Panavally
+Cherthala,Cherthala
+Cherthala,Muhamma
+Alappuzha,Alappuzha
+Alappuzha,Mararikkulam
+Ambalappuzha,Ambalappuzha
+Ambalappuzha,Mullakkal
+Kuttanad,Kuttanadu
+Kuttanad,Thakazhy
+Haripad,Haripad
+Haripad,Karthikappalli
+Chenganur,Chengannur
+Chenganur,Mannar
+Mavelikkara,Mavelikkara
+Mavelikkara,Charummoodu
+Kayamkulam,Kayamkulam
+Kayamkulam,Chettikulangara
+Kaduthuruthy,Kaduthuruthy
+Kaduthuruthy,Kuravilangadu
+Vaikom,Vaikom
+Vaikom,Thalayolaparambu
+Ettumanoor,Ettumanoor
+Ettumanoor,Kumarakom
+Kottayam,Kottayam
+Kottayam,Panachikadu
+Pala,Pala
+Pala,Bharananganam
+Puthuppally,Puthuppally
+Puthuppally,Ayarkunnam
+Kanjirappally,Kanjirappally
+Kanjirappally,Vazhoor
+Poonjar,Poonjar
+Poonjar,Mundakkayam
+Changanassery,Changanassery
+Changanassery,Madappally
+Devikulam,Devikulam
+Devikulam,Adimali
+Thodupuzha,Thodupuzha
+Thodupuzha,Vannappuram
+Idukki,Idukki
+Idukki,Kattappana
+Udumbanchola,Udumbanchola
+Udumbanchola,Vandanmedu
+Peerumade,Peermade
+Peerumade,Elappara
+Vypen,Vypin
+Vypen,Cherayi
+Kochi,Kochi
+Kochi,Mattancherry
+Thripunithura,Thrippunithura
+Thripunithura,Palluruthy
+Eranakulam,Ernakulam North
+Thrikkakara,Thrikkakkara
+Perumbavoor,Perumbavoor
+Perumbavoor,Kuruppampady
+Angamaly,Angamaly
+Angamaly,Kalady
+Aluva,Aluva
+Aluva,Nedumbassery
+Kalamassery,Kalamassery
+Kalamassery,Karumalloor
+Paravur,Paravur
+Paravur,Vadakkekara
+Kunnathunad,Kunnathunadu
+Kunnathunad,Kolenchery
+Piravom,Piravom
+Piravom,Chottanikara
+Muvattupuzha,Muvattupuzha
+Muvattupuzha,Vazhakkulam
+Kothamangalam,Kothamangalam
+Kothamangalam,Kavalangad
+Manalur,Manalur
+Manalur,Pavaratty
+Nattika,Nattika
+Nattika,Cherpu
+Ollur,Ollur
+Ollur,Peechi
+Thrissur,Thrissur West
+Thrissur,Thrissur East
+Puthukkad,Puthukkad
+Puthukkad,Amballur
+Kunnamkulam,Kunnamkulam
+Kunnamkulam,Erumapetty
+Guruvayoor,Guruvayoor
+Guruvayoor,Chavakkad
+Chelakkara,Chelakkara
+Chelakkara,Cheruthuruthy
+Wadakkanchery,Wadakkanchery
+Wadakkanchery,Kaipparambu
+Kaipamangalam,Kaipamangalam
+Kaipamangalam,Edavilangu
+Irinjalakuda,Irinjalakuda
+Irinjalakuda,Aloor
+Chalakudy,Chalakudy
+Chalakudy,Koratty
+Kodungallur,Kodungallur
+Kodungallur,Mala
+Kongad,Kongad
+Kongad,Karimba
+Malampuzha,Malampuzha
+Malampuzha,Puthussery
+Palakkad,Palakkad
+Palakkad,Pirayiri
+Chittur,Chittoor
+Chittur,Kozhinjampara
+Nenmara,Nenmara
+Nenmara,Kollengode
+Alathur,Alathur
+Alathur,Vandazhi
+Thrithala,Thrithala
+Thrithala,Kappur
+Pattambi,Pattambi
+Pattambi,Koppam
+Shornur,Shornur
+Shornur,Cherpulassery
+Ottapalam,Ottapalam
+Ottapalam,Sreekrishnapuram
+Mannarkkad,Mannarkkad
+Mannarkkad,Attappady
+Tarur,Tharur
+Tarur,Vadakkenchery
+Kondotty,Kondotty
+Kondotty,Vazhakkad
+Vengara,Vengara
+Vengara,Parappur
+Malappuram,Malappuram
+Malappuram,Pookkottur
+Kottakkal,Kottakkal
+Kottakkal,Kuttippuram
+Mankada,Mankada
+Mankada,Kolathur
+Vallikkunnu,Vallikkunnu
+Vallikkunnu,Pallikkal
+Thirurangadi,Thirurangadi
+Thirurangadi,Edarikkodu
+Tanur,Tanur
+Tanur,Ponmundam
+Tirur,Tirur
+Tirur,Thirunavaya
+Thavanur,Thavanur
+Thavanur,Thrippangodu
+Ponnani,Ponnani
+Ponnani,Changaramkulam
+Nilambur,Nilambur
+Nilambur,Edakkara
+Ernaad,Eranad
+Ernaad,Edavanna
+Manjeri,Manjeri
+Manjeri,Pandikkad
+Wandoor,Wandoor
+Wandoor,Kalikkavu
+Perinthalamanna,Perinthalmanna
+Perinthalamanna,Elamkulam
+Vatakara,Vatakara
+Vatakara,Onchiyam
+Kuttiady,Kuttiady
+Kuttiady,Villiappally
+Nadapuram,Nadapuram
+Nadapuram,Naripatta
+Perambra,Perambra
+Perambra,Meppayur
+Koyilandy,Koyilandy
+Koyilandy,Payyoli
+Balussery (SC),Balussery
+Balussery (SC),Ulliyeri
+Elathur,Elathur
+Elathur,Chelannur
+Koduvally,Koduvally
+Koduvally,Thamarassery
+Thiruvambady,Thiruvambady
+Thiruvambady,Mukkam
+Kozhikode North,Kozhikode North
+Kozhikode North,Nadakkavu
+Kunnamangalam,Kunnamangalam
+Kunnamangalam,Olavanna
+Kozhikode South,Kozhikode South
+Kozhikode South,Puthiyara
+Beypore,Beypore
+Beypore,Ramanattukara
+Mananthavady,Mananthavady
+Mananthavady,Panamaram
+Sulthanbathery,Sulthan Bathery
+Sulthanbathery,Pulpally
+Kalpetta,Kalpetta
+Kalpetta,Padinjarathara
+Payyannur,Payyannur
+Payyannur,Peringome
+Kalliasseri,Kalliassery
+Kalliasseri,Madayi
+Thaliparambu,Thaliparambu
+Thaliparambu,Mayyil
+Irikkur,Irikkur
+Irikkur,Alakkode
+Azhikode,Azhikode
+Azhikode,Chirakkal
+Kannur,Kannur
+Kannur,Edakkad
+Dharmadam,Dharmadom
+Dharmadam,Chakkarakkal
+Mattannur,Mattannur
+Mattannur,Chittariparamba
+Peravoor,Peravoor
+Peravoor,Iritty
+Koothuparamba,Koothuparamba
+Koothuparamba,Panoor
+Thalassery,Thalassery
+Thalassery,Kathiroor
+Manjeshwaram,Manjeshwar
+Manjeshwaram,Kumbla
+Kasaragod,Kasaragod
+Kasaragod,Badiadka
+Udma,Udma
+Udma,Muliyar
+Kanhangad,Kanhangad
+Kanhangad,Vellarikundu
+Trikkarippur,Trikaripur
+Trikkarippur,Neeleshwaram
+Eranakulam,Ernakulam North
+Eranakulam,Ernakulam South
+Kochi,Kochi
+Kochi,Mattancherry
+Thripunithura,Thrippunithura
+Thripunithura,Palluruthy
+Thrikkakara,Thrikkakara
+Thrikkakara,Pallarivattom
+Vypen,Cherayi
+Vypen,Vypin
+
+`.trim();
+
+    const AC_TO_MANDALS = (() => {
+      const rows = MAPPING_BLOCK.split(/\r?\n/).slice(1);
+      const out = new Map();
+      for (const line of rows) {
+        const [acRaw, mRaw] = line.split(',').map(s=>s?.trim());
+        if (!acRaw || !mRaw) continue;
+        if (!out.has(acRaw)) out.set(acRaw, new Set());
+        out.get(acRaw).add(mRaw);
+      }
+      return out;
+    })();
+    const AC_KEYS = () => Array.from(AC_TO_MANDALS.keys());
+    function resolveACKey(acName){
+      const keys = AC_KEYS();
+      let k = keys.find(x => x === acName); if (k) return k;
+      const acNorm = norm(acName);
+      k = keys.find(x => norm(x) === acNorm); if (k) return k;
+      const strippedNorm = norm(stripParens(acName));
+      k = keys.find(x => norm(x) === strippedNorm); if (k) return k;
+      let best=null, bestScore=-1;
+      for (const cand of keys){
+        const s = Math.max(sim(norm(cand), acNorm), sim(norm(cand), strippedNorm));
+        if (s>bestScore){ bestScore=s; best=cand; }
+      }
+      return bestScore>=FUZZY ? best : null;
+    }
+
+    // Build Mandal index for name→features
+    let mandalIndex;
+    function buildMandalIndex() {
+      mandalIndex = new Map();
+      for (const f of mandalGJ.features) {
+        const n = norm(prop(f, KEYS.mnd));
+        if (!mandalIndex.has(n)) mandalIndex.set(n, []);
+        mandalIndex.get(n).push(f);
+      }
+    }
+    function featuresForMappedMandals(names){
+      const hits=[], missed=[], labelByNorm={};
+      for (const name of names) {
+        const target = norm(name);
+        if (mandalIndex.has(target)) { labelByNorm[target]=name; hits.push(...mandalIndex.get(target)); continue; }
+        let bestArr=null, bestKey=null, bestScore=-1;
+        for (const [k, arr] of mandalIndex.entries()) {
+          const score = sim(k, target);
+          if (score>bestScore){ bestScore=score; bestArr=arr; bestKey=k; }
+        }
+        if (bestArr && bestScore>=FUZZY){ labelByNorm[bestKey]=name; hits.push(...bestArr); }
+        else { missed.push(name); }
+      }
+      return {hits, missed, labelByNorm};
+    }
+
+    // ========= VIEWS =========
+    function safeFit(layer){
+      try{ map.fitBounds(layer.getBounds()); }catch(e){}
+    }
+
+    function showZones(){
+      clearLayers(); clearLabels(); ctx.level='zones'; ctx.zone=ctx.org=ctx.ac=ctx.mandal=null;
+      titleEl.textContent="Kerala — Zones"; legendTitle.textContent="Zones";
+      const layer=L.geoJSON(zonesGJ,{
+        style:f=>({color:"#f97316",weight:2,fillColor:colorFor(prop(f,KEYS.zone)),fillOpacity:0.7}),
+        onEachFeature:(f,l)=>l.on('click',()=>showOrgs(f))
+      }).addTo(map);
+      safeFit(layer);
+      buildLegend([...new Set(zonesGJ.features.map(f=>prop(f,KEYS.zone)))]);
+      addLabels(layer, KEYS.zone, 'lbl-zone');
+      backBtn.style.display="none";
+      
+      // Send context update to parent
+      window.parent.postMessage({
+        type: 'context-change',
+        context: {
+          level: 'zones',
+          zone: '',
+          org: '',
+          ac: '',
+          mandal: ''
+        }
+      }, '*');
+    }
+
+    function showOrgs(zoneF){
+      clearLayers(); clearLabels(); ctx.level='orgs'; ctx.zone=zoneF; ctx.org=ctx.ac=ctx.mandal=null;
+      titleEl.textContent=`Kerala — ${prop(zoneF,KEYS.zone)} — Org Districts`; legendTitle.textContent="Org Districts";
+      const subset=filterChildrenSmart(orgGJ,zoneF,KEYS.zone);
+      const layer=L.geoJSON(subset,{
+        style:f=>({color:"#3b82f6",weight:2,fillColor:colorFor(prop(f,KEYS.org)),fillOpacity:0.7}),
+        onEachFeature:(f,l)=>l.on('click',()=>showACs(f))
+      }).addTo(map);
+        safeFit(layer);
+      buildLegend([...new Set(subset.features.map(f=>prop(f,KEYS.org)))]);
+      addLabels(layer, KEYS.org, 'lbl-org');
+      backBtn.style.display="inline-block";
+      
+      // Send context update to parent
+      window.parent.postMessage({
+        type: 'context-change',
+        context: {
+          level: 'orgs',
+          zone: prop(zoneF, KEYS.zone),
+          org: '',
+          ac: '',
+          mandal: ''
+        }
+      }, '*');
+    }
+
+    function showACs(orgF){
+      clearLayers(); clearLabels(); ctx.level='acs'; ctx.org=orgF; ctx.ac=ctx.mandal=null;
+      titleEl.textContent=`Kerala — ${prop(ctx.zone,KEYS.zone)} — ${prop(orgF,KEYS.org)} — ACs`; legendTitle.textContent="Assembly Constituencies";
+      const subset=filterChildrenSmart(acGJ,orgF,KEYS.org);
+      const layer=L.geoJSON(subset,{
+        style:f=>({color:"#10b981",weight:2,fillColor:colorFor(prop(f,KEYS.ac)),fillOpacity:0.7}),
+        onEachFeature:(f,l)=>l.on('click',()=>showMandals(f))
+      }).addTo(map);
+      safeFit(layer);
+      buildLegend([...new Set(subset.features.map(f=>prop(f,KEYS.ac)))]);
+      addLabels(layer, KEYS.ac, 'lbl-ac');
+      
+      // Send context update to parent
+      window.parent.postMessage({
+        type: 'context-change',
+        context: {
+          level: 'acs',
+          zone: prop(ctx.zone, KEYS.zone),
+          org: prop(orgF, KEYS.org),
+          ac: '',
+          mandal: ''
+        }
+      }, '*');
+    }
+
+    function showMandals(acF){
+      clearLayers(); clearLabels(); ctx.level='mandals'; ctx.ac=acF; ctx.mandal=null;
+      const acName = prop(acF, KEYS.ac);
+      titleEl.textContent=`Kerala — ${prop(ctx.zone,KEYS.zone)} — ${prop(ctx.org,KEYS.org)} — ${acName} — Mandals & Corporation Mandals`;
+      legendTitle.textContent="Mandals & Corporation Mandals";
+
+      const LABEL_KEY="__label";
+      let subsetFeatures = [];
+      let missed = [];
+      let labelByNorm = {};
+
+      const acKey = resolveACKey(acName);
+      if (acKey){
+        const mapped = AC_TO_MANDALS.get(acKey);
+        const r = featuresForMappedMandals([...mapped]);
+        subsetFeatures = r.hits; missed = r.missed; labelByNorm = r.labelByNorm || {};
+      }
+      if (!subsetFeatures.length) {
+        subsetFeatures = mandalGJ.features.filter(f=>{
+          try { return turf.booleanPointInPolygon(turf.pointOnFeature(f), acF); }
+          catch(e){ return false; }
+        });
+      }
+      const labeled = subsetFeatures.map(f=>{
+        const n = norm(prop(f, KEYS.mnd));
+        const canon = labelByNorm[n] || prop(f, KEYS.mnd);
+        return { ...f, properties: { ...f.properties, [LABEL_KEY]: canon } };
+      });
+
+      const subset = { type:"FeatureCollection", features: labeled };
+      
+      // Create a single layer with thick borders and no internal lines
+      const layer=L.geoJSON(subset,{
+        style:f=>{
+          const isCorpMandal = prop(f, 'Type') === 'Corporation';
+          return {
+            color: isCorpMandal ? "#f59e0b" : "#8b5cf6",  // Orange border for corporation mandals, purple for regular
+            weight: isCorpMandal ? 3 : 2,  // Slightly thicker for corporation mandals
+            fillColor: colorFor(prop(f,LABEL_KEY)),
+            fillOpacity: isCorpMandal ? 0.8 : 0.7,  // Slightly more opaque for corporation mandals
+            dashArray: isCorpMandal ? "5,5" : null  // Dashed border for corporation mandals
+          };
+        },
+        onEachFeature:(f,l)=>l.on('click',async ()=>{
+          console.log('Mandal clicked:', {
+            name: prop(f, LABEL_KEY),
+            type: prop(f, 'Type'),
+            corporation: prop(f, 'Corporation')
+          });
+          // Check if this is a corporation mandal (has Type property set to Corporation)
+          if (prop(f, 'Type') === 'Corporation') {
+            console.log('Calling showCorporationWards...');
+            await showCorporationWards(f);
+          } else {
+            console.log('Calling showPanchayats...');
+            showPanchayats(f);
+          }
+        })
+      }).addTo(map);
+
+      // Debug: Count corporation mandals
+      const corpMandals = subset.features.filter(f => prop(f, 'Type') === 'Corporation');
+      console.log(`Loaded ${subset.features.length} mandals, ${corpMandals.length} are corporation mandals`);
+      if (corpMandals.length > 0) {
+        console.log('Corporation mandals:', corpMandals.map(f => ({
+          name: prop(f, LABEL_KEY),
+          corporation: prop(f, 'Corporation'),
+          wardCount: prop(f, 'Ward_Count')
+        })));
+      }
+
+      safeFit(layer);
+      buildLegend([...new Set(subset.features.map(f=>prop(f,LABEL_KEY)))]);
+      addLabels(layer, LABEL_KEY, 'lbl-mandal');
+
+      legendNote.textContent =
+        (!acKey) ? 'Note: AC name not found in mapping; showing spatially contained mandals.'
+        : (missed.length ? `Note: not found by name (≥${Math.round(FUZZY*100)}%): ${missed.join(', ')}.` : '') +
+        ' Corporation mandals have orange dashed borders and can be clicked to drill down to wards.';
+      
+      // Send context update to parent
+      window.parent.postMessage({
+        type: 'context-change',
+        context: {
+          level: 'mandals',
+          zone: prop(ctx.zone, KEYS.zone),
+          org: prop(ctx.org, KEYS.org),
+          ac: prop(acF, KEYS.ac),
+          mandal: ''
+        }
+      }, '*');
+    }
+
+    function showPanchayats(mF){
+      clearLayers(); clearLabels(); ctx.level='panchayats'; ctx.mandal=mF;
+      const mName = prop(mF,"__label") || prop(mF, KEYS.mnd);
+      titleEl.textContent=`Kerala — ${prop(ctx.zone,KEYS.zone)} — ${prop(ctx.org,KEYS.org)} — ${prop(ctx.ac,KEYS.ac)} — ${mName} — Panchayats`;
+      legendTitle.textContent="Panchayats";
+
+      const panMandalKey = KEYS.pan_mnd;
+      let subset = {type:"FeatureCollection", features:[]};
+
+      if (panMandalKey){
+        const target = norm(mName);
+        subset.features = panGJ.features.filter(f => norm(prop(f, panMandalKey)) === target);
+      }
+      if (!subset.features.length){
+        subset.features = panGJ.features.filter(f=>{
+          try{ return turf.booleanPointInPolygon(turf.pointOnFeature(f), mF); }catch(e){return false;}
+        });
+      }
+
+      // Create a single layer with thick borders and no internal lines
+      const layer=L.geoJSON(subset,{
+        style:f=>({color:"#ef4444",weight:2,fillColor:colorFor(prop(f,KEYS.pan)),fillOpacity:0.7}),
+        onEachFeature:(f,l)=>l.on('click',()=>showWards(f))
+      }).addTo(map);
+
+      safeFit(layer);
+      buildLegend([...new Set(subset.features.map(f=>prop(f,KEYS.pan)))]);
+      addLabels(layer, KEYS.pan, 'lbl-pan');
+      
+      // Send context update to parent
+      window.parent.postMessage({
+        type: 'context-change',
+        context: {
+          level: 'panchayats',
+          zone: prop(ctx.zone, KEYS.zone),
+          org: prop(ctx.org, KEYS.org),
+          ac: prop(ctx.ac, KEYS.ac),
+          mandal: mName
+        }
+      }, '*');
+    }
+
+    async function showCorporationWards(mF){
+      clearLayers(); clearLabels(); ctx.level='wards'; ctx.mandal=mF;
+      const mName = prop(mF,"__label") || prop(mF, KEYS.mnd);
+      const corporationName = prop(mF, 'LocalBody');
+      titleEl.textContent=`Kerala — ${corporationName} — ${mName} — Wards`;
+      legendTitle.textContent="Wards";
+      legendNote.textContent = "Loading ward data...";
+      
+      console.log('🏛️ showCorporationWards called with:', {
+        mName,
+        corporationName,
+        mandalType: prop(mF, 'Type'),
+        wardNames: prop(mF, 'Ward_Names'),
+        allProperties: prop(mF, '')
+      });
+
+      // Get ward list from corporation mandal properties or CSV mapping
+      const wardNamesString = prop(mF, 'Ward_Names') || '';
+      let wardList = wardNamesString.split(',').map(w => w.trim()).filter(w => w);
+      
+      // If no ward names in mandal data, use CSV mapping
+      if (wardList.length === 0) {
+        wardList = CORPORATION_MANDAL_WARDS[mName] || [];
+        console.log(`Using CSV mapping for ${mName}: ${wardList.length} wards`);
+      }
+      let subset = {type:"FeatureCollection", features:[]};
+
+      // Try to load corporation ward data if not already loaded
+      if (!corpWardsGJ[corporationName]) {
+        const corpWardFile = FILES.corp_wards[corporationName];
+        console.log(`🔍 Looking for corporation ward file for: ${corporationName}`);
+        console.log(`🔍 Available corporation files:`, Object.keys(FILES.corp_wards));
+        console.log(`🔍 Corp ward file path:`, corpWardFile);
+        
+        if (corpWardFile) {
+          try {
+            console.log(`📁 Loading corporation ward data for ${corporationName} from ${corpWardFile}...`);
+            const response = await fetch(corpWardFile);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            corpWardsGJ[corporationName] = await response.json();
+            console.log(`✅ Loaded ${corpWardsGJ[corporationName].features.length} wards for ${corporationName}`);
+          } catch (error) {
+            console.error(`❌ Error loading corporation ward data for ${corporationName}:`, error);
+          }
+        } else {
+          console.warn(`❌ No corporation ward file found for: ${corporationName}`);
+        }
+      } else {
+        console.log(`✅ Corporation ward data already loaded for ${corporationName}: ${corpWardsGJ[corporationName].features.length} features`);
+      }
+
+      // Use corporation ward data if available
+      if (corpWardsGJ[corporationName]) {
+        if (wardList.length > 0) {
+          // Filter corporation wards by the ward names (from CSV mapping or mandal data)
+          // Use case-insensitive matching to handle different case formats
+          subset.features = corpWardsGJ[corporationName].features.filter(f => {
+            const wardName = prop(f, 'Ward_Name');
+            if (!wardName) return false;
+            // Normalize both ward names for case-insensitive comparison
+            const normalizedWardName = wardName.toLowerCase().trim();
+            return wardList.some(expectedWard => {
+              const normalizedExpected = expectedWard.toLowerCase().trim();
+              // Use fuzzy matching for slight differences
+              return normalizedWardName === normalizedExpected || 
+                     sim(normalizedWardName, normalizedExpected) >= FUZZY;
+            });
+          });
+          console.log(`Found ${subset.features.length} corporation wards for mandal ${mName} by name matching (${wardList.length} expected)`);
+        } else {
+          // If no ward names specified, use spatial filtering
+          subset.features = corpWardsGJ[corporationName].features.filter(f => {
+            try {
+              return turf.booleanPointInPolygon(turf.pointOnFeature(f), mF);
+            } catch(e) {
+              return false;
+            }
+          });
+          console.log(`Found ${subset.features.length} corporation wards for mandal ${mName} by spatial filtering`);
+        }
+      }
+
+      // Fallback to general wards data if corporation data not available
+      if (!subset.features.length && wardsGJ) {
+        if (wardList && wardList.length > 0){
+          // Filter wards by the ward names in the mandal's Ward_Names
+          subset.features = wardsGJ.features.filter(f => {
+            const wardName = prop(f, 'Ward_Name') || prop(f, KEYS.ward_name);
+            return wardList.includes(wardName);
+          });
+        }
+
+        if (!subset.features.length){
+          // Fallback: filter by corporation name
+          if (corporationName){
+            subset.features = wardsGJ.features.filter(f => {
+              const wardCorp = prop(f, 'LSGD') || prop(f, 'Corporation');
+              return norm(wardCorp) === norm(corporationName);
+            });
+          }
+        }
+
+        if (!subset.features.length){
+          // Final fallback: spatial filtering
+          subset.features = wardsGJ.features.filter(f=>{
+            try{ return turf.booleanPointInPolygon(turf.pointOnFeature(f), mF); }catch(e){return false;}
+          });
+        }
+      }
+
+      if (subset.features.length > 0) {
+        console.log(`✅ Creating ${subset.features.length} corporation ward polygons for ${mName}`);
+        const layer=L.geoJSON(subset,{
+          style:f=>({color:"#06b6d4",weight:1,fillColor:colorFor(prop(f,'Ward_Name') || prop(f,KEYS.ward_name)),fillOpacity:0.6}),
+          onEachFeature:(f,l)=>{
+            const wardName = prop(f,'Ward_Name') || prop(f,KEYS.ward_name) || 'Unknown Ward';
+            const wardNo = prop(f,'Ward_No') || prop(f,KEYS.ward_no) || '';
+            const wardInfo = wardNo ? `Ward ${wardNo}: ${wardName}` : `Ward: ${wardName}`;
+            
+            console.log(`🏘️ Setting up popup for corporation ward: ${wardInfo}`);
+            
+            // Find voter data for this corporation ward first
+            let wardData = voterData.find(row => {
+              const csvWard = norm(row.ward);
+              const geoWard = norm(wardName);
+              const aliasedWard = aliases.get(geoWard) || geoWard;
+              
+              return (csvWard === geoWard || csvWard === aliasedWard) && 
+                     norm(row.lbName) === norm('Thiruvananthapuram') &&
+                     norm(row.mandal) === norm(mName);
+            });
+            
+            // If not found with mandal matching, try without mandal matching
+            if (!wardData) {
+              wardData = voterData.find(row => {
+                const csvWard = norm(row.ward);
+                const geoWard = norm(wardName);
+                const aliasedWard = aliases.get(geoWard) || geoWard;
+                
+                return (csvWard === geoWard || csvWard === aliasedWard) && 
+                       norm(row.lbName) === norm('Thiruvananthapuram');
+              });
+            }
+            
+            // If exact match not found, try fuzzy matching
+            if (!wardData) {
+              wardData = voterData.find(row => {
+                if (norm(row.lbName) !== norm('Thiruvananthapuram')) return false;
+                
+                const csvWard = norm(row.ward);
+                const geoWard = norm(wardName);
+                const aliasedWard = aliases.get(geoWard) || geoWard;
+                
+                if (csvWard === geoWard || csvWard === aliasedWard) return true;
+                
+                const similarity = sim(csvWard, geoWard);
+                if (similarity >= 0.85) return true;
+                
+                const aliasedSimilarity = sim(csvWard, aliasedWard);
+                if (aliasedSimilarity >= 0.85) return true;
+                
+                return false;
+              });
+            }
+            
+            console.log('🔍 Voter data found for corporation ward:', wardData ? 'YES' : 'NO');
+            
+            // Create popup with button based on whether we found data
+            if (wardData) {
+              console.log('📊 Corporation ward data:', wardData);
+              const wardSummary = {
+                mandal: mName,
+                ac: wardData.ac,
+                orgDist: wardData.orgDist,
+                zone: wardData.zone,
+                totalWards: 1,
+                totalHouses: wardData.houses,
+                totalVoters: wardData.totalVoters,
+                femaleVoters: wardData.female,
+                maleVoters: wardData.male,
+                transgenderVoters: wardData.transgender,
+                femalePercentage: wardData.totalVoters > 0 ? (wardData.female / wardData.totalVoters) * 100 : 0,
+                malePercentage: wardData.totalVoters > 0 ? (wardData.male / wardData.totalVoters) * 100 : 0,
+                transgenderPercentage: wardData.totalVoters > 0 ? (wardData.transgender / wardData.totalVoters) * 100 : 0,
+                topWards: [{
+                  ward: wardData.ward,
+                  wardNumber: wardData.wardNumber,
+                  houses: wardData.houses,
+                  totalVoters: wardData.totalVoters,
+                  female: wardData.female,
+                  male: wardData.male,
+                  transgender: wardData.transgender
+                }]
+              };
+              
+              // Create popup with button that triggers the modal
+              l.bindPopup(`<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; padding: 10px;">
+                <b style="color: #f97316; font-size: 16px;">${wardInfo}</b><br/>
+                <span style="color: #3b82f6;">Corporation:</span> ${corporationName}<br/>
+                <span style="color: #10b981;">Mandal:</span> ${mName}<br/>
+                <span style="color: #059669;">Voters:</span> ${wardData.totalVoters}<br/>
+                <button onclick="showCorporationWardModal('${wardInfo.replace(/'/g, "\\'")}', '${corporationName.replace(/'/g, "\\'")}', '${mName.replace(/'/g, "\\'")}', ${JSON.stringify(wardSummary).replace(/"/g, '&quot;')})" 
+                        style="background: #f97316; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-top: 8px; font-size: 12px;">
+                  View Full Report
+                </button>
+              </div>`, {
+                maxWidth: 300,
+                className: 'custom-ward-popup'
+              });
+              
+              console.log(`✅ Popup bound for ward: ${wardInfo}`);
+              console.log(`🔍 Popup test for ${wardInfo}:`, l.getPopup() ? 'HAS POPUP' : 'NO POPUP');
+              console.log(`🔍 Event listeners for ${wardInfo}:`, l.listens('click') ? 'HAS CLICK LISTENER' : 'NO CLICK LISTENER');
+              
+              // Auto-open popup after a delay for testing
+              setTimeout(() => {
+                console.log(`🔍 Auto-opening popup for ${wardInfo}`);
+                l.openPopup();
+              }, Math.random() * 2000 + 1000); // Random delay between 1-3 seconds
+              
+              // Test popup opening immediately
+              setTimeout(() => {
+                console.log(`🔍 Testing immediate popup open for ${wardInfo}`);
+                try {
+                  l.openPopup();
+                  console.log(`✅ Popup opened successfully for ${wardInfo}`);
+                } catch (error) {
+                  console.log(`❌ Error opening popup for ${wardInfo}:`, error);
+                }
+              }, 500);
+              
+              // Try multiple event types to ensure popup opens
+              l.on('click', (e) => {
+                console.log('🔍 CLICK EVENT FIRED for:', wardInfo);
+                console.log('🔍 Click event triggered for ward:', wardName);
+                console.log('🏘️ Corporation ward clicked:', wardInfo);
+                e.originalEvent.stopPropagation();
+                // e.originalEvent.preventDefault(); // Removed to allow popup opening
+                l.openPopup();
+                console.log('🔍 Popup opened for ward:', wardInfo);
+              });
+              
+              // Also try mousedown as backup
+              l.on('mousedown', (e) => {
+                console.log('🏘️ Corporation ward mousedown:', wardInfo);
+                e.originalEvent.stopPropagation();
+                // e.originalEvent.preventDefault(); // Removed to allow popup opening
+                l.openPopup();
+                console.log('🔍 Popup opened for ward:', wardInfo);
+              });
+              
+              l.on('mouseover', (e) => {
+                console.log('🏘️ Corporation ward mouseover:', wardInfo);
+                // Don't open popup on mouseover, just log
+              });
+              
+            } else {
+              // Show popup without button if no voter data
+              l.bindPopup(`<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; padding: 10px;">
+                <b style="color: #f97316; font-size: 16px;">${wardInfo}</b><br/>
+                <span style="color: #3b82f6;">Corporation:</span> ${corporationName}<br/>
+                <span style="color: #10b981;">Mandal:</span> ${mName}<br/>
+                <span style="color: #6b7280; font-size: 12px;">Voter data not available</span>
+              </div>`, {
+                maxWidth: 300,
+                className: 'custom-ward-popup'
+              });
+              
+              console.log(`✅ Popup bound for ward (no data): ${wardInfo}`);
+              
+              // Add click event to open popup
+              l.on('click', (e) => {
+                console.log('🔍 CLICK EVENT FIRED for:', wardInfo);
+                console.log('🔍 Click event triggered for ward:', wardName);
+                console.log('🏘️ Corporation ward clicked (no data):', wardInfo);
+                e.originalEvent.stopPropagation();
+                // e.originalEvent.preventDefault(); // Removed to allow popup opening
+                l.openPopup();
+                console.log('🔍 Popup opened for ward:', wardInfo);
+              });
+              
+              // Also try mousedown as backup
+              l.on('mousedown', (e) => {
+                console.log('🏘️ Corporation ward mousedown (no data):', wardInfo);
+                e.originalEvent.stopPropagation();
+                // e.originalEvent.preventDefault(); // Removed to allow popup opening
+                l.openPopup();
+                console.log('🔍 Popup opened for ward:', wardInfo);
+              });
+              
+              l.on('mouseover', (e) => {
+                console.log('🏘️ Corporation ward mouseover (no data):', wardInfo);
+              });
+            }
+          }
+      }).addTo(map);
+        
+        // Create mandal boundary from ward union
+        try {
+          let mandalUnion = subset.features[0];
+          for (let i = 1; i < subset.features.length; i++) {
+            mandalUnion = turf.union(mandalUnion, subset.features[i]);
+          }
+          
+          // Add mandal boundary as a separate layer
+          const mandalLayer = L.geoJSON(mandalUnion, {
+            style: {
+              color: "#f59e0b",
+              weight: 3,
+              fillColor: "transparent",
+              fillOpacity: 0,
+              dashArray: "5,5"
+            }
+          }).addTo(map);
+          
+          console.log(`Created mandal boundary for ${mName} from ${subset.features.length} wards`);
+        } catch (error) {
+          console.warn(`Could not create mandal boundary for ${mName}:`, error);
+        }
+        
+        safeFit(layer);
+        buildLegend([...new Set(subset.features.map(f=>prop(f,'Ward_Name') || prop(f,KEYS.ward_name)))]);
+        addLabels(layer, 'Ward_Name', 'lbl-ward');
+        legendNote.textContent = `Showing ${subset.features.length} wards for ${mName} mandal.`;
+      } else {
+        console.warn(`❌ No wards found for mandal ${mName} in corporation ${corporationName}`);
+        console.log('🔍 Debug info:', {
+          corporationName,
+          mName,
+          corpWardsGJ: corpWardsGJ[corporationName] ? `${corpWardsGJ[corporationName].features.length} features` : 'not loaded',
+          wardList,
+          wardsGJ: wardsGJ ? `${wardsGJ.features.length} features` : 'not loaded'
+        });
+        
+        // Create a fallback layer with the mandal itself as a clickable area
+        const fallbackLayer = L.geoJSON(mF, {
+          style: {
+            color: "#f59e0b",
+            weight: 3,
+            fillColor: "#f59e0b",
+            fillOpacity: 0.3,
+            dashArray: "5,5"
+          },
+          onEachFeature: (f, l) => {
+            l.bindPopup(`<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; padding: 10px;">
+              <b style="color: #f97316; font-size: 16px;">${mName} Mandal</b><br/>
+              <span style="color: #3b82f6;">Corporation:</span> ${corporationName}<br/>
+              <span style="color: #6b7280; font-size: 12px;">Ward data not available</span>
+            </div>`, {
+              maxWidth: 300,
+              className: 'custom-ward-popup'
+            });
+          }
+        }).addTo(map);
+        
+        legendNote.textContent = `No ward data found for ${mName} mandal. Showing mandal area.`;
+      }
+      
+      // Send context update to parent
+      window.parent.postMessage({
+        type: 'context-change',
+        context: {
+          level: 'wards',
+          zone: prop(ctx.zone, KEYS.zone),
+          org: prop(ctx.org, KEYS.org),
+          ac: prop(ctx.ac, KEYS.ac),
+          mandal: mName
+        }
+      }, '*');
+    }
+
+    function getCorporationName(mandalName){
+      // Map mandal names to corporation names
+      const mandalToCorp = {
+        'Kazhakkoottam': 'Thiruvananthapuram',
+        'Pattom': 'Thiruvananthapuram',
+        'Vattiyoorkavu': 'Thiruvananthapuram',
+        'Ulloor': 'Thiruvananthapuram',
+        'Thiruvananthapuram Central': 'Thiruvananthapuram',
+        'Nemom': 'Thiruvananthapuram',
+        'Attukal': 'Thiruvananthapuram',
+        'Kovalam': 'Thiruvananthapuram',
+        'Thiruvananthapuram West': 'Thiruvananthapuram',
+        'Chavara': 'Kollam',
+        'Kollam': 'Kollam',
+        'Thrikkadavoor': 'Kollam',
+        'Kilikolloor': 'Kollam',
+        'Eravipuram': 'Kollam',
+        'Mattancherry': 'Cochin',
+        'Kochi': 'Cochin',
+        'Ernakulam City': 'Cochin',
+        'Thrissur west': 'Thrissur',
+        'Thrissur East': 'Thrissur',
+        'Elathoor': 'Kozhikode',
+        'Kozhikode North': 'Kozhikode',
+        'Puthiyara': 'Kozhikode',
+        'Kozhikode South': 'Kozhikode',
+        'Beypore': 'Kozhikode',
+        'Nadakkavu': 'Kozhikode',
+        'Azhikkode': 'Kannur',
+        'Edakkadu': 'Kannur',
+        'Kannur': 'Kannur'
+      };
+      return mandalToCorp[mandalName] || null;
+    }
+
+    function showWards(panF){
+      clearLayers(); clearLabels(); ctx.level='wards'; ctx.panchayat=panF;
+      const panName = prop(panF, KEYS.pan);
+      titleEl.textContent=`Kerala — ${prop(ctx.zone,KEYS.zone)} — ${prop(ctx.org,KEYS.org)} — ${prop(ctx.ac,KEYS.ac)} — ${prop(ctx.mandal,"__label") || prop(ctx.mandal, KEYS.mnd)} — ${panName} — Wards`;
+      legendTitle.textContent="Wards";
+
+      // Filter wards by local body name
+      const localBodyKey = KEYS.ward_lb;
+      let subset = {type:"FeatureCollection", features:[]};
+
+      if (localBodyKey){
+        const target = norm(panName);
+        subset.features = wardsGJ.features.filter(f => norm(prop(f, localBodyKey)) === target);
+      }
+      if (!subset.features.length){
+        // Fallback: spatial filtering
+        subset.features = wardsGJ.features.filter(f=>{
+          try{ return turf.booleanPointInPolygon(turf.pointOnFeature(f), panF); }catch(e){return false;}
+        });
+      }
+
+      const layer=L.geoJSON(subset,{
+        style:f=>({color:"#84cc16",weight:1,fillColor:colorFor(prop(f,KEYS.ward_name)),fillOpacity:0.6}),
+        onEachFeature:(f,l)=>{
+          const wardName = prop(f,KEYS.ward_name) || 'Unknown Ward';
+          const wardNo = prop(f,KEYS.ward_no) || '';
+          const localBody = prop(f,KEYS.ward_lb) || 'Unknown Local Body';
+          const wardInfo = wardNo ? `Ward ${wardNo}: ${wardName}` : `Ward: ${wardName}`;
+            console.log(`🏘️ Regular ward popup: ${wardInfo} in ${localBody}`);
+            console.log('🔍 Looking for voter data for ward:', wardName, 'in local body:', localBody);
+            console.log('🔍 Available voter data for this local body:', voterData.filter(row => norm(row.lbName) === norm(localBody)).map(row => row.ward).slice(0, 10));
+          
+          // Find voter data for this ward with improved matching
+          let wardData = voterData.find(row => 
+            norm(row.ward) === norm(wardName) && 
+            norm(row.lbName) === norm(localBody)
+          );
+          
+          // If exact match not found, try fuzzy matching
+          if (!wardData) {
+            wardData = voterData.find(row => {
+              if (norm(row.lbName) !== norm(localBody)) return false;
+              
+              const csvWard = norm(row.ward);
+              const geoWard = norm(wardName);
+              
+              // Try exact match first
+              if (csvWard === geoWard) return true;
+              
+              // Try fuzzy matching with high threshold
+              const similarity = sim(csvWard, geoWard);
+              if (similarity >= 0.85) return true;
+              
+              // Try matching with common variations
+              const variations = [
+                csvWard.replace(/\s+/g, ''),
+                csvWard.replace(/[^a-z0-9]/g, ''),
+                geoWard.replace(/\s+/g, ''),
+                geoWard.replace(/[^a-z0-9]/g, '')
+              ];
+              
+              return variations.some(v1 => 
+                variations.some(v2 => v1 === v2 && v1.length > 3)
+              );
+            });
+          }
+          
+          console.log('🔍 Voter data found:', wardData ? 'YES' : 'NO');
+          if (wardData) {
+            console.log('📊 Ward data:', wardData);
+            // Create individual ward data summary for modal
+            const wardSummary = {
+              mandal: prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd) || 'Unknown',
+              ac: wardData.ac,
+              orgDist: wardData.orgDist,
+              zone: wardData.zone,
+              totalWards: 1,
+              totalHouses: wardData.houses,
+              totalVoters: wardData.totalVoters,
+              femaleVoters: wardData.female,
+              maleVoters: wardData.male,
+              transgenderVoters: wardData.transgender,
+              femalePercentage: wardData.totalVoters > 0 ? (wardData.female / wardData.totalVoters) * 100 : 0,
+              malePercentage: wardData.totalVoters > 0 ? (wardData.male / wardData.totalVoters) * 100 : 0,
+              transgenderPercentage: wardData.totalVoters > 0 ? (wardData.transgender / wardData.totalVoters) * 100 : 0,
+              topWards: [{
+                ward: wardData.ward,
+                wardNumber: wardData.wardNumber,
+                houses: wardData.houses,
+                totalVoters: wardData.totalVoters,
+                female: wardData.female,
+                male: wardData.male,
+                transgender: wardData.transgender
+              }]
+            };
+            // Create popup with button that triggers the modal
+            l.on('click', (e) => {
+                console.log('🔍 CLICK EVENT FIRED for:', wardInfo);
+                console.log('🔍 Click event triggered for ward:', wardName);
+              console.log('🏘️ Regular ward clicked:', wardInfo);
+              e.originalEvent.stopPropagation();
+              showModal(wardInfo, localBody, prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd) || 'Unknown', wardSummary);
+            });
+          } else {
+            // Show detailed popup even without voter data - use local body data
+            const localBodyData = findLocalBodyByName(localBody);
+            if (localBodyData) {
+              console.log('📊 Found local body data for local body:', localBody);
+              // Create popup with button that triggers the modal with local body data
+              l.on('click', (e) => {
+                console.log('🔍 CLICK EVENT FIRED for:', wardInfo);
+                console.log('🔍 Click event triggered for ward:', wardName);
+                console.log('🏘️ Regular ward clicked (local body data):', wardInfo);
+                e.originalEvent.stopPropagation();
+                showModal(wardInfo, localBody, prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd) || 'Unknown', localBodyData);
+              });
+            } else {
+              // Simple popup if no data at all
+              l.bindPopup(`<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4;">
+                <b style="color: #f97316;">${wardInfo}</b><br/>
+                <span style="color: #3b82f6;">Local Body:</span> ${localBody}<br/>
+                <span style="color: #10b981;">Mandal:</span> ${prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd) || 'Unknown'}<br/>
+                <span style="color: #6b7280; font-size: 12px;">Voter data not available</span>
+              </div>`);
+            }
+          }
+        }
+      }).addTo(map);
+      safeFit(layer);
+      buildLegend([...new Set(subset.features.map(f=>`Ward ${prop(f,KEYS.ward_no)}`))]);
+      addLabels(layer, KEYS.ward_name, 'lbl-ward');
+      
+      // Send context update to parent
+      window.parent.postMessage({
+        type: 'context-change',
+        context: {
+          level: 'wards',
+          zone: prop(ctx.zone, KEYS.zone),
+          org: prop(ctx.org, KEYS.org),
+          ac: prop(ctx.ac, KEYS.ac),
+          mandal: prop(ctx.mandal, "__label") || prop(ctx.mandal, KEYS.mnd)
+        }
+      }, '*');
+    }
+
+    // ========= NAV =========
+    function goBack(){
+      switch(ctx.level){
+        case 'wards':
+          // Check if we came from a corporation mandal or regular panchayat
+          if (ctx.mandal && prop(ctx.mandal, 'Type') === 'Corporation') {
+            showMandals(ctx.ac); // Go back to mandals for corporation areas
+          } else {
+            showPanchayats(ctx.mandal); // Go back to panchayats for regular areas
+          }
+          break;
+        case 'panchayats': showMandals(ctx.ac); break;
+        case 'mandals':    showACs(ctx.org);    break;
+        case 'acs':        showOrgs(ctx.zone);  break;
+        default:           showZones();
+      }
+    }
+    backBtn.onclick = goBack;
+    homeBtn.onclick = ()=>showZones();
+
+    // ========= LOAD =========
+    (async function(){
+      zonesGJ=await (await fetch(FILES.zones)).json();
+      orgGJ=await (await fetch(FILES.org)).json();
+      acGJ=await (await fetch(FILES.ac)).json();
+      mandalGJ=await (await fetch(FILES.mandal)).json();
+      panGJ = await (await fetch(FILES.pan)).json();
+      corpsGJ = await (await fetch(FILES.corps)).json();
+      
+      wardsGJ = await (await fetch(FILES.wards)).json();  // ← Load wards data
+      console.log(`✅ Loaded ${wardsGJ.features.length} wards from ${FILES.wards}`);
+      if (wardsGJ.features.length > 0) {
+        console.log('Sample ward properties:', wardsGJ.features[0].properties);
+      }
+      
+      // Load voter data
+      try {
+        const voterResponse = await fetch('/data/Voter/Org Dist_Mandal_Voters - Voter_num_pan_ward (1).csv');
+        const voterCsvText = await voterResponse.text();
+        voterData = parseVoterCSV(voterCsvText);
+        console.log(`✅ Loaded ${voterData.length} voter records`);
+        if (voterData.length > 0) {
+          console.log('📊 Sample voter data:', voterData[0]);
+          console.log('📊 Available local bodies:', [...new Set(voterData.map(row => row.lbName))].slice(0, 5));
+        }
+      } catch (error) {
+        console.error('❌ Error loading voter data:', error);
+        voterData = [];
+      }
+
+      KEYS.zone = detectKey(zonesGJ, ["Zones","Zone","name"]);
+      KEYS.org  = detectKey(orgGJ, ["Org District","Org_Dist","OrgDistrict","name"]);
+      KEYS.ac   = detectKey(acGJ, ["AC_NAME","ACNAME","Constituency","name"]);
+      KEYS.mnd  = detectKey(mandalGJ, ["MandalName","Mandal","Org_Mandal","OrgMandal","name"]);
+      KEYS.pan     = detectKey(panGJ, ["LBName","Panchayat","NAME","Local Body","local_body","Local_Body","Panchayat_Name"]);
+      KEYS.pan_mnd = detectKey(panGJ, ["Org Mandal","Mandal","Org_Mandal","OrgMandal","mandal","org_mandal","Mandal_Name","ORG_MANDAL"]);
+      KEYS.corp    = detectKey(corpsGJ, ["CorpName","Corporation","NAME","name"]);
+      
+      // ← NEW: Ward keys
+      KEYS.ward_name = detectKey(wardsGJ, ["Ward_Name","WARD_NAME","WardName","name"]);
+      KEYS.ward_no   = detectKey(wardsGJ, ["Ward_No","WARD_NO","WardNo","ward_number"]);
+      KEYS.ward_lb   = detectKey(wardsGJ, ["Local_Body","LOCAL_BODY","LSGD","local_body","LocalBody"]);
+
+      buildMandalIndex();
+      showZones();
+    })();
+  </script>
+</body>
+</html>
