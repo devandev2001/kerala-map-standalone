@@ -1650,8 +1650,8 @@ Vypen,Vypin
             type: prop(f, 'Type'),
             corporation: prop(f, 'Corporation')
           });
-          // Check if this is a corporation mandal (has Type property set to Corporation)
-          if (prop(f, 'Type') === 'Corporation') {
+          // Check if this is a corporation mandal (has Type property set to Corporation OR has Corporation property)
+          if (prop(f, 'Type') === 'Corporation' || prop(f, 'Corporation')) {
             console.log('Calling showCorporationWards...');
             await showCorporationWards(f);
           } else {
@@ -1662,7 +1662,7 @@ Vypen,Vypin
       }).addTo(map);
 
       // Debug: Count corporation mandals
-      const corpMandals = subset.features.filter(f => prop(f, 'Type') === 'Corporation');
+      const corpMandals = subset.features.filter(f => prop(f, 'Type') === 'Corporation' || prop(f, 'Corporation'));
       console.log(`🏛️ Loaded ${subset.features.length} mandals, ${corpMandals.length} are corporation mandals`);
       console.log('🏛️ All mandals:', subset.features.map(f => prop(f, LABEL_KEY)));
       if (corpMandals.length > 0) {
