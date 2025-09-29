@@ -1756,6 +1756,15 @@ Vypen,Vypin
         lsgd: prop(mF, 'LSGD'),
         allProperties: mF.properties
       });
+      
+      // Check if corporation ward data is already preloaded - if so, use it immediately
+      if (corpWardsGJ[corporationName]) {
+        console.log(`✅ Using preloaded corporation ward data for ${corporationName}: ${corpWardsGJ[corporationName].features.length} features`);
+        // Skip the loading process and go directly to displaying wards
+        const subset = {type:"FeatureCollection", features: corpWardsGJ[corporationName].features};
+        displayCorporationWards(subset, mName, corporationName);
+        return;
+      }
 
       // Get ward list from corporation mandal properties or CSV mapping
       const wardNamesString = prop(mF, 'Ward_Names') || '';
@@ -2145,6 +2154,186 @@ Vypen,Vypin
       }
     }
 
+    function displayCorporationWards(subset, mName, corporationName) {
+      if (subset.features.length > 0) {
+        console.log(`✅ Creating ${subset.features.length} corporation ward polygons for ${mName}`);
+        console.log('🔍 Ward geometry types:', subset.features.map(f => ({
+          name: prop(f, 'Ward_Name'),
+          geometryType: f.geometry?.type,
+          hasCoordinates: !!f.geometry?.coordinates
+        })).slice(0, 5));
+        console.log('🔍 All ward names in subset:', subset.features.map(f => prop(f, 'Ward_Name')));
+        
+        const layer=L.geoJSON(subset,{
+          style:f=>({color:"#06b6d4",weight:2,fillColor:colorFor(prop(f,'Ward_Name') || prop(f,KEYS.ward_name)),fillOpacity:0.8}),
+          onEachFeature:(f,l)=>{
+            const wardName = prop(f,'Ward_Name') || prop(f,KEYS.ward_name) || 'Unknown Ward';
+            const wardNo = prop(f,'Ward_No') || prop(f,KEYS.ward_no) || '';
+            const wardInfo = wardNo ? `Ward ${wardNo}: ${wardName}` : `Ward: ${wardName}`;
+            
+            console.log(`🏘️ Setting up popup for corporation ward: ${wardInfo}`);
+            console.log(`🔍 Looking for voter data: ward=${wardName}, corporation=${corporationName}, mandal=${mName}`);
+            
+            // Find voter data for this corporation ward first
+            let wardData = voterData.find(row => {
+              const csvWard = norm(row.ward);
+              const geoWard = norm(wardName);
+              const aliasedWard = aliases.get(geoWard) || geoWard;
+              
+              return (csvWard === geoWard || csvWard === aliasedWard) && 
+                     norm(row.lbName) === norm(corporationName) &&
+                     norm(row.mandal) === norm(mName);
+            });
+            
+            // If not found with mandal matching, try without mandal matching
+            if (!wardData) {
+              wardData = voterData.find(row => {
+                const csvWard = norm(row.ward);
+                const geoWard = norm(wardName);
+                const aliasedWard = aliases.get(geoWard) || geoWard;
+                
+                return (csvWard === geoWard || csvWard === aliasedWard) && 
+                       norm(row.lbName) === norm(corporationName);
+              });
+            }
+            
+            // If exact match not found, try fuzzy matching
+            if (!wardData) {
+              wardData = voterData.find(row => {
+                if (norm(row.lbName) !== norm(corporationName)) return false;
+                
+                const csvWard = norm(row.ward);
+                const geoWard = norm(wardName);
+                const aliasedWard = aliases.get(geoWard) || geoWard;
+                
+                if (csvWard === geoWard || csvWard === aliasedWard) return true;
+                
+                const similarity = sim(csvWard, geoWard);
+                return similarity >= 0.85;
+              });
+            }
+            
+            console.log(`🔍 Voter data found for corporation ward: ${wardData ? 'YES' : 'NO'}`);
+            
+            if (wardData) {
+              const popupContent = `<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; padding: 10px;">
+                <b style="color: #f97316; font-size: 16px;">${wardInfo}</b><br/>
+                <span style="color: #3b82f6;">Corporation:</span> ${corporationName}<br/>
+                <span style="color: #3b82f6;">Mandal:</span> ${mName}<br/>
+                <span style="color: #10b981;">Total Voters:</span> ${wardData.totalVoters || 0}<br/>
+                <span style="color: #ef4444;">Male:</span> ${wardData.male || 0} | <span style="color: #8b5cf6;">Female:</span> ${wardData.female || 0}<br/>
+                <span style="color: #6b7280; font-size: 12px;">Click for detailed information</span>
+              </div>`;
+              
+              l.bindPopup(popupContent, {
+                maxWidth: 300,
+                className: 'custom-ward-popup'
+              });
+            } else {
+              // Try to find local body data as fallback
+              const localBodyData = voterData.find(row => 
+                norm(row.ward) === norm(wardName) && 
+                norm(row.lbName) === norm(corporationName)
+              );
+              
+              if (localBodyData) {
+                console.log(`📊 Found local body data for corporation: ${localBodyData.lbName}`);
+                const popupContent = `<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; padding: 10px;">
+                  <b style="color: #f97316; font-size: 16px;">${wardInfo}</b><br/>
+                  <span style="color: #3b82f6;">Corporation:</span> ${corporationName}<br/>
+                  <span style="color: #3b82f6;">Mandal:</span> ${mName}<br/>
+                  <span style="color: #10b981;">Total Voters:</span> ${localBodyData.totalVoters || 0}<br/>
+                  <span style="color: #ef4444;">Male:</span> ${localBodyData.male || 0} | <span style="color: #8b5cf6;">Female:</span> ${localBodyData.female || 0}<br/>
+                  <span style="color: #6b7280; font-size: 12px;">Click for detailed information</span>
+                </div>`;
+                
+                l.bindPopup(popupContent, {
+                  maxWidth: 300,
+                  className: 'custom-ward-popup'
+                });
+                console.log(`✅ Direct modal setup for ward (local body data): ${wardInfo}`);
+              } else {
+                const popupContent = `<div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.4; padding: 10px;">
+                  <b style="color: #f97316; font-size: 16px;">${wardInfo}</b><br/>
+                  <span style="color: #3b82f6;">Corporation:</span> ${corporationName}<br/>
+                  <span style="color: #3b82f6;">Mandal:</span> ${mName}<br/>
+                  <span style="color: #6b7280; font-size: 12px;">Voter data not available</span>
+                </div>`;
+                
+                l.bindPopup(popupContent, {
+                  maxWidth: 300,
+                  className: 'custom-ward-popup'
+                });
+              }
+            }
+            
+            l.on('click', () => {
+              console.log(`🏘️ Corporation ward clicked: ${wardInfo}`);
+              console.log(`🔍 Opening modal directly...`);
+              showModal(wardInfo, corporationName, mName, wardData);
+              console.log(`🔍 Modal opened successfully`);
+            });
+            
+            l.on('mousedown', () => {
+              console.log(`🏘️ Corporation ward mousedown: ${wardInfo}`);
+            });
+            
+            l.on('mouseup', () => {
+              console.log(`🏘️ Corporation ward mouseup: ${wardInfo}`);
+            });
+            
+            l.on('mouseover', () => {
+              console.log(`🏘️ Corporation ward mouseover: ${wardInfo}`);
+            });
+          }
+        }).addTo(map);
+        
+        // Create mandal boundary from ward union
+        try {
+          let mandalUnion = subset.features[0];
+          for (let i = 1; i < subset.features.length; i++) {
+            mandalUnion = turf.union(mandalUnion, subset.features[i]);
+          }
+          
+          // Add mandal boundary as a separate layer
+          const mandalLayer = L.geoJSON(mandalUnion, {
+            style: {
+              color: "#f59e0b",
+              weight: 3,
+              fillColor: "transparent",
+              fillOpacity: 0,
+              dashArray: "5,5"
+            },
+            interactive: false
+          }).addTo(map);
+          
+          console.log(`Created mandal boundary for ${mName} from ${subset.features.length} wards`);
+        } catch (error) {
+          console.warn(`Could not create mandal boundary for ${mName}:`, error);
+        }
+        
+        safeFit(layer);
+        buildLegend([...new Set(subset.features.map(f=>prop(f,'Ward_Name') || prop(f,KEYS.ward_name)))]);
+        addLabels(layer, 'Ward_Name', 'lbl-ward');
+        legendNote.textContent = `Showing ${subset.features.length} wards for ${mName} mandal.`;
+        
+        // Send context update to parent
+        window.parent.postMessage({
+          type: 'context-change',
+          context: {
+            level: 'wards',
+            zone: ctx.zone,
+            org: ctx.org,
+            ac: ctx.ac,
+            mandal: mName
+          }
+        }, '*');
+      } else {
+        console.warn(`❌ No wards found for mandal ${mName} in corporation ${corporationName}`);
+        legendNote.textContent = `No ward data found for ${mName} mandal.`;
+      }
+    }
+
     function getCorporationName(mandalName){
       // Map mandal names to corporation names
       const mandalToCorp = {
@@ -2523,3 +2712,4 @@ Vypen,Vypin
   <!-- Corporation name and loading fix: 1759129000 -->
   <!-- Corporation name LSGD fix and debugging: 1759130000 -->
   <!-- Aggressive preloading fix: 1759131000 -->
+  <!-- Instant corporation ward display fix: 1759132000 -->
