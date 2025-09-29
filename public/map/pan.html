@@ -2313,14 +2313,44 @@ Vypen,Vypin
         corpsGJ = await (await fetch(FILES.corps)).json();
         console.log('✅ Corporation data loaded:', corpsGJ.features?.length || 0, 'features');
         
-        console.log('🔄 Loading wards data...');
-        wardsGJ = await (await fetch(FILES.wards)).json();  // ← Load wards data
+        console.log('🔄 Loading wards data... (this may take a moment for large file)');
+        const wardsController = new AbortController();
+        const wardsTimeout = setTimeout(() => wardsController.abort(), 30000); // 30 second timeout
+        
+        const wardsResponse = await fetch(FILES.wards, {
+          signal: wardsController.signal
+        });
+        clearTimeout(wardsTimeout);
+        console.log('📊 Wards response status:', wardsResponse.status);
+        console.log('📊 Wards response headers:', Object.fromEntries(wardsResponse.headers.entries()));
+        
+        if (!wardsResponse.ok) {
+          throw new Error(`Failed to fetch wards data: ${wardsResponse.status} ${wardsResponse.statusText}`);
+        }
+        
+        const wardsText = await wardsResponse.text();
+        console.log('📊 Wards data size:', wardsText.length, 'characters');
+        
+        // Check if the response starts with valid JSON
+        if (!wardsText.trim().startsWith('{')) {
+          console.error('❌ Wards data does not start with valid JSON:', wardsText.substring(0, 100));
+          throw new Error('Invalid JSON format in wards data');
+        }
+        
+        wardsGJ = JSON.parse(wardsText);
         console.log('✅ Wards data loaded:', wardsGJ.features?.length || 0, 'features');
       } catch (error) {
         console.error('❌ Error loading GeoJSON data:', error);
         console.error('❌ Error details:', error.message);
         console.error('❌ Failed file:', error.stack);
-        throw error;
+        
+        // If wards data failed to load, try to continue without it
+        if (error.message.includes('wards')) {
+          console.warn('⚠️ Continuing without wards data...');
+          wardsGJ = { type: 'FeatureCollection', features: [] };
+        } else {
+          throw error;
+        }
       }
       console.log(`✅ Loaded ${wardsGJ.features.length} wards from ${FILES.wards}`);
       if (wardsGJ.features.length > 0) {
