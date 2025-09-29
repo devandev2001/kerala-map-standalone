@@ -1495,6 +1495,14 @@ Vypen,Vypin
     function showZones(){
       clearLayers(); clearLabels(); ctx.level='zones'; ctx.zone=ctx.org=ctx.ac=ctx.mandal=null;
       titleEl.textContent="Kerala — Zones"; legendTitle.textContent="Zones";
+      
+      // Check if zonesGJ is available
+      if (!zonesGJ || !zonesGJ.features || zonesGJ.features.length === 0) {
+        console.error('❌ Zones data not available');
+        titleEl.textContent="Kerala — Data Loading Error";
+        return;
+      }
+      
       const layer=L.geoJSON(zonesGJ,{
         style:f=>({color:"#f97316",weight:2,fillColor:colorFor(prop(f,KEYS.zone)),fillOpacity:0.7}),
         onEachFeature:(f,l)=>l.on('click',()=>showOrgs(f))
@@ -1520,6 +1528,14 @@ Vypen,Vypin
     function showOrgs(zoneF){
       clearLayers(); clearLabels(); ctx.level='orgs'; ctx.zone=zoneF; ctx.org=ctx.ac=ctx.mandal=null;
       titleEl.textContent=`Kerala — ${prop(zoneF,KEYS.zone)} — Org Districts`; legendTitle.textContent="Org Districts";
+      
+      // Check if orgGJ is available
+      if (!orgGJ || !orgGJ.features || orgGJ.features.length === 0) {
+        console.error('❌ Org districts data not available');
+        titleEl.textContent="Kerala — Data Loading Error";
+        return;
+      }
+      
       const subset=filterChildrenSmart(orgGJ,zoneF,KEYS.zone);
       const layer=L.geoJSON(subset,{
         style:f=>({color:"#3b82f6",weight:2,fillColor:colorFor(prop(f,KEYS.org)),fillOpacity:0.7}),
@@ -1546,6 +1562,14 @@ Vypen,Vypin
     function showACs(orgF){
       clearLayers(); clearLabels(); ctx.level='acs'; ctx.org=orgF; ctx.ac=ctx.mandal=null;
       titleEl.textContent=`Kerala — ${prop(ctx.zone,KEYS.zone)} — ${prop(orgF,KEYS.org)} — ACs`; legendTitle.textContent="Assembly Constituencies";
+      
+      // Check if acGJ is available
+      if (!acGJ || !acGJ.features || acGJ.features.length === 0) {
+        console.error('❌ AC data not available');
+        titleEl.textContent="Kerala — Data Loading Error";
+        return;
+      }
+      
       const subset=filterChildrenSmart(acGJ,orgF,KEYS.org);
       const layer=L.geoJSON(subset,{
         style:f=>({color:"#10b981",weight:2,fillColor:colorFor(prop(f,KEYS.ac)),fillOpacity:0.7}),
@@ -2379,6 +2403,24 @@ Vypen,Vypin
         
         console.log('🔄 Continuing with available data...');
       }
+      
+      // Final data validation
+      console.log('📊 Final data status:');
+      console.log(`  - Zones: ${zonesGJ?.features?.length || 0} features`);
+      console.log(`  - Org Districts: ${orgGJ?.features?.length || 0} features`);
+      console.log(`  - ACs: ${acGJ?.features?.length || 0} features`);
+      console.log(`  - Mandals: ${mandalGJ?.features?.length || 0} features`);
+      console.log(`  - Panchayats: ${panGJ?.features?.length || 0} features`);
+      console.log(`  - Corporations: ${corpsGJ?.features?.length || 0} features`);
+      console.log(`  - Wards: ${wardsGJ?.features?.length || 0} features`);
+      
+      // Only proceed if we have at least zones data
+      if (!zonesGJ || !zonesGJ.features || zonesGJ.features.length === 0) {
+        console.error('❌ No zones data available - cannot initialize map');
+        document.body.innerHTML = '<div style="padding: 20px; text-align: center; color: white;"><h2>Map Loading Error</h2><p>Unable to load map data. Please refresh the page or contact support.</p></div>';
+        return;
+      }
+      
       console.log(`✅ Loaded ${wardsGJ.features.length} wards from ${FILES.wards}`);
       if (wardsGJ.features.length > 0) {
         console.log('Sample ward properties:', wardsGJ.features[0].properties);
