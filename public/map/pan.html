@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <title>BJP Kerala Dashboard - Interactive Map | Mission 2025-2026</title>
+  <!-- Version: 1.8.0 - Fixed undefined features error -->
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
@@ -414,6 +415,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
   <script>
+    // ========= VERSION CHECK =========
+    console.log('🗺️ Kerala Map v1.8.0 - Fixed undefined features error');
+    
     // ========= FILES =========
     const FILES = {
       zones:  'kerala_zones.geojson?v=' + Date.now(),
