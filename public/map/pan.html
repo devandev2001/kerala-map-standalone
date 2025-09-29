@@ -1741,7 +1741,7 @@ Vypen,Vypin
       try {
         clearLayers(); clearLabels(); ctx.level='wards'; ctx.mandal=mF;
         const mName = prop(mF,"__label") || prop(mF, KEYS.mnd);
-        const corporationName = prop(mF, 'LocalBody');
+        const corporationName = prop(mF, 'LocalBody') || prop(mF, 'Corporation') || 'Thrissur';
         titleEl.textContent=`Kerala — ${corporationName} — ${mName} — Wards`;
         legendTitle.textContent="Wards";
         legendNote.textContent = "Loading ward data...";
@@ -1751,7 +1751,9 @@ Vypen,Vypin
         corporationName,
         mandalType: prop(mF, 'Type'),
         wardNames: prop(mF, 'Ward_Names'),
-        allProperties: prop(mF, '')
+        localBody: prop(mF, 'LocalBody'),
+        corporation: prop(mF, 'Corporation'),
+        allProperties: mF.properties
       });
 
       // Get ward list from corporation mandal properties or CSV mapping
@@ -1783,9 +1785,13 @@ Vypen,Vypin
             console.log(`✅ Loaded ${corpWardsGJ[corporationName].features.length} wards for ${corporationName}`);
           } catch (error) {
             console.error(`❌ Error loading corporation ward data for ${corporationName}:`, error);
+            // Set empty data to prevent repeated loading attempts
+            corpWardsGJ[corporationName] = { type: "FeatureCollection", features: [] };
           }
         } else {
           console.warn(`❌ No corporation ward file found for: ${corporationName}`);
+          // Set empty data to prevent repeated loading attempts
+          corpWardsGJ[corporationName] = { type: "FeatureCollection", features: [] };
         }
       } else {
         console.log(`✅ Corporation ward data already loaded for ${corporationName}: ${corpWardsGJ[corporationName].features.length} features`);
@@ -2368,6 +2374,24 @@ Vypen,Vypin
         const wardsController = new AbortController();
         const wardsTimeout = setTimeout(() => wardsController.abort(), 30000); // 30 second timeout
         
+        // Preload corporation ward data for faster access
+        console.log('🔄 Preloading corporation ward data...');
+        const preloadPromises = Object.entries(FILES.corp_wards).map(async ([corpName, filePath]) => {
+          try {
+            const response = await fetch(filePath);
+            if (response.ok) {
+              corpWardsGJ[corpName] = await response.json();
+              console.log(`✅ Preloaded ${corpWardsGJ[corpName].features.length} wards for ${corpName}`);
+            }
+          } catch (error) {
+            console.warn(`⚠️ Failed to preload ${corpName} ward data:`, error);
+          }
+        });
+        // Don't wait for preloading to complete, let it happen in background
+        Promise.all(preloadPromises).then(() => {
+          console.log('✅ Corporation ward data preloading completed');
+        });
+        
         const wardsResponse = await fetch(FILES.wards, {
           signal: wardsController.signal
         });
@@ -2478,3 +2502,4 @@ Vypen,Vypin
   <!-- Corporation ward fix trigger: 1759125959 -->
   <!-- Ward geometry debug fix: 1759127000 -->
   <!-- Ward filtering fix: 1759128000 -->
+  <!-- Corporation name and loading fix: 1759129000 -->
