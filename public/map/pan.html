@@ -1653,9 +1653,21 @@ Vypen,Vypin
           // Check if this is a corporation mandal (has Type property set to Corporation OR has Corporation property)
           if (prop(f, 'Type') === 'Corporation' || prop(f, 'Corporation')) {
             console.log('Calling showCorporationWards...');
+            console.log('🔍 Corporation mandal properties:', {
+              type: prop(f, 'Type'),
+              corporation: prop(f, 'Corporation'),
+              localBody: prop(f, 'LocalBody'),
+              lsgd: prop(f, 'LSGD')
+            });
             await showCorporationWards(f);
           } else {
             console.log('Calling showPanchayats...');
+            console.log('🔍 Regular mandal properties:', {
+              type: prop(f, 'Type'),
+              corporation: prop(f, 'Corporation'),
+              localBody: prop(f, 'LocalBody'),
+              lsgd: prop(f, 'LSGD')
+            });
             showPanchayats(f);
           }
         })
@@ -1758,12 +1770,18 @@ Vypen,Vypin
       });
       
       // Check if corporation ward data is already preloaded - if so, use it immediately
+      console.log(`🔍 Checking for preloaded data for corporation: ${corporationName}`);
+      console.log(`🔍 Available preloaded corporations:`, Object.keys(corpWardsGJ));
+      console.log(`🔍 Corporation data exists:`, !!corpWardsGJ[corporationName]);
+      
       if (corpWardsGJ[corporationName]) {
         console.log(`✅ Using preloaded corporation ward data for ${corporationName}: ${corpWardsGJ[corporationName].features.length} features`);
         // Skip the loading process and go directly to displaying wards
         const subset = {type:"FeatureCollection", features: corpWardsGJ[corporationName].features};
         displayCorporationWards(subset, mName, corporationName);
         return;
+      } else {
+        console.log(`⚠️ No preloaded data found for ${corporationName}, will try to load...`);
       }
 
       // Get ward list from corporation mandal properties or CSV mapping
@@ -2595,6 +2613,10 @@ Vypen,Vypin
         try {
           await Promise.all(preloadPromises);
           console.log('✅ Corporation ward data preloading completed - all data ready');
+          console.log('🔍 Preloaded corporation data:', Object.keys(corpWardsGJ).map(key => ({
+            name: key,
+            features: corpWardsGJ[key]?.features?.length || 0
+          })));
         } catch (error) {
           console.warn('⚠️ Some corporation ward data failed to preload:', error);
         }
@@ -2713,3 +2735,4 @@ Vypen,Vypin
   <!-- Corporation name LSGD fix and debugging: 1759130000 -->
   <!-- Aggressive preloading fix: 1759131000 -->
   <!-- Instant corporation ward display fix: 1759132000 -->
+  <!-- Corporation ward debugging fix: 1759133000 -->
