@@ -1852,8 +1852,13 @@ Vypen,Vypin
 
       if (subset.features.length > 0) {
         console.log(`✅ Creating ${subset.features.length} corporation ward polygons for ${mName}`);
+        console.log('🔍 Ward geometry types:', subset.features.map(f => ({
+          name: prop(f, 'Ward_Name'),
+          geometryType: f.geometry?.type,
+          hasCoordinates: !!f.geometry?.coordinates
+        })).slice(0, 5));
         const layer=L.geoJSON(subset,{
-          style:f=>({color:"#06b6d4",weight:1,fillColor:colorFor(prop(f,'Ward_Name') || prop(f,KEYS.ward_name)),fillOpacity:0.6}),
+          style:f=>({color:"#06b6d4",weight:2,fillColor:colorFor(prop(f,'Ward_Name') || prop(f,KEYS.ward_name)),fillOpacity:0.8}),
           onEachFeature:(f,l)=>{
             const wardName = prop(f,'Ward_Name') || prop(f,KEYS.ward_name) || 'Unknown Ward';
             const wardNo = prop(f,'Ward_No') || prop(f,KEYS.ward_no) || '';
@@ -2470,4 +2475,5 @@ Vypen,Vypin
 </html>
 <!-- Deployment trigger: Mon Sep 29 11:18:29 IST 2025 -->
 <!-- Deployment trigger 1: 1759125010 -->
-<!-- Corporation ward fix trigger: 1759125959 -->
+  <!-- Corporation ward fix trigger: 1759125959 -->
+  <!-- Ward geometry debug fix: 1759127000 -->
