@@ -1768,6 +1768,13 @@ Vypen,Vypin
       }
       let subset = {type:"FeatureCollection", features:[]};
 
+      // Check if corporation ward data is already preloaded
+      if (corpWardsGJ[corporationName]) {
+        console.log(`✅ Corporation ward data already preloaded for ${corporationName}: ${corpWardsGJ[corporationName].features.length} features`);
+      } else {
+        console.log(`⚠️ Corporation ward data not preloaded for ${corporationName}, loading now...`);
+      }
+      
       // Try to load corporation ward data if not already loaded
       if (!corpWardsGJ[corporationName]) {
         const corpWardFile = FILES.corp_wards[corporationName];
@@ -2383,19 +2390,25 @@ Vypen,Vypin
         console.log('🔄 Preloading corporation ward data...');
         const preloadPromises = Object.entries(FILES.corp_wards).map(async ([corpName, filePath]) => {
           try {
+            console.log(`🔄 Preloading ${corpName} from ${filePath}...`);
             const response = await fetch(filePath);
             if (response.ok) {
               corpWardsGJ[corpName] = await response.json();
               console.log(`✅ Preloaded ${corpWardsGJ[corpName].features.length} wards for ${corpName}`);
+            } else {
+              console.warn(`⚠️ Failed to preload ${corpName}: HTTP ${response.status}`);
             }
           } catch (error) {
             console.warn(`⚠️ Failed to preload ${corpName} ward data:`, error);
           }
         });
-        // Don't wait for preloading to complete, let it happen in background
-        Promise.all(preloadPromises).then(() => {
-          console.log('✅ Corporation ward data preloading completed');
-        });
+        // Wait for preloading to complete to ensure data is available
+        try {
+          await Promise.all(preloadPromises);
+          console.log('✅ Corporation ward data preloading completed - all data ready');
+        } catch (error) {
+          console.warn('⚠️ Some corporation ward data failed to preload:', error);
+        }
         
         const wardsResponse = await fetch(FILES.wards, {
           signal: wardsController.signal
@@ -2509,3 +2522,4 @@ Vypen,Vypin
   <!-- Ward filtering fix: 1759128000 -->
   <!-- Corporation name and loading fix: 1759129000 -->
   <!-- Corporation name LSGD fix and debugging: 1759130000 -->
+  <!-- Aggressive preloading fix: 1759131000 -->
