@@ -23,6 +23,8 @@ const AC_NAME_MAPPINGS: Record<string, string> = {
   // Thrissur City mapping
   'Thrissur City': 'Thrissur City',
   'thrissur city': 'Thrissur City',
+  'Thrissur': 'Thrissur City',
+  'thrissur': 'Thrissur City',
 };
 
 /**
@@ -196,4 +198,42 @@ export function normalizeWardName(wardName: string): string {
   
   // Return original if no mapping found
   return wardName;
+}
+
+/**
+ * Normalizes Mandal names to match CSV data format
+ */
+export function normalizeMandalName(mandalName: string): string {
+  if (!mandalName) return mandalName;
+  
+  // Add mandal name mappings if needed
+  const MANDAL_NAME_MAPPINGS: Record<string, string> = {
+    // Thrissur mandal mappings
+    'Thrissur west': 'Thrissur west',
+    'Thrissur West': 'Thrissur west',
+    'thrissur west': 'Thrissur west',
+    'Thrissur east': 'Thrissur East',
+    'Thrissur East': 'Thrissur East',
+    'thrissur east': 'Thrissur East',
+    
+    // Add more mandal name mappings as discovered
+  };
+  
+  // First, check direct mapping
+  if (MANDAL_NAME_MAPPINGS[mandalName]) {
+    console.log(`🔧 Mapped Mandal name: ${mandalName} → ${MANDAL_NAME_MAPPINGS[mandalName]}`);
+    return MANDAL_NAME_MAPPINGS[mandalName];
+  }
+  
+  // Check case-insensitive mapping
+  const lowerMandal = mandalName.toLowerCase();
+  for (const [key, value] of Object.entries(MANDAL_NAME_MAPPINGS)) {
+    if (key.toLowerCase() === lowerMandal) {
+      console.log(`🔧 Mapped Mandal name (case): ${mandalName} → ${value}`);
+      return value;
+    }
+  }
+  
+  // Return original if no mapping found
+  return mandalName;
 }

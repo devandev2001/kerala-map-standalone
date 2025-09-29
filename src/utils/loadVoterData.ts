@@ -1,5 +1,5 @@
 // Utility to load voter data from CSV
-import { normalizeACName, normalizeOrgDistrictName, normalizeZoneName, normalizeLocalBodyName, normalizeWardName } from './nameNormalization';
+import { normalizeACName, normalizeOrgDistrictName, normalizeZoneName, normalizeLocalBodyName, normalizeWardName, normalizeMandalName } from './nameNormalization';
 
 export interface VoterRowData {
   Zone: string;
@@ -53,13 +53,13 @@ export async function loadVoterData(): Promise<VoterData> {
       // Clean up any #REF! or other Excel artifacts
       const cleanValues = values.map(val => val.replace(/#REF!.*$/, '').trim());
       
-      const row: VoterRowData = {
-        Zone: normalizeZoneName(cleanValues[0]),
-        Org_District: normalizeOrgDistrictName(cleanValues[1]),
-        AC_Name: normalizeACName(cleanValues[2]),
-        Mandal_Name: cleanValues[3],
-        LocalBody: normalizeLocalBodyName(cleanValues[4]),
-        Ward_Name: normalizeWardName(cleanValues[5]),
+          const row: VoterRowData = {
+            Zone: normalizeZoneName(cleanValues[0]),
+            Org_District: normalizeOrgDistrictName(cleanValues[1]),
+            AC_Name: normalizeACName(cleanValues[2]),
+            Mandal_Name: normalizeMandalName(cleanValues[3]),
+            LocalBody: normalizeLocalBodyName(cleanValues[4]),
+            Ward_Name: normalizeWardName(cleanValues[5]),
         Ward_No: parseInt(cleanValues[6]) || 0,
         Houses: parseInt(cleanValues[7]) || 0,
         Total_Voters: parseInt(cleanValues[8]) || 0,
@@ -114,21 +114,22 @@ export function getVoterDataForWard(
   wardName: string
 ) {
   try {
-    // Normalize the input names to match the stored data
-    const normalizedOrgDistrict = normalizeOrgDistrictName(orgDistrict);
-    const normalizedACName = normalizeACName(acName);
-    const normalizedLocalBody = normalizeLocalBodyName(localBody);
-    const normalizedWardName = normalizeWardName(wardName);
+        // Normalize the input names to match the stored data
+        const normalizedOrgDistrict = normalizeOrgDistrictName(orgDistrict);
+        const normalizedACName = normalizeACName(acName);
+        const normalizedMandalName = normalizeMandalName(mandalName);
+        const normalizedLocalBody = normalizeLocalBodyName(localBody);
+        const normalizedWardName = normalizeWardName(wardName);
     
-    console.log('🔍 Looking for voter data:', {
-      orgDistrict: normalizedOrgDistrict,
-      acName: normalizedACName,
-      mandalName,
-      localBody: normalizedLocalBody,
-      wardName: normalizedWardName
-    });
+        console.log('🔍 Looking for voter data:', {
+          orgDistrict: normalizedOrgDistrict,
+          acName: normalizedACName,
+          mandalName: normalizedMandalName,
+          localBody: normalizedLocalBody,
+          wardName: normalizedWardName
+        });
     
-    const result = voterData[normalizedOrgDistrict]?.[normalizedACName]?.[mandalName]?.[normalizedLocalBody]?.[normalizedWardName] || null;
+        const result = voterData[normalizedOrgDistrict]?.[normalizedACName]?.[normalizedMandalName]?.[normalizedLocalBody]?.[normalizedWardName] || null;
     
     if (result) {
       console.log('✅ Found voter data:', result);
@@ -139,19 +140,19 @@ export function getVoterDataForWard(
       if (district) {
         const ac = district[normalizedACName];
         if (ac) {
-          const mandal = ac[mandalName];
-          if (mandal) {
-            const lb = mandal[normalizedLocalBody];
-            if (lb) {
-              const availableWards = Object.keys(lb);
-              console.log('Available wards in', normalizedLocalBody, ':', availableWards);
-              console.log('Looking for ward:', normalizedWardName, 'in available wards:', availableWards);
-            } else {
-              // Show available local bodies in this mandal
-              const availableLBs = Object.keys(mandal);
-              console.log('Available local bodies in', mandalName, ':', availableLBs);
-            }
-          }
+              const mandal = ac[normalizedMandalName];
+              if (mandal) {
+                const lb = mandal[normalizedLocalBody];
+                if (lb) {
+                  const availableWards = Object.keys(lb);
+                  console.log('Available wards in', normalizedLocalBody, ':', availableWards);
+                  console.log('Looking for ward:', normalizedWardName, 'in available wards:', availableWards);
+                } else {
+                  // Show available local bodies in this mandal
+                  const availableLBs = Object.keys(mandal);
+                  console.log('Available local bodies in', normalizedMandalName, ':', availableLBs);
+                }
+              }
         }
       }
     }
