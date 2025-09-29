@@ -2289,29 +2289,43 @@ Vypen,Vypin
     // ========= LOAD =========
     (async function(){
       try {
-        console.log('🔄 Loading zones data...');
-        zonesGJ=await (await fetch(FILES.zones)).json();
-        console.log('✅ Zones loaded:', zonesGJ.features?.length || 0, 'features');
+        // Helper function to safely load and validate JSON
+        async function loadGeoJSON(url, name) {
+          console.log(`🔄 Loading ${name} data...`);
+          const response = await fetch(url);
+          console.log(`📊 ${name} response status:`, response.status);
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch ${name} data: ${response.status} ${response.statusText}`);
+          }
+          
+          const text = await response.text();
+          console.log(`📊 ${name} data size:`, text.length, 'characters');
+          
+          // Check if the response starts with valid JSON
+          if (!text.trim().startsWith('{')) {
+            console.error(`❌ ${name} data does not start with valid JSON:`, text.substring(0, 200));
+            console.error(`❌ Full ${name} response preview:`, text.substring(0, 500));
+            
+            // Check if it's HTML content (error page)
+            if (text.includes('<html') || text.includes('<!DOCTYPE')) {
+              throw new Error(`${name} file returned HTML instead of JSON - likely a server error or missing file`);
+            }
+            
+            throw new Error(`Invalid JSON format in ${name} data`);
+          }
+          
+          const data = JSON.parse(text);
+          console.log(`✅ ${name} loaded:`, data.features?.length || 0, 'features');
+          return data;
+        }
         
-        console.log('🔄 Loading org districts data...');
-        orgGJ=await (await fetch(FILES.org)).json();
-        console.log('✅ Org districts loaded:', orgGJ.features?.length || 0, 'features');
-        
-        console.log('🔄 Loading AC data...');
-        acGJ=await (await fetch(FILES.ac)).json();
-        console.log('✅ AC data loaded:', acGJ.features?.length || 0, 'features');
-        
-        console.log('🔄 Loading mandal data...');
-        mandalGJ=await (await fetch(FILES.mandal)).json();
-        console.log('✅ Mandal data loaded:', mandalGJ.features?.length || 0, 'features');
-        
-        console.log('🔄 Loading panchayat data...');
-        panGJ = await (await fetch(FILES.pan)).json();
-        console.log('✅ Panchayat data loaded:', panGJ.features?.length || 0, 'features');
-        
-        console.log('🔄 Loading corporation data...');
-        corpsGJ = await (await fetch(FILES.corps)).json();
-        console.log('✅ Corporation data loaded:', corpsGJ.features?.length || 0, 'features');
+        zonesGJ = await loadGeoJSON(FILES.zones, 'zones');
+        orgGJ = await loadGeoJSON(FILES.org, 'org districts');
+        acGJ = await loadGeoJSON(FILES.ac, 'AC');
+        mandalGJ = await loadGeoJSON(FILES.mandal, 'mandal');
+        panGJ = await loadGeoJSON(FILES.pan, 'panchayat');
+        corpsGJ = await loadGeoJSON(FILES.corps, 'corporation');
         
         console.log('🔄 Loading wards data... (this may take a moment for large file)');
         const wardsController = new AbortController();
@@ -2333,7 +2347,14 @@ Vypen,Vypin
         
         // Check if the response starts with valid JSON
         if (!wardsText.trim().startsWith('{')) {
-          console.error('❌ Wards data does not start with valid JSON:', wardsText.substring(0, 100));
+          console.error('❌ Wards data does not start with valid JSON:', wardsText.substring(0, 200));
+          console.error('❌ Full response preview:', wardsText.substring(0, 500));
+          
+          // Check if it's HTML content (error page)
+          if (wardsText.includes('<html') || wardsText.includes('<!DOCTYPE')) {
+            throw new Error('Wards file returned HTML instead of JSON - likely a server error or missing file');
+          }
+          
           throw new Error('Invalid JSON format in wards data');
         }
         
@@ -2344,13 +2365,19 @@ Vypen,Vypin
         console.error('❌ Error details:', error.message);
         console.error('❌ Failed file:', error.stack);
         
-        // If wards data failed to load, try to continue without it
-        if (error.message.includes('wards')) {
-          console.warn('⚠️ Continuing without wards data...');
-          wardsGJ = { type: 'FeatureCollection', features: [] };
-        } else {
-          throw error;
-        }
+        // If any data failed to load, try to continue with what we have
+        console.warn('⚠️ Some data failed to load, continuing with available data...');
+        
+        // Initialize missing data with empty collections
+        if (!zonesGJ) zonesGJ = { type: 'FeatureCollection', features: [] };
+        if (!orgGJ) orgGJ = { type: 'FeatureCollection', features: [] };
+        if (!acGJ) acGJ = { type: 'FeatureCollection', features: [] };
+        if (!mandalGJ) mandalGJ = { type: 'FeatureCollection', features: [] };
+        if (!panGJ) panGJ = { type: 'FeatureCollection', features: [] };
+        if (!corpsGJ) corpsGJ = { type: 'FeatureCollection', features: [] };
+        if (!wardsGJ) wardsGJ = { type: 'FeatureCollection', features: [] };
+        
+        console.log('🔄 Continuing with available data...');
       }
       console.log(`✅ Loaded ${wardsGJ.features.length} wards from ${FILES.wards}`);
       if (wardsGJ.features.length > 0) {
