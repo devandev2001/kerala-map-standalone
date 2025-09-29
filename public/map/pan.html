@@ -1793,6 +1793,9 @@ Vypen,Vypin
 
       // Use corporation ward data if available
       if (corpWardsGJ[corporationName]) {
+        console.log(`🔍 Corporation ward data available: ${corpWardsGJ[corporationName].features.length} total wards`);
+        console.log(`🔍 Ward list from CSV/mandal: ${wardList.length} wards:`, wardList);
+        
         if (wardList.length > 0) {
           // Filter corporation wards by the ward names (from CSV mapping or mandal data)
           // Use case-insensitive matching to handle different case formats
@@ -1810,15 +1813,10 @@ Vypen,Vypin
           });
           console.log(`Found ${subset.features.length} corporation wards for mandal ${mName} by name matching (${wardList.length} expected)`);
         } else {
-          // If no ward names specified, use spatial filtering
-          subset.features = corpWardsGJ[corporationName].features.filter(f => {
-            try {
-              return turf.booleanPointInPolygon(turf.pointOnFeature(f), mF);
-            } catch(e) {
-              return false;
-            }
-          });
-          console.log(`Found ${subset.features.length} corporation wards for mandal ${mName} by spatial filtering`);
+          // If no ward names specified, show ALL corporation wards for this corporation
+          // This is better than spatial filtering which might miss wards
+          subset.features = corpWardsGJ[corporationName].features;
+          console.log(`Showing ALL ${subset.features.length} corporation wards for ${corporationName} (no ward list provided)`);
         }
       }
 
@@ -1857,6 +1855,8 @@ Vypen,Vypin
           geometryType: f.geometry?.type,
           hasCoordinates: !!f.geometry?.coordinates
         })).slice(0, 5));
+        console.log('🔍 All ward names in subset:', subset.features.map(f => prop(f, 'Ward_Name')));
+        console.log('🔍 Expected ward list:', wardList);
         const layer=L.geoJSON(subset,{
           style:f=>({color:"#06b6d4",weight:2,fillColor:colorFor(prop(f,'Ward_Name') || prop(f,KEYS.ward_name)),fillOpacity:0.8}),
           onEachFeature:(f,l)=>{
@@ -2477,3 +2477,4 @@ Vypen,Vypin
 <!-- Deployment trigger 1: 1759125010 -->
   <!-- Corporation ward fix trigger: 1759125959 -->
   <!-- Ward geometry debug fix: 1759127000 -->
+  <!-- Ward filtering fix: 1759128000 -->
