@@ -19,6 +19,10 @@ const AC_NAME_MAPPINGS: Record<string, string> = {
   // Punalur/Punaloor mapping
   'Punalur': 'Punaloor',
   'punalur': 'Punaloor',
+  
+  // Thrissur City mapping
+  'Thrissur City': 'Thrissur City',
+  'thrissur city': 'Thrissur City',
 };
 
 /**
@@ -71,6 +75,8 @@ export function normalizeZoneName(zoneName: string): string {
   // Add zone mappings if needed
   const ZONE_MAPPINGS: Record<string, string> = {
     'Thiruvananthapuram': 'Thiruvananthapuram',
+    'Ernakulam': 'Ernakulam',
+    'ernakulam': 'Ernakulam',
     // Add more as discovered
   };
   
@@ -115,6 +121,10 @@ export function normalizeLocalBodyName(localBodyName: string): string {
     'Kottarakara': 'Kottarakara',
     'kottarakara': 'Kottarakara',
     
+    // Thrissur mappings (Corporation - no Gramapanchayath suffix)
+    'Thrissur': 'Thrissur',
+    'thrissur': 'Thrissur',
+    
     // Add more mappings as discovered
   };
   
@@ -158,6 +168,13 @@ export function normalizeWardName(wardName: string): string {
     // ERATHUVADAKKU variations (case insensitive)
     'erathuvadakku': 'ERATHUVADAKKU',
     'Erathuvadakku': 'ERATHUVADAKKU',
+    
+    // Thrissur ward name variations
+    'Krishnapuram': 'Krishnapuram',
+    'krishnapuram': 'Krishnapuram',
+    'MISSION QUARTERS': 'MISSION QUARTERS',
+    'mission quarters': 'MISSION QUARTERS',
+    'Mission Quarters': 'MISSION QUARTERS',
     
     // Add more ward name mappings as discovered
   };
