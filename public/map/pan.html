@@ -416,13 +416,13 @@
   <script>
     // ========= FILES =========
     const FILES = {
-      zones:  'kerala_zones.geojson',
-      org:    'kerala_org_districts.geojson',
-      ac:     'KERALA_ASSEMBLY_filtered.geojson',
+      zones:  'kerala_zones.geojson?v=' + Date.now(),
+      org:    'kerala_org_districts.geojson?v=' + Date.now(),
+      ac:     'KERALA_ASSEMBLY_filtered.geojson?v=' + Date.now(),
       mandal: 'org_mandal_with_corporations_comprehensive.geojson?v=' + Date.now(),  // ← Updated with corporation mandals + cache busting
-      pan:    'hierarchy_output/kerala_panchayats_mapped.geojson',
-      corps:  'hierarchy_output/kerala_corporations_mapped.geojson',
-      wards:  'kerala_wards.geojson',  // ← Ward level data
+      pan:    'hierarchy_output/kerala_panchayats_mapped.geojson?v=' + Date.now(),
+      corps:  'hierarchy_output/kerala_corporations_mapped.geojson?v=' + Date.now(),
+      wards:  'kerala_wards.geojson?v=' + Date.now(),  // ← Ward level data with cache busting
       // Corporation ward files
       corp_wards: {
         'Thiruvananthapuram': 'ward_jsons/Thiruvanathapuram/Corporation/Thiruvananthapuram.json',
@@ -2288,14 +2288,40 @@ Vypen,Vypin
 
     // ========= LOAD =========
     (async function(){
-      zonesGJ=await (await fetch(FILES.zones)).json();
-      orgGJ=await (await fetch(FILES.org)).json();
-      acGJ=await (await fetch(FILES.ac)).json();
-      mandalGJ=await (await fetch(FILES.mandal)).json();
-      panGJ = await (await fetch(FILES.pan)).json();
-      corpsGJ = await (await fetch(FILES.corps)).json();
-      
-      wardsGJ = await (await fetch(FILES.wards)).json();  // ← Load wards data
+      try {
+        console.log('🔄 Loading zones data...');
+        zonesGJ=await (await fetch(FILES.zones)).json();
+        console.log('✅ Zones loaded:', zonesGJ.features?.length || 0, 'features');
+        
+        console.log('🔄 Loading org districts data...');
+        orgGJ=await (await fetch(FILES.org)).json();
+        console.log('✅ Org districts loaded:', orgGJ.features?.length || 0, 'features');
+        
+        console.log('🔄 Loading AC data...');
+        acGJ=await (await fetch(FILES.ac)).json();
+        console.log('✅ AC data loaded:', acGJ.features?.length || 0, 'features');
+        
+        console.log('🔄 Loading mandal data...');
+        mandalGJ=await (await fetch(FILES.mandal)).json();
+        console.log('✅ Mandal data loaded:', mandalGJ.features?.length || 0, 'features');
+        
+        console.log('🔄 Loading panchayat data...');
+        panGJ = await (await fetch(FILES.pan)).json();
+        console.log('✅ Panchayat data loaded:', panGJ.features?.length || 0, 'features');
+        
+        console.log('🔄 Loading corporation data...');
+        corpsGJ = await (await fetch(FILES.corps)).json();
+        console.log('✅ Corporation data loaded:', corpsGJ.features?.length || 0, 'features');
+        
+        console.log('🔄 Loading wards data...');
+        wardsGJ = await (await fetch(FILES.wards)).json();  // ← Load wards data
+        console.log('✅ Wards data loaded:', wardsGJ.features?.length || 0, 'features');
+      } catch (error) {
+        console.error('❌ Error loading GeoJSON data:', error);
+        console.error('❌ Error details:', error.message);
+        console.error('❌ Failed file:', error.stack);
+        throw error;
+      }
       console.log(`✅ Loaded ${wardsGJ.features.length} wards from ${FILES.wards}`);
       if (wardsGJ.features.length > 0) {
         console.log('Sample ward properties:', wardsGJ.features[0].properties);
