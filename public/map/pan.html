@@ -1741,7 +1741,7 @@ Vypen,Vypin
       try {
         clearLayers(); clearLabels(); ctx.level='wards'; ctx.mandal=mF;
         const mName = prop(mF,"__label") || prop(mF, KEYS.mnd);
-        const corporationName = prop(mF, 'LocalBody') || prop(mF, 'Corporation') || 'Thrissur';
+        const corporationName = prop(mF, 'LocalBody') || prop(mF, 'Corporation') || prop(mF, 'LSGD') || 'Thrissur';
         titleEl.textContent=`Kerala — ${corporationName} — ${mName} — Wards`;
         legendTitle.textContent="Wards";
         legendNote.textContent = "Loading ward data...";
@@ -1753,6 +1753,7 @@ Vypen,Vypin
         wardNames: prop(mF, 'Ward_Names'),
         localBody: prop(mF, 'LocalBody'),
         corporation: prop(mF, 'Corporation'),
+        lsgd: prop(mF, 'LSGD'),
         allProperties: mF.properties
       });
 
@@ -1777,7 +1778,9 @@ Vypen,Vypin
         if (corpWardFile) {
           try {
             console.log(`📁 Loading corporation ward data for ${corporationName} from ${corpWardFile}...`);
+            console.log(`🔍 Full file path: ${window.location.origin}/map/${corpWardFile}`);
             const response = await fetch(corpWardFile);
+            console.log(`📊 Response status: ${response.status}, ok: ${response.ok}`);
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -1785,11 +1788,13 @@ Vypen,Vypin
             console.log(`✅ Loaded ${corpWardsGJ[corporationName].features.length} wards for ${corporationName}`);
           } catch (error) {
             console.error(`❌ Error loading corporation ward data for ${corporationName}:`, error);
+            console.error(`❌ File path attempted: ${corpWardFile}`);
             // Set empty data to prevent repeated loading attempts
             corpWardsGJ[corporationName] = { type: "FeatureCollection", features: [] };
           }
         } else {
           console.warn(`❌ No corporation ward file found for: ${corporationName}`);
+          console.warn(`❌ Available corporation files:`, Object.keys(FILES.corp_wards));
           // Set empty data to prevent repeated loading attempts
           corpWardsGJ[corporationName] = { type: "FeatureCollection", features: [] };
         }
@@ -2503,3 +2508,4 @@ Vypen,Vypin
   <!-- Ward geometry debug fix: 1759127000 -->
   <!-- Ward filtering fix: 1759128000 -->
   <!-- Corporation name and loading fix: 1759129000 -->
+  <!-- Corporation name LSGD fix and debugging: 1759130000 -->
