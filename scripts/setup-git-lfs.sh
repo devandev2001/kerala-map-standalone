@@ -28,3 +28,4 @@ echo "Git LFS setup complete!"
 echo "Now you can commit the ward JSON files:"
 echo "git add public/map/ward_jsons/"
 echo "git commit -m 'Add ward JSON files with Git LFS'"
+

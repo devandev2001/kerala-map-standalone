@@ -16,3 +16,4 @@ compressed_size=$(du -sh public/map/ward_jsons_compressed | cut -f1)
 echo "Original size: $original_size"
 echo "Compressed size: $compressed_size"
 echo "Compressed files saved to: public/map/ward_jsons_compressed"
+

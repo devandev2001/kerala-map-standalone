@@ -99,3 +99,4 @@ If issues occur, revert these changes:
 2. Restore original `useEffect` for modal state management
 3. Restore original `refreshMap` function
 4. Remove enhanced message handling logic
+

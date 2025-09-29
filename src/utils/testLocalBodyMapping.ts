@@ -66,3 +66,4 @@ export async function testLocalBodyMapping() {
 if (typeof window !== 'undefined') {
   testLocalBodyMapping();
 }
+

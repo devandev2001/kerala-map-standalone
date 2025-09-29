@@ -36,3 +36,4 @@ const SimpleApp: React.FC = () => {
 };
 
 export default SimpleApp;
+

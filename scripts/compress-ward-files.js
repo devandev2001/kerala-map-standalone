@@ -112,3 +112,4 @@ if (require.main === module) {
 }
 
 module.exports = { compressWardFiles, compressFile };
+
