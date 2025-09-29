@@ -1860,6 +1860,7 @@ Vypen,Vypin
             const wardInfo = wardNo ? `Ward ${wardNo}: ${wardName}` : `Ward: ${wardName}`;
             
             console.log(`🏘️ Setting up popup for corporation ward: ${wardInfo}`);
+            console.log(`🔍 Looking for voter data: ward=${wardName}, corporation=${corporationName}, mandal=${mName}`);
             
             // Find voter data for this corporation ward first
             let wardData = voterData.find(row => {
@@ -1868,7 +1869,7 @@ Vypen,Vypin
               const aliasedWard = aliases.get(geoWard) || geoWard;
               
               return (csvWard === geoWard || csvWard === aliasedWard) && 
-                     norm(row.lbName) === norm('Thiruvananthapuram') &&
+                     norm(row.lbName) === norm(corporationName) &&
                      norm(row.mandal) === norm(mName);
             });
             
@@ -1880,14 +1881,14 @@ Vypen,Vypin
                 const aliasedWard = aliases.get(geoWard) || geoWard;
                 
                 return (csvWard === geoWard || csvWard === aliasedWard) && 
-                       norm(row.lbName) === norm('Thiruvananthapuram');
+                       norm(row.lbName) === norm(corporationName);
               });
             }
             
             // If exact match not found, try fuzzy matching
             if (!wardData) {
               wardData = voterData.find(row => {
-                if (norm(row.lbName) !== norm('Thiruvananthapuram')) return false;
+                if (norm(row.lbName) !== norm(corporationName)) return false;
                 
                 const csvWard = norm(row.ward);
                 const geoWard = norm(wardName);
